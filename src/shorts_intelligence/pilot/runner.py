@@ -88,6 +88,11 @@ def _resume_metrics(
         stages = payload.get("stages", {})
         return {
             "record_id": record.record_id,
+            "platform": record.platform,
+            "language": record.language,
+            "topic": record.topic,
+            "speech_mode": record.speech_mode,
+            "duration_band": record.duration_band,
             "status": sidecar.get("status", "complete"),
             "wall_seconds": 0.0,
             "input_file_bytes": record.file_size_bytes,
@@ -214,6 +219,11 @@ def process_selected(
         elapsed = time.perf_counter() - started
         metrics.append({
             "record_id": record.record_id,
+            "platform": record.platform,
+            "language": record.language,
+            "topic": record.topic,
+            "speech_mode": record.speech_mode,
+            "duration_band": record.duration_band,
             "status": status,
             "wall_seconds": round(elapsed, 4),
             "input_file_bytes": input_file_bytes,
@@ -236,6 +246,35 @@ def process_selected(
     input_total = sum(int(item["input_file_bytes"]) for item in metrics)
     report_total = sum(int(item["report_json_bytes"]) for item in metrics)
     artifact_total = sum(int(item["artifact_bytes_written"]) for item in metrics)
+    quality_slices: dict[str, dict[str, Any]] = {}
+    stage_status_counts: Counter[str] = Counter()
+    for item in metrics:
+        slice_key = "|".join([
+            str(item["platform"]), str(item["language"]), str(item["topic"]),
+            str(item["speech_mode"]), str(item["duration_band"]),
+        ])
+        slice_metrics = quality_slices.setdefault(slice_key, {
+            "records": 0, "complete": 0, "partial": 0, "failed": 0,
+            "wall_seconds": 0.0, "frames": 0, "cut_candidates": 0,
+            "asr_segments": 0, "ocr_spans": 0,
+        })
+        slice_metrics["records"] += 1
+        slice_metrics[str(item["status"])] += 1
+        slice_metrics["wall_seconds"] += float(item["wall_seconds"])
+        slice_metrics["frames"] += int(item["frame_count"])
+        slice_metrics["cut_candidates"] += int(item["cut_candidate_count"])
+        slice_metrics["asr_segments"] += int(item["transcript_segment_count"])
+        slice_metrics["ocr_spans"] += int(item["ocr_span_count"])
+        for stage_name, stage_status in item["stage_statuses"].items():
+            stage_status_counts[f"{stage_name}:{stage_status}"] += 1
+    for slice_metrics in quality_slices.values():
+        slice_metrics["wall_seconds"] = round(float(slice_metrics["wall_seconds"]), 3)
+        records_in_slice = max(int(slice_metrics["records"]), 1)
+        slice_metrics["success_rate"] = round(
+            (int(slice_metrics["complete"]) + int(slice_metrics["partial"]))
+            / records_in_slice, 4
+        )
+
     summary: dict[str, object] = {
         "schema_version": "1.0.0",
         "manifest_name": manifest_path.name,
@@ -263,6 +302,8 @@ def process_selected(
         "total_frames_retained": sum(int(item["frame_count"]) for item in metrics),
         "total_asr_segments": sum(int(item["transcript_segment_count"]) for item in metrics),
         "total_ocr_spans": sum(int(item["ocr_span_count"]) for item in metrics),
+        "stage_status_counts": dict(stage_status_counts),
+        "quality_by_stratum": quality_slices,
         "status_note": (
             "Byte totals are per-file input size plus generated JSON/keyframe artifact sizes; "
             "they are not physical disk I/O counters. Wall time excludes human review, "
@@ -273,7 +314,8 @@ def process_selected(
         for item in metrics:
             handle.write(json.dumps(item, ensure_ascii=False) + "\n")
     columns = [
-        "record_id", "status", "wall_seconds", "input_file_bytes",
+        "record_id", "platform", "language", "topic", "speech_mode", "duration_band",
+        "status", "wall_seconds", "input_file_bytes",
         "report_json_bytes", "artifact_bytes_written", "frame_count",
         "cut_candidate_count", "transcript_segment_count", "ocr_span_count",
         "model_training_permitted", "resumed", "error",
