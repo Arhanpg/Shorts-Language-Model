@@ -85,7 +85,7 @@ class PilotRecord(StrictModel):
         return normalized or "unknown"
 
     @model_validator(mode="after")
-    def validate_rights_consistency(self) -> "PilotRecord":
+    def validate_rights_consistency(self) -> PilotRecord:
         if self.rights.model_training and not (
             self.rights.media_analysis
             and self.rights.temporary_processing
@@ -95,8 +95,11 @@ class PilotRecord(StrictModel):
                 "model_training requires media_analysis, temporary_processing "
                 "and derived_artifact_retention capabilities"
             )
-        if self.performance and self.published_at:
-            if self.performance.observed_at < self.published_at:
+        if (
+            self.performance
+            and self.published_at
+            and self.performance.observed_at < self.published_at
+        ):
                 raise ValueError("performance observed_at cannot precede published_at")
         return self
 
