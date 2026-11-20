@@ -7,7 +7,7 @@ from shorts_intelligence.discovery.providers import YouTubeSearchProvider
 
 
 class FakeYoutubeDL:
-    instances: list["FakeYoutubeDL"] = []
+    instances: list[FakeYoutubeDL] = []
 
     def __init__(self, options):
         self.options = options
