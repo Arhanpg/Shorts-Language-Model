@@ -288,8 +288,10 @@ def run_discovery(
             status_by_platform[candidate.platform][stored.status] += 1
 
             if stored.status == "eligible":
-                if is_new or became_eligible:
+                if is_new:
                     stats["new_eligible"] += 1
+                elif became_eligible:
+                    stats["known_ids_became_eligible"] += 1
                 else:
                     stats["already_eligible"] += 1
             elif stored.status == "metric_unknown":
@@ -335,6 +337,7 @@ def run_discovery(
         "already_known_source_ids": stats["already_known_source_ids"],
         "new_eligible": stats["new_eligible"],
         "already_eligible": stats["already_eligible"],
+        "known_ids_became_eligible": stats["known_ids_became_eligible"],
         "missing_view_metric": stats["missing_view_metric"],
         "below_threshold": stats["below_threshold"],
         "format_uncertain": stats["format_uncertain"],
@@ -369,6 +372,7 @@ def run_discovery(
         ("Repeated results in this run", stats["duplicate_search_results"]),
         ("Already in SQLite", stats["already_known_source_ids"]),
         ("New eligible candidates", stats["new_eligible"]),
+        ("Known IDs newly eligible", stats["known_ids_became_eligible"]),
         ("Already eligible candidates", stats["already_eligible"]),
         ("Missing view metric", stats["missing_view_metric"]),
         ("Below view threshold", stats["below_threshold"]),
