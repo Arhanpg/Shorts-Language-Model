@@ -1,179 +1,224 @@
 # Shorts Language Model — Global Master Plan
 
-> **Direction (20 November 2026):** build a rights-aware, multilingual short-form video intelligence system using deterministic temporal telemetry, a compact multimodal reasoning model, and a separate creator-normalized performance predictor.
+> **Revised direction — 21 November 2026:** build an automated, provider-based short-form video discovery and intelligence system. It should discover eligible candidates, deduplicate them in a local database, retrieve media through an authorized delivery route, extract audiovisual evidence, and fine-tune a compact multimodal model after dataset and baseline gates pass.
 >
-> **Not the plan:** mass-scrape or download 100–200 million third-party Reels/Shorts, train a foundation model from scratch, or claim that view counts alone prove why a video went viral.
+> **Critical distinction:** a source URL, public view count, metadata API response, permission to download, and permission to train are different things. The project can automate discovery; it cannot assume every public YouTube Short or Instagram Reel can be downloaded.
 
-<p align="center">
-  <img src="docs/research/images/telemetry-training-architecture.jpg" alt="Stratified ingestion, temporal telemetry, cloud fine-tuning and local inference" width="760" />
-</p>
+## 1. Product definition
 
-## 1. Product vision
+The target product is an automated short-form video intelligence factory. On each scheduled or manual run, it should:
 
-Given a short-form video the user or project is authorized to process, plus permitted metadata, the system should produce:
+1. Discover candidates through official APIs, approved research interfaces or licensed provider feeds.
+2. Filter by a configurable threshold (default: 1,000,000 observed views/plays).
+3. Prevent repeated discovery using a local SQLite inventory, subject to each source's retention policy.
+4. Store permitted title/caption, description, tags/hashtags, duration, publication time and engagement snapshots.
+5. Acquire media automatically only where a platform/provider/creator route explicitly permits delivery and model training.
+6. Extract transcript, OCR, scenes, cuts, effects candidates, motion and audio evidence.
+7. Produce timestamp-grounded reports and human-auditable training examples.
+8. Evaluate and fine-tune a pretrained compact multimodal model in cloud batches.
+9. Ship a quantized model and local analysis application where actual hardware measurements support it.
 
-- a grounded description of what is visible, spoken and written;
-- a timestamped account of scenes, cuts, transitions, effects, framing, movement, pacing, captions and audio;
-- language, topic, title, description and hashtag analysis;
-- plausible attention/retention hypotheses linked to evidence;
-- comparable examples from a rights-cleared corpus;
-- actionable suggestions for improving a new short.
+The project owner should not have to paste URLs or manually download videos during a normal supported discovery run. Initial API credentials, institutional approval, creator agreements or a platform partnership may still be prerequisites. If no authorized media source exists for a platform, it remains metadata-only; the system must not silently fall back to scraping.
 
-It must support speech-heavy clips, music-only edits, silent visual sequences and multiple languages. It must distinguish correlation from causation.
+## 2. Requirements and honest limits
 
-## 2. Final architecture decision
+| Requirement | Design |
+|---|---|
+| No manual link pasting | Provider query planners search configured language/region/topic/time strata |
+| 100–200 new unique candidates per run | Configurable target; partial result if quota/source/threshold prevents it |
+| Filter videos above 1M views | Use a current, timestamped provider metric with its definition |
+| Avoid duplicates | SQLite source keys plus file/perceptual fingerprints where retention and rights permit |
+| YouTube Shorts and Instagram Reels | Separate provider adapters and metric semantics |
+| Automatic media delivery | Only through a documented, authorized provider |
+| Title, description, hashtags | Store provider-native fields; Instagram may expose caption rather than a separate title |
+| Transcript/OCR/visual effects | Run existing telemetry after authorized media delivery |
+| Training | Build/version/QA a dataset, then fine-tune in batches; do not train once per incoming file |
+| RTX 3050 4 GB | Development, CPU preprocessing and quantized inference experiments; cloud for VLM training |
 
-Use a **hybrid, tool-grounded multimodal system**, not one giant video LLM.
+A randomized browser crawl is not a statistically uniform sample. Search results are ranked and query-dependent. Randomize query order across declared strata and report the sampling frame; do not claim unbiased platform-wide sampling.
 
-1. **Acquisition and provenance:** creator uploads, creator-authorized media, licensed datasets and approved research access. Metadata-only access stays metadata-only unless an applicable agreement explicitly permits more.
-2. **Deterministic telemetry:** media validation, scene/shot boundaries, keyframes, OCR, multilingual ASR, audio events, motion and editing candidates. Every event includes timestamp, tool version, evidence and confidence.
-3. **Evidence store:** compact JSON/Parquet records and selected keyframes. Raw media is temporary by default and retained only where rights and policy allow.
-4. **Learning layer:** first establish non-LLM and frozen-model baselines. Fine-tune an open multimodal model only after identifying measurable weaknesses and reviewing labels.
-5. **Performance research:** a separate LightGBM/ranking model studies creator-relative performance from authorized outcomes. The VLM explains evidence; it does not invent the score.
-6. **Local deployment:** quantized compact model with CPU-capable preprocessing. GPU fit and speed must be measured on actual target hardware.
+## 3. Platform access reality
 
-```mermaid
-flowchart TD
-  A[Creator upload / licensed dataset / approved provider] --> B[Rights, consent and provenance gate]
-  B --> C[Metadata snapshot and deduplication]
-  C --> D[Temporary media processing, when authorized]
-  D --> E[Temporal telemetry: shots, motion, OCR, ASR, audio]
-  E --> F[Evidence manifest + selected frames]
-  F --> G[Human-reviewed labels and dataset builder]
-  G --> H[Baselines and frozen-model evaluation]
-  H --> I[LoRA fine-tuning, only if baseline gap is real]
-  I --> J[Temporal, multilingual and hallucination evaluation]
-  J --> K[Quantized local package + API/dashboard]
-  F --> L[Creator-relative performance features]
-  L --> M[Separate performance ranking model]
-  M --> N[Evidence-linked explanation]
-  K --> N
+### YouTube
+
+The YouTube Data API v3 can search videos and retrieve metadata/statistics. Current published default quota documentation describes a separate 100-call/day `search.list` bucket and 10,000 units/day for other standard methods. `videos.list` returns title, description, tags, duration and view statistics. Search can produce candidate IDs, but common public API fields do not reliably confirm every result is a Short.
+
+Shorts classification must respect YouTube's current rule: for standard channels, square or vertical videos uploaded on/after 15 October 2024 and up to three minutes are categorized as Shorts. Duration alone is not sufficient. Store format status as `confirmed`, `candidate` or `unknown`.
+
+YouTube developer policies prohibit downloading/caching audiovisual copies without prior written approval and prohibit scraping YouTube applications. Non-authorized API data generally has a 30-day storage/refresh limit. As of 1 June 2026, an amended policy offers audited developers a longer retention path for specified statistical data and approved derived metrics when the required amendment is accepted for an approved analytics use case. Other fields, including titles, creator names and descriptions, remain subject to refresh/deletion requirements.
+
+YouTube also offers a creator/rightsholder third-party AI-training opt-in. It is off by default. Applicable rights holders must opt in, creators select approved third-party companies, and companies may apply to be listed. YouTube may share eligible videos with selected companies. This is the first platform-native route to investigate for automatic YouTube training media, but it requires acceptance and documented delivery terms. It is not permission to use yt-dlp on arbitrary videos.
+
+### Instagram / Meta
+
+Instagram Graph API access is limited to eligible professional Business/Creator accounts and required app permissions. Business Discovery can inspect eligible public professional accounts whose usernames are known. Reel `view_count` is documented through Business Discovery; it may include paid or cross-posted activity. The standard API is not a global index of every public Reel. Hashtag search is narrower, and its responses must not be assumed to contain the Business Discovery-only view-count field. A media URL can be omitted for copyrighted or flagged content.
+
+Meta Content Library/API is controlled research access for eligible academic or not-for-profit research institutions. Its API operates in a secure research environment, and Meta says API data cannot be downloaded from that environment. An approved web-interface downloadable subset has separate conditions; it is not a universal MP4 training feed.
+
+Therefore, Instagram discovery can be partially automated through known eligible professional accounts or institutional research access. A fully automatic arbitrary-public-Reel-to-local-MP4 pipeline is not available through the standard Graph API.
+
+### Acquisition consequence
+
+Support three independent states: `discovered_metadata`, `authorized_media_available` and `authorized_for_model_training`. A video can pass the 1M filter and still remain metadata-only. That is an expected source outcome, not a pipeline error.
+
+See [Automated Discovery and Rights-Gated Media Acquisition](AUTOMATED_DISCOVERY_AND_ACQUISITION.md) and [Data and Compliance](DATA_AND_COMPLIANCE.md).
+
+## 4. Revised end-to-end architecture
+
+```text
+Scheduled discovery run
+       |
+       v
+Provider query planner
+       |
+       +--> YouTube Data API
+       +--> Instagram Business Discovery
+       +--> Meta research / licensed provider
+       +--> Creator-authorized source
+       |
+       v
+Provider response normalization
+       |
+       v
+1M threshold + short-format confidence
+       |
+       v
+SQLite inventory + retention-aware deduplication
+       |
+       v
+Rights and delivery capability gate
+       |                            |
+authorized media                 not authorized
+       |                            |
+       v                            v
+Approved media delivery        Metadata-only / deferred
+       |
+       v
+Private media staging + checksum
+       |
+       v
+Phase 1 telemetry: ASR/OCR/shots/motion/audio
+       |
+       v
+Evidence store + human review + dataset QA
+       |
+       v
+Frozen model baseline -> cloud batch LoRA fine-tuning
+       |
+       v
+Evaluation -> quantized local model + report application
 ```
 
-## 3. Research question
+### Core subsystems
 
-Can compact multimodal models, grounded by measurable audiovisual telemetry and carefully designed comparison data, identify short-form storytelling and editing patterns more accurately and usefully than frozen models and simple baselines?
+1. **Discovery Agent:** query planner, source connectors, quota/rate-limit manager, candidate normalizer and 1M+ filter.
+2. **Local Inventory:** SQLite for discovery runs, source items, metadata snapshots, rights, media assets, jobs and provider state.
+3. **Rights Gate:** independent scopes for metadata, media retrieval, analysis, temporary processing, derived retention, training and redistribution.
+4. **Media Delivery:** pluggable licensed/creator/platform-approved providers; no universal public URL downloader.
+5. **Telemetry Engine:** reuse existing ShortsLM Phase 1 analyzer and audited VidTrace adapters.
+6. **Dataset Factory:** checksums, perceptual dedup, annotations, split control, sampling weights, human review and quality reports.
+7. **Model Factory:** frozen baselines, ranking model and VLM SFT; cloud batch jobs with recoverable checkpoints.
+8. **Local Inference:** quantized compact model, structured report validator and CPU-capable preprocessing.
 
-Secondary questions: which edit types can be detected at sub-second timescales; do audio/OCR/speech/motion signals add predictive value; does creator normalization reduce mega-channel bias; does fine-tuning beat prompting; which components run acceptably on 4 GB GPUs or CPU-only laptops?
+## 5. Discovery-run design
 
-## 4. Dataset scale and sampling
+Planned command (not implemented yet):
 
-The original 5–10 crore per platform ambition is recorded as a **long-term discovery ambition only**, not a committed corpus size or legal acquisition plan. No global supply ceiling is inferred from the supplied sample chart.
+```powershell
+shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
+```
 
-| Gate | Unique videos | Purpose |
+A run generates queries from a seeded grid of platform/provider, language/script, country/region, content niche, publication window and discovery mode. Queries are shuffled with a recorded seed. Candidate results are enriched, filtered, deduplicated and assigned an acquisition status. The run stops after its target of new unique candidates, candidate budget, quota or provider limit. It returns actual yield and reasons for any shortfall. Do not retry indefinitely to force the output to say 100.
+
+The database stores provider source keys and expiry/refresh rules. Durable deduplication can be guaranteed only while source identity/fingerprint can lawfully be retained. A hashed identifier is not automatically outside platform retention rules.
+
+## 6. Local SQLite inventory
+
+Use SQLite first; no remote database is required for initial discovery.
+
+| Table | Purpose |
+|---|---|
+| `discovery_runs` | Target, start/end, query seed, quota and run summary |
+| `source_items` | Platform ID, canonical URL, first/last seen, unique key and state |
+| `metadata_snapshots` | Title/caption, description, tags/hashtags, duration, views/likes/comments and observation time |
+| `rights_records` | Permission evidence, capability flags, version, expiry/revocation |
+| `media_assets` | Delivered file, checksum, size, codec, provider and retention |
+| `jobs` | Acquisition/processing status, retries and last error |
+| `provider_state` | API cursor, query cell, quota and rate-limit state |
+
+Use a unique index on provider/platform/source identity while that key may be retained. After authorized media acquisition, compute SHA-256 and optional perceptual video/audio fingerprints to catch cross-platform copies. A retention worker refreshes/deletes API data as required. Keep the database and media out of GitHub.
+
+## 7. Model architecture and training
+
+Do not train a foundation model from scratch. Use a pretrained decoder-based multimodal VLM, deterministic perception tools and a separate performance estimator.
+
+Candidate bake-off (no winner preselected):
+- Qwen3-VL-2B;
+- Qwen3.5-2B;
+- SmolVLM2-500M;
+- VideoLLaMA3-2B;
+- a larger open-weight teacher only if its license and cost are appropriate.
+
+The initial local deployment target is a 2B-class quantized model; 4B is a stretch goal on the RTX 3050 4 GB, not a universal guarantee. Fine-tuning uses cloud GPUs after rights, data-quality and baseline gates pass. Training settings are model-specific.
+
+Keep tasks separable: video grounding, OCR/transcript fusion, editing/VFX candidate detection, hook/pacing/payoff/audio analysis, metadata interpretation, creator-relative performance estimation and evidence-linked recommendations.
+
+Train only on assets and derived records whose rights permit the intended use. Public API metadata and raw media have their own platform terms; local storage does not override them.
+
+## 8. Scale and collection policy
+
+The original ambition of 5–10 crore Reels plus 5–10 crore Shorts is not the first implementation target. It remains a long-term ambition conditional on platform agreements, licensed media feeds, durable data rights, storage, compute, rights operations and measured model improvement.
+
+| Gate | Unique items/assets | Purpose |
 |---|---:|---|
-| Smoke fixture | 25–50 | Pipeline correctness |
-| Diagnostic pilot | 300 | Tool quality, annotation effort and cost/video |
-| First research set | 1K–2K | Coverage and baseline evaluation |
-| First SFT candidate | 5K–10K | Measure whether reviewed labels improve a model |
-| Expansion | 20K–50K | Broader creator/category generalization |
-| Large research | 100K–500K+ | Only after rights and unit economics pass |
-| Millions / crore-scale | Conditional | Requires rights, budget and demonstrated marginal value |
+| Provider smoke tests | 10–25 mock/API candidates | Validate schema, quotas, dedup and retention |
+| Discovery MVP | 100 new candidates/run target | Verify source yield and repeat prevention |
+| Acquisition pilot | 100 rights-cleared media assets if available | Verify automatic delivery |
+| Telemetry pilot | 300 authorized videos | Measure extractor quality and cost |
+| Dataset v1 | 1K–2K reviewed examples | Baselines and annotation agreement |
+| SFT candidate | 5K–10K examples | Fine-tuning experiment |
+| Expansion | 20K–50K | Generalization and learning curves |
+| Large corpus | 100K+ | Only with rights and unit economics |
 
-Do not sample only videos above one million views. Include ordinary-performing controls, creator baselines, varied creator sizes, language/script, category, duration, publication period, speech/no-speech and edit styles. Use same-creator matched controls when permitted. Treat any 70/30 mix as an experiment, not a universal ratio.
+The number of discovered URLs and trainable media assets are separate counters. Reports must never imply 1,000 metadata candidates equal 1,000 downloaded/training videos.
 
-A creator-relative outcome can be explored, for example:
+## 9. Evaluation
 
-`relative = log1p(video outcome) - median(log1p(eligible creator outcomes in baseline window))`
+Discovery: per-provider query/unique yield; threshold correctness and snapshot age; duplicates across runs; data retention; short-format confirmation; quota/retry rates; candidates with authorized media delivery.
 
-Define the baseline window, eligible uploads and minimum count before use. Compare only compatible platform metrics and observation windows. Store raw snapshots and normalized targets separately.
+Data: all training assets have rights/provenance; checksums and extractor versions; ASR/OCR missing/failed states explicit; coverage by source/language/topic/speech mode/duration; creator/repost leakage excluded.
 
-**Splits:** creator/account-disjoint, time-forward holdout, cross-post deduplication before splitting, and a locked golden test set.
+Model: timestamp grounding, edit-event F1, OCR/ASR quality, JSON validity, unsupported-claim rate, human usefulness, creator/time-holdout ranking/calibration and per-language/platform metrics.
 
-## 5. Model choice
+The model may explain plausible associations. It must not claim one edit caused virality from observational data alone.
 
-Benchmark candidates on identical authorized clips and inputs:
-
-- Qwen3-VL-2B — initial compact VLM baseline;
-- Qwen3.5-2B / 4B — candidates after verifying exact card, runtime, training and deployment support;
-- VideoLLaMA3-2B — video-centric comparison;
-- SmolVLM2-500M — low-resource smoke baseline;
-- a larger open-weight teacher — optional, only with compatible terms and audited labels.
-
-Select by measured short-video performance, temporal grounding, multilingual coverage, license, framework support and local inference—not model name or vendor score alone.
-
-Use a pretrained decoder-based multimodal VLM. Specialist audio tools initially supply timestamped transcript and acoustic features. Fine-tuning order: frozen prompt baseline → reviewed SFT with LoRA/DoRA → optional preference/RL only after stable SFT and verifiable reward checks. QLoRA and exact YAML settings are model-specific, not assumed universal.
-
-## 6. Temporal telemetry
-
-Do not rely only on 1 FPS. Combine a dense hook window (0–3 seconds), frames around candidate cuts, shot midpoints, motion peaks, climax/end frames and possible loop seam. A 12–16 frame VLM budget is an experiment, not guaranteed coverage.
-
-| Signal | Initial candidates | Output |
-|---|---|---|
-| Shots | TransNetV2 / PySceneDetect | boundaries, type candidates, confidence |
-| Motion | OpenCV optical flow | movement statistics; add RAFT/GMFlow only if needed |
-| Zoom/shake/speed | motion and frame geometry heuristics | candidate intervals, not guaranteed effect labels |
-| Flash/fade | luminance and histogram deltas | event candidates |
-| OCR | PaddleOCR | timestamped text, boxes and confidence |
-| ASR | faster-whisper; compare Indic ASR | language and timestamped transcript |
-| Audio | librosa; optional licensed classifier | onset/beat candidates, loudness, silence |
-| Keyframes | hook-aware + cut/motion-aware selector | timestamped evidence frames |
-
-Treat beat-to-cut synchronization as a measurable score, not proof that music caused retention. Use human-annotated ground truth to evaluate the editing taxonomy.
-
-Your existing [VidTrace](https://github.com/Arhanpg/VidTrace) may be reused after a source/interface/license audit. Integrate through a stable extractor protocol rather than duplicating its working ASR/OCR/frame extraction.
-
-## 7. Performance reasoning
-
-Keep the VLM and performance predictor separate. Start with LightGBM/XGBoost using creator baseline, platform metric definition, age, duration, topic, language, publication window, metadata and extracted editing/audio/visual features.
-
-Prefer retention, watch duration, completion and swipe-away when creator-authorized analytics provide them. Public views alone are weak labels. Evaluate creator/time holdouts with ranking metrics, calibration and subgroup results.
-
-The report must say “associated with” or “plausible hypothesis,” not “caused.” Causal estimates require creator-owned A/B variants or defensible longitudinal/experimental designs with exposure information.
-
-## 8. Data rights
-
-A public URL, view counter or API metadata record does not automatically grant media download, retention, derived-artifact storage, model training or redistribution rights.
-
-Use project-owned media, explicit creator permissions, licensed datasets and approved research access. YouTube API metadata does not create a general-purpose audiovisual training license. Meta Content Library API is controlled research access; its API overview says API data downloading is not permitted. Creator-upload and separately licensed files are the practical media foundation unless approved terms explicitly allow otherwise.
-
-Every source record needs separate capabilities for metadata read, media analysis, temporary processing, raw retention, derived artifact retention, model training and redistribution. Deletion after extraction is a retention practice, not a workaround for unauthorized use. See [Data and Compliance](docs/DATA_AND_COMPLIANCE.md).
-
-## 9. Compute and local deployment
-
-The supplied $112.25 (50K) and $449,004 (200M) cost totals are **not accepted as project budgets**. They rely on unmeasured GPU-seconds, tokens/video, training throughput, teacher pricing, artifact size and storage assumptions. Measure all stages on 300 videos, including human review and retries.
-
-Use the RTX 3050 4 GB for development, FFmpeg, CPU/OpenCV extraction, small smoke tests and quantized inference experiments. Use Colab/Kaggle for short reproducible experiments; rent SSH-capable GPUs with persistent storage and checkpointing for sustained training. For Qwen3.5 specifically, current Unsloth guidance reports approximately 5 GB BF16 LoRA VRAM for 2B and 10 GB for 4B, and advises against 4-bit QLoRA; verify the exact current recipe before renting.
-
-Deployment tiers are provisional: Lite (smallest tested model), 2B (main candidate), 4B (stretch / higher-memory). Measure peak VRAM/RAM, first-token latency, end-to-end report time, context/frame budget, CPU fallback and quantization quality. Do not promise fit on every 4 GB GPU.
-
-## 10. Roadmap
+## 10. Revised phases
 
 | Phase | Deliverable | Exit gate |
 |---|---|---|
-| 0 | Repo, rights model, schemas, config, tests | Clean install and rights tests |
-| 1 | Single-video telemetry CLI | Audit 25–50 diverse clips |
-| 2 | 300-video pilot | Cost, quality, provenance reports |
-| 3 | Frozen-model and feature baselines | Locked holdout and comparison |
-| 4 | Reviewed 1K–2K dataset; then SFT | Fine-tuned model beats frozen baseline |
-| 5 | Creator-relative performance model | Adds value over metadata-only baseline |
-| 6 | Quantized local package | Real hardware measurements |
-| 7 | Expand 5K → 20K → 50K+ | Each expansion passes marginal-value gate |
+| 0. Provider/rights foundation | Credentials, source contracts, schemas and retention | Each enabled source has documented discovery and acquisition scopes |
+| 1. Automated discovery + SQLite | YouTube metadata provider, Instagram Business Discovery interface, query planner, 1M filter, retention-aware dedup | Replay produces no duplicates; second run yields unseen items where available |
+| 2. Rights-gated media delivery | YouTube partner path if accepted, creator inbox, licensed datasets/provider | Every acquired asset has delivery and training rights evidence |
+| 3. Automated video processing | Reuse existing Phase 1 telemetry | 10, then 100, then 300 authorized media assets audited |
+| 4. Dataset and labels | Dedup, review queue, creator/time splits | 1K–2K reviewed examples |
+| 5. Model bake-off and baselines | Frozen VLM, retrieval and tabular baselines | Locked baseline report |
+| 6. Cloud fine-tuning | LoRA/DoRA with checkpointing | Beats frozen model on predeclared tasks |
+| 7. Quantized local deployment | Local model/API/UI | Measured hardware matrix |
+| 8. Controlled scale | 5K/20K/50K+ | Rights, quality and marginal value pass |
 
-The detailed docs are linked below. Phases are gates, not calendar promises.
+### Existing work mapping
 
-## 11. Repository documentation
+- Original Phase 1 single-video telemetry is retained as the processing component in revised Phase 3.
+- Earlier Phase 2 local-manifest code/PR #4 is not an automated acquisition solution. Its validation, sampling, resumability and metrics may be reused once discovery and delivery layers exist. Do not mistake that PR for the requested hands-off crawler or treat it as the final acquisition path without reconciling it to this roadmap.
 
-- [Architecture decision](docs/ARCHITECTURE.md)
-- [Research comparison and decisions](docs/RESEARCH_COMPARISON.md)
-- [Data acquisition and compliance](docs/DATA_AND_COMPLIANCE.md)
-- [Dataset and labeling specification](docs/DATASET_AND_LABELING.md)
-- [Model selection and training](docs/MODEL_AND_TRAINING.md)
-- [Evaluation protocol](docs/EVALUATION.md)
-- [Compute and cost assumptions](docs/COMPUTE_AND_COSTS.md)
-- [Roadmap](docs/ROADMAP.md)
-- [References](docs/REFERENCES.md)
-- [Research diagrams](docs/research/README.md)
-- [Supplied proposal notes](docs/research/PROPOSALS_ARCHIVED.md)
+## 11. Hardware and deployment
 
-## 12. First implementation
+Local laptop: Discovery Agent, SQLite, API calls, metadata normalization, deduplication, job scheduler, FFmpeg smoke tests and CPU preprocessing. RTX 3050 4 GB is useful for small experiments and quantized inference, not large-scale multimodal fine-tuning.
 
-Start with a one-file command:
+Cloud: VLM training and large-batch inference only after data rights/quality gates. Use SSH-capable instances, persistent object storage, checkpoints, resumable jobs, budget caps and shutdown guards. Colab is for experiments, not durable acquisition/database scheduling.
 
-```bash
-python -m shorts_intelligence analyze --input ./authorized_clip.mp4 --output ./out/analysis.json
-```
+Storage: SQLite locally first; authorized raw media in private object storage/encrypted staging with expiry; compact telemetry in Parquet/JSON/JSONL; never put platform videos in public GitHub.
 
-Implement media validation, frames/shots, ASR, OCR, audio/motion telemetry and a Pydantic-validated evidence report. Only after this works, build the 300-video pilot and model bake-off.
+## 12. References
 
-**Success means** reproducible rights-aware analysis, accurate timestamped telemetry, measurable model gains, separately evaluated performance research and an honestly documented local model—not a headline count of videos scraped.
+See [References](REFERENCES.md) and [Automated Discovery and Rights-Gated Media Acquisition](AUTOMATED_DISCOVERY_AND_ACQUISITION.md). Re-check platform terms, API versions, quotas, Meta eligibility and model licenses before implementation/release.
