@@ -68,6 +68,8 @@ def analyze_video(
     input_path = validate_input(input_path, config)
     metadata = probe_video(input_path, config)
     output_path = output_path.expanduser().resolve()
+    if output_path == input_path:
+        raise MediaError("The report destination cannot overwrite the source video.")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     warnings: list[str] = []
@@ -105,6 +107,19 @@ def analyze_video(
                 extracted_audio = extract_audio_wav(input_path, audio_path)
             except MediaError as exc:
                 warnings.append(str(exc))
+                stages["audio_features"] = StageStatus(
+                    status="failed", engine="ffmpeg", detail=str(exc)
+                )
+                stages["asr"] = StageStatus(
+                    status="skipped", engine="ffmpeg",
+                    detail="Audio extraction failed; ASR was not attempted.",
+                )
+        if metadata.audio_present and extracted_audio is None:
+            if stages["audio_features"].status == "skipped":
+                stages["audio_features"] = StageStatus(
+                    status="skipped", engine="ffmpeg",
+                    detail="No usable audio stream was extracted.",
+                )
 
         if extracted_audio and config.enable_audio_analysis:
             audio_features = analyze_audio(extracted_audio)
@@ -155,6 +170,10 @@ def analyze_video(
         elif not metadata.audio_present:
             stages["asr"] = StageStatus(
                 status="skipped", detail="No audio stream in source."
+            )
+        elif extracted_audio is None:
+            stages["asr"] = StageStatus(
+                status="skipped", detail="No usable audio stream was extracted."
             )
         elif not config.enable_asr:
             stages["asr"] = StageStatus(
