@@ -161,7 +161,7 @@ class DiscoveryStore:
 
     def eligible_candidates(self, limit: int = 100) -> list[DiscoveredCandidate]:
         rows = self.connection.execute(
-            "SELECT * FROM candidates WHERE status='eligible' AND download_status='not_downloaded' "
+            "SELECT * FROM candidates WHERE status='eligible' AND download_status IN ('not_downloaded','download_failed') "
             "ORDER BY view_count DESC LIMIT ?", (limit,),
         ).fetchall()
         return [self._candidate_from_row(row) for row in rows]
@@ -188,6 +188,14 @@ class DiscoveryStore:
             "media_sha256=?, downloaded_at=?, last_error=NULL, updated_at=? "
             "WHERE platform=? AND source_id=?",
             (path, media_sha256, now, now, platform, source_id),
+        )
+        self.connection.commit()
+
+    def mark_download_failure(self, platform: str, source_id: str, *, error: str) -> None:
+        self.connection.execute(
+            "UPDATE candidates SET download_status='download_failed', last_error=?, updated_at=? "
+            "WHERE platform=? AND source_id=?",
+            (error[:500], datetime.now(UTC).isoformat(), platform, source_id),
         )
         self.connection.commit()
 
