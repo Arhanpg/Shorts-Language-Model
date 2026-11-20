@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
@@ -128,6 +129,31 @@ def _download_instagram(
         return target
 
 
+def _download_gallery_dl(candidate: DiscoveredCandidate, output_dir: Path) -> Path:
+    """Secondary Instagram extractor using gallery-dl when Instaloader cannot resolve a Reel."""
+    executable = shutil.which("gallery-dl")
+    if executable is None:
+        raise DownloadError("gallery-dl is not installed; install the instagram-fallback extra.")
+    with tempfile.TemporaryDirectory(prefix="shortslm_gallerydl_") as temp_dir:
+        result = subprocess.run(
+            [executable, "-D", temp_dir, str(candidate.canonical_url)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "gallery-dl failed").strip()[-500:]
+            raise DownloadError(detail)
+        videos = [p for p in Path(temp_dir).rglob("*") if p.is_file() and p.suffix.lower() == ".mp4"]
+        if not videos:
+            raise DownloadError("gallery-dl completed but returned no MP4 file.")
+        source = max(videos, key=lambda p: p.stat().st_size)
+        target = output_dir / f"instagram_{candidate.source_id}.mp4"
+        shutil.copy2(source, target)
+        return target
+
+
 def download_candidate(
     candidate: DiscoveredCandidate,
     authorization: AcquisitionAuthorization,
@@ -146,12 +172,20 @@ def download_candidate(
     if candidate.platform == "youtube":
         media_path = _download_youtube(candidate, output_dir)
     else:
-        media_path = _download_instagram(
-            candidate,
-            output_dir,
-            session_username=instagram_session_username,
-            session_file=instagram_session_file,
-        )
+        try:
+            media_path = _download_instagram(
+                candidate,
+                output_dir,
+                session_username=instagram_session_username,
+                session_file=instagram_session_file,
+            )
+        except DownloadError as primary_error:
+            try:
+                media_path = _download_gallery_dl(candidate, output_dir)
+            except (DownloadError, subprocess.TimeoutExpired) as fallback_error:
+                raise DownloadError(
+                    f"Instaloader failed ({primary_error}); gallery-dl fallback failed ({fallback_error})."
+                ) from fallback_error
     if not media_path.exists() or media_path.stat().st_size == 0:
         raise DownloadError("Downloaded media file is empty or missing.")
     _write_metadata(candidate, authorization, media_path)
