@@ -85,12 +85,14 @@ def _youtube_format_status(
 
     # YouTube's standard-channel Shorts duration window changed on 15 Oct 2024.
     # When upload_date is missing, do not assume which duration rule applies.
-    if upload_date and upload_date >= "20241015":
-        max_duration = 180.0
-    elif upload_date:
+    if not upload_date:
+        if duration > 60.0:
+            return "unknown"
         max_duration = 60.0
-    else:
+    elif upload_date >= "20241015":
         max_duration = 180.0
+    else:
+        max_duration = 60.0
 
     if duration > max_duration:
         return "not_short"
