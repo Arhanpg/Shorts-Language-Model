@@ -1,179 +1,115 @@
-# Shorts Language Model — Global Master Plan
+# Shorts Language Model
 
-> **Direction (20 November 2026):** build a rights-aware, multilingual short-form video intelligence system using deterministic temporal telemetry, a compact multimodal reasoning model, and a separate creator-normalized performance predictor.
->
-> **Not the plan:** mass-scrape or download 100–200 million third-party Reels/Shorts, train a foundation model from scratch, or claim that view counts alone prove why a video went viral.
+A rights-aware, local-first multimodal system for analyzing short-form videos. The project combines deterministic audiovisual telemetry with a compact video-language model in later phases; **Phase 1 implements the local single-video telemetry pipeline only**.
 
 <p align="center">
-  <img src="docs/research/images/telemetry-training-architecture.jpg" alt="Stratified ingestion, temporal telemetry, cloud fine-tuning and local inference" width="760" />
+  <img src="docs/research/images/telemetry-training-architecture.jpg" alt="Stratified ingestion, telemetry, training and local inference architecture" width="760" />
 </p>
 
-## 1. Product vision
+## Phase 1 — Single-video telemetry
 
-Given a short-form video the user or project is authorized to process, plus permitted metadata, the system should produce:
+The first working command accepts a local video file and writes a validated JSON evidence report:
 
-- a grounded description of what is visible, spoken and written;
-- a timestamped account of scenes, cuts, transitions, effects, framing, movement, pacing, captions and audio;
-- language, topic, title, description and hashtag analysis;
-- plausible attention/retention hypotheses linked to evidence;
-- comparable examples from a rights-cleared corpus;
-- actionable suggestions for improving a new short.
+    shorts-lm analyze --input "D:\Videos\my_short.mp4" --output outputs\my_short.analysis.json --rights-basis creator_owned
 
-It must support speech-heavy clips, music-only edits, silent visual sequences and multiple languages. It must distinguish correlation from causation.
+It extracts:
+- media metadata, dimensions, FPS, duration, codec and SHA-256;
+- dense opening-window frames plus selected frames across the rest of the clip;
+- visual shot-boundary candidates using frame-histogram discontinuities;
+- optical-flow motion measurements;
+- multilingual timestamped ASR through faster-whisper;
+- timestamped on-screen text through PaddleOCR;
+- acoustic energy, silence, onset, tempo and estimated beat times;
+- a validated JSON report with warnings, provenance and timestamp bounds.
 
-## 2. Final architecture decision
+**Important:** cut, motion and beat events are measured candidates, not human-verified labels. The hook window is measured only; Phase 1 does not judge hook quality or predict views. The pipeline does not crawl websites, download platform videos or upload media to a cloud service.
 
-Use a **hybrid, tool-grounded multimodal system**, not one giant video LLM.
+## Hardware recommendation
 
-1. **Acquisition and provenance:** creator uploads, creator-authorized media, licensed datasets and approved research access. Metadata-only access stays metadata-only unless an applicable agreement explicitly permits more.
-2. **Deterministic telemetry:** media validation, scene/shot boundaries, keyframes, OCR, multilingual ASR, audio events, motion and editing candidates. Every event includes timestamp, tool version, evidence and confidence.
-3. **Evidence store:** compact JSON/Parquet records and selected keyframes. Raw media is temporary by default and retained only where rights and policy allow.
-4. **Learning layer:** first establish non-LLM and frozen-model baselines. Fine-tune an open multimodal model only after identifying measurable weaknesses and reviewing labels.
-5. **Performance research:** a separate LightGBM/ranking model studies creator-relative performance from authorized outcomes. The VLM explains evidence; it does not invent the score.
-6. **Local deployment:** quantized compact model with CPU-capable preprocessing. GPU fit and speed must be measured on actual target hardware.
+**Run Phase 1 on your local Windows laptop first.** Your RTX 3050 4 GB is not required for this phase. Start with CPU ASR (`--asr-device cpu`) and CPU OCR to avoid VRAM contention. Colab is unnecessary for this preprocessing/telemetry phase; later rented GPUs will be used for model fine-tuning after the pilot and baselines.
 
-```mermaid
-flowchart TD
-  A[Creator upload / licensed dataset / approved provider] --> B[Rights, consent and provenance gate]
-  B --> C[Metadata snapshot and deduplication]
-  C --> D[Temporary media processing, when authorized]
-  D --> E[Temporal telemetry: shots, motion, OCR, ASR, audio]
-  E --> F[Evidence manifest + selected frames]
-  F --> G[Human-reviewed labels and dataset builder]
-  G --> H[Baselines and frozen-model evaluation]
-  H --> I[LoRA fine-tuning, only if baseline gap is real]
-  I --> J[Temporal, multilingual and hallucination evaluation]
-  J --> K[Quantized local package + API/dashboard]
-  F --> L[Creator-relative performance features]
-  L --> M[Separate performance ranking model]
-  M --> N[Evidence-linked explanation]
-  K --> N
-```
+## Installation
 
-## 3. Research question
+### 1. System dependency
 
-Can compact multimodal models, grounded by measurable audiovisual telemetry and carefully designed comparison data, identify short-form storytelling and editing patterns more accurately and usefully than frozen models and simple baselines?
+Install FFmpeg (including ffprobe) and make sure both executables are on PATH:
 
-Secondary questions: which edit types can be detected at sub-second timescales; do audio/OCR/speech/motion signals add predictive value; does creator normalization reduce mega-channel bias; does fine-tuning beat prompting; which components run acceptably on 4 GB GPUs or CPU-only laptops?
+    ffmpeg -version
+    ffprobe -version
 
-## 4. Dataset scale and sampling
+### 2. Python environment (Windows PowerShell)
 
-The original 5–10 crore per platform ambition is recorded as a **long-term discovery ambition only**, not a committed corpus size or legal acquisition plan. No global supply ceiling is inferred from the supplied sample chart.
+Python 3.11 is recommended:
 
-| Gate | Unique videos | Purpose |
-|---|---:|---|
-| Smoke fixture | 25–50 | Pipeline correctness |
-| Diagnostic pilot | 300 | Tool quality, annotation effort and cost/video |
-| First research set | 1K–2K | Coverage and baseline evaluation |
-| First SFT candidate | 5K–10K | Measure whether reviewed labels improve a model |
-| Expansion | 20K–50K | Broader creator/category generalization |
-| Large research | 100K–500K+ | Only after rights and unit economics pass |
-| Millions / crore-scale | Conditional | Requires rights, budget and demonstrated marginal value |
+    py -3.11 -m venv .venv
+    .\.venv\Scripts\Activate.ps1
+    python -m pip install --upgrade pip
+    pip install -e ".[dev,audio]"
 
-Do not sample only videos above one million views. Include ordinary-performing controls, creator baselines, varied creator sizes, language/script, category, duration, publication period, speech/no-speech and edit styles. Use same-creator matched controls when permitted. Treat any 70/30 mix as an experiment, not a universal ratio.
+### 3. Reuse your existing VidTrace project (recommended)
 
-A creator-relative outcome can be explored, for example:
+VidTrace already contains a maintained PaddleOCR wrapper, faster-whisper transcription, adaptive frame sampling and a common event model. ShortsLM integrates its OCR and ASR adapters when VidTrace is installed; it does not copy VidTrace's implementation.
 
-`relative = log1p(video outcome) - median(log1p(eligible creator outcomes in baseline window))`
+With both repositories as sibling folders and the ShortsLM environment activated:
 
-Define the baseline window, eligible uploads and minimum count before use. Compare only compatible platform metrics and observation windows. Store raw snapshots and normalized targets separately.
+    pip install -e "..\VidTrace[whisper,ocr]"
 
-**Splits:** creator/account-disjoint, time-forward holdout, cross-post deduplication before splitting, and a locked golden test set.
+Adjust the relative path if your two repositories are not sibling folders. Alternatively:
 
-## 5. Model choice
+    pip install -e ".[ocr]"
 
-Benchmark candidates on identical authorized clips and inputs:
+PaddlePaddle GPU installation is platform/CUDA-specific. Follow the official PaddlePaddle installation instructions for your platform. Do not install CPU and GPU Paddle builds together.
 
-- Qwen3-VL-2B — initial compact VLM baseline;
-- Qwen3.5-2B / 4B — candidates after verifying exact card, runtime, training and deployment support;
-- VideoLLaMA3-2B — video-centric comparison;
-- SmolVLM2-500M — low-resource smoke baseline;
-- a larger open-weight teacher — optional, only with compatible terms and audited labels.
+## Check setup
 
-Select by measured short-video performance, temporal grounding, multilingual coverage, license, framework support and local inference—not model name or vendor score alone.
+    shorts-lm doctor
+    shorts-lm doctor --json
 
-Use a pretrained decoder-based multimodal VLM. Specialist audio tools initially supply timestamped transcript and acoustic features. Fine-tuning order: frozen prompt baseline → reviewed SFT with LoRA/DoRA → optional preference/RL only after stable SFT and verifiable reward checks. QLoRA and exact YAML settings are model-specific, not assumed universal.
+FFmpeg, ffprobe and OpenCV are required. faster-whisper, PaddleOCR and librosa are optional engines; missing extras are reported as skipped stages rather than silently fabricated results.
 
-## 6. Temporal telemetry
+## Analyze one permitted video
 
-Do not rely only on 1 FPS. Combine a dense hook window (0–3 seconds), frames around candidate cuts, shot midpoints, motion peaks, climax/end frames and possible loop seam. A 12–16 frame VLM budget is an experiment, not guaranteed coverage.
+    shorts-lm analyze --input "D:\Videos\my_short.mp4" --output "outputs\my_short.analysis.json" --rights-basis creator_owned --asr-model small --asr-device cpu --keep-artifacts
 
-| Signal | Initial candidates | Output |
-|---|---|---|
-| Shots | TransNetV2 / PySceneDetect | boundaries, type candidates, confidence |
-| Motion | OpenCV optical flow | movement statistics; add RAFT/GMFlow only if needed |
-| Zoom/shake/speed | motion and frame geometry heuristics | candidate intervals, not guaranteed effect labels |
-| Flash/fade | luminance and histogram deltas | event candidates |
-| OCR | PaddleOCR | timestamped text, boxes and confidence |
-| ASR | faster-whisper; compare Indic ASR | language and timestamped transcript |
-| Audio | librosa; optional licensed classifier | onset/beat candidates, loudness, silence |
-| Keyframes | hook-aware + cut/motion-aware selector | timestamped evidence frames |
+Supported rights-basis values:
+- `creator_owned`
+- `creator_permission`
+- `licensed_dataset`
+- `approved_research`
 
-Treat beat-to-cut synchronization as a measurable score, not proof that music caused retention. Use human-annotated ground truth to evaluate the editing taxonomy.
+This is an explicit user declaration, not an automatic legal check. Model-training permission is a separate field and defaults to false. Use `--training-permitted` only when that permission is explicitly covered by the relevant rights/consent record.
 
-Your existing [VidTrace](https://github.com/Arhanpg/VidTrace) may be reused after a source/interface/license audit. Integrate through a stable extractor protocol rather than duplicating its working ASR/OCR/frame extraction.
+For a quick pipeline smoke run without downloading model weights or initializing OCR:
 
-## 7. Performance reasoning
+    shorts-lm analyze --input "D:\Videos\my_short.mp4" --output outputs\smoke.json --rights-basis creator_owned --no-asr --no-ocr
 
-Keep the VLM and performance predictor separate. Start with LightGBM/XGBoost using creator baseline, platform metric definition, age, duration, topic, language, publication window, metadata and extracted editing/audio/visual features.
+Useful controls: `--max-duration 180`, `--max-file-size-mb 500`, `--max-keyframes 48`, `--max-ocr-frames 12`, `--no-asr`, `--no-ocr`, `--no-audio-analysis`, `--keep-artifacts`.
 
-Prefer retention, watch duration, completion and swipe-away when creator-authorized analytics provide them. Public views alone are weak labels. Evaluate creator/time holdouts with ranking metrics, calibration and subgroup results.
+## Output
 
-The report must say “associated with” or “plausible hypothesis,” not “caused.” Causal estimates require creator-owned A/B variants or defensible longitudinal/experimental designs with exposure information.
+- `outputs/my_short.analysis.json` — timestamped telemetry report.
+- `outputs/my_short.analysis_frames/` — selected JPEG evidence frames, only when `--keep-artifacts` is supplied.
 
-## 8. Data rights
+Extracted WAV audio lives in a temporary directory and is deleted when processing ends. Do not commit videos, audio, generated frames, private analytics, transcripts or training data to GitHub.
 
-A public URL, view counter or API metadata record does not automatically grant media download, retention, derived-artifact storage, model training or redistribution rights.
+## Tests
 
-Use project-owned media, explicit creator permissions, licensed datasets and approved research access. YouTube API metadata does not create a general-purpose audiovisual training license. Meta Content Library API is controlled research access; its API overview says API data downloading is not permitted. Creator-upload and separately licensed files are the practical media foundation unless approved terms explicitly allow otherwise.
+    ruff check src tests
+    pytest -q
 
-Every source record needs separate capabilities for metadata read, media analysis, temporary processing, raw retention, derived artifact retention, model training and redistribution. Deletion after extraction is a retention practice, not a workaround for unauthorized use. See [Data and Compliance](docs/DATA_AND_COMPLIANCE.md).
+For the 25–50-video manual acceptance checklist, setup troubleshooting, GPU experiment and test log template, see [Phase 1 Setup and Test Guide](docs/PHASE_1_TESTING.md). For component contracts and limitations, see [Phase 1 Design](docs/PHASE_1_DESIGN.md).
 
-## 9. Compute and local deployment
+## Research architecture and next phases
 
-The supplied $112.25 (50K) and $449,004 (200M) cost totals are **not accepted as project budgets**. They rely on unmeasured GPU-seconds, tokens/video, training throughput, teacher pricing, artifact size and storage assumptions. Measure all stages on 300 videos, including human review and retries.
-
-Use the RTX 3050 4 GB for development, FFmpeg, CPU/OpenCV extraction, small smoke tests and quantized inference experiments. Use Colab/Kaggle for short reproducible experiments; rent SSH-capable GPUs with persistent storage and checkpointing for sustained training. For Qwen3.5 specifically, current Unsloth guidance reports approximately 5 GB BF16 LoRA VRAM for 2B and 10 GB for 4B, and advises against 4-bit QLoRA; verify the exact current recipe before renting.
-
-Deployment tiers are provisional: Lite (smallest tested model), 2B (main candidate), 4B (stretch / higher-memory). Measure peak VRAM/RAM, first-token latency, end-to-end report time, context/frame budget, CPU fallback and quantization quality. Do not promise fit on every 4 GB GPU.
-
-## 10. Roadmap
-
-| Phase | Deliverable | Exit gate |
-|---|---|---|
-| 0 | Repo, rights model, schemas, config, tests | Clean install and rights tests |
-| 1 | Single-video telemetry CLI | Audit 25–50 diverse clips |
-| 2 | 300-video pilot | Cost, quality, provenance reports |
-| 3 | Frozen-model and feature baselines | Locked holdout and comparison |
-| 4 | Reviewed 1K–2K dataset; then SFT | Fine-tuned model beats frozen baseline |
-| 5 | Creator-relative performance model | Adds value over metadata-only baseline |
-| 6 | Quantized local package | Real hardware measurements |
-| 7 | Expand 5K → 20K → 50K+ | Each expansion passes marginal-value gate |
-
-The detailed docs are linked below. Phases are gates, not calendar promises.
-
-## 11. Repository documentation
-
-- [Architecture decision](docs/ARCHITECTURE.md)
-- [Research comparison and decisions](docs/RESEARCH_COMPARISON.md)
-- [Data acquisition and compliance](docs/DATA_AND_COMPLIANCE.md)
-- [Dataset and labeling specification](docs/DATASET_AND_LABELING.md)
-- [Model selection and training](docs/MODEL_AND_TRAINING.md)
-- [Evaluation protocol](docs/EVALUATION.md)
-- [Compute and cost assumptions](docs/COMPUTE_AND_COSTS.md)
+- [Full Global Master Plan](docs/GLOBAL_MASTER_PLAN.md)
+- [Architecture Decision Record](docs/ARCHITECTURE.md)
+- [Phase 1 Design](docs/PHASE_1_DESIGN.md)
+- [Phase 1 Setup and Test Guide](docs/PHASE_1_TESTING.md)
+- [Dataset and Labeling](docs/DATASET_AND_LABELING.md)
+- [Evaluation Protocol](docs/EVALUATION.md)
+- [Data and Compliance](docs/DATA_AND_COMPLIANCE.md)
 - [Roadmap](docs/ROADMAP.md)
-- [References](docs/REFERENCES.md)
-- [Research diagrams](docs/research/README.md)
-- [Supplied proposal notes](docs/research/PROPOSALS_ARCHIVED.md)
 
-## 12. First implementation
+## License
 
-Start with a one-file command:
-
-```bash
-python -m shorts_intelligence analyze --input ./authorized_clip.mp4 --output ./out/analysis.json
-```
-
-Implement media validation, frames/shots, ASR, OCR, audio/motion telemetry and a Pydantic-validated evidence report. Only after this works, build the 300-video pilot and model bake-off.
-
-**Success means** reproducible rights-aware analysis, accurate timestamped telemetry, measurable model gains, separately evaluated performance research and an honestly documented local model—not a headline count of videos scraped.
+Apache-2.0. See [LICENSE](LICENSE).
