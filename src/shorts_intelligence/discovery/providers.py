@@ -1,8 +1,8 @@
-"""Public search discovery adapters built on yt-dlp, DDGS and Instaloader.
+"""Quiet, flat search providers for public short-form video discovery.
 
-No first-party platform API keys are used. These adapters use the public web
-search/provider interfaces implemented by the upstream open-source projects.
-They do not bypass login walls, CAPTCHAs, rate limits or access restrictions.
+YouTube search results are parsed from the search page itself. The provider does
+not resolve every result as a full video page, which avoids dropping search
+results or flooding the terminal when individual videos are unavailable.
 """
 
 from __future__ import annotations
@@ -23,44 +23,94 @@ class ProviderUnavailable(RuntimeError):
     """An optional discovery dependency is unavailable."""
 
 
+class _QuietYtDlpLogger:
+    """Collect yt-dlp messages instead of writing per-item errors to the console."""
+
+    def __init__(self) -> None:
+        self.warnings: list[str] = []
+        self.errors: list[str] = []
+
+    def debug(self, message: str) -> None:
+        # yt-dlp sends ordinary progress/debug details here.
+        return None
+
+    def info(self, message: str) -> None:
+        return None
+
+    def warning(self, message: str) -> None:
+        self.warnings.append(str(message))
+
+    def error(self, message: str) -> None:
+        self.errors.append(str(message))
+
+
 class YouTubeSearchProvider:
-    """Search YouTube with yt-dlp's ytsearch extractor (no Data API key)."""
+    """Search YouTube using yt-dlp's native ytsearch extractor without opening every video."""
+
+    def __init__(self) -> None:
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
 
     def search(self, query: str, *, limit: int = 50) -> Iterator[DiscoveredCandidate]:
         try:
             from yt_dlp import YoutubeDL
         except ImportError as exc:
             raise ProviderUnavailable(
-                'YouTube discovery requires the optional extra: pip install -e ".[discovery]"'
+                'YouTube discovery requires yt-dlp: pip install -e ".[discovery]"'
             ) from exc
 
+        logger = _QuietYtDlpLogger()
         options: dict[str, Any] = {
             "quiet": True,
             "no_warnings": True,
             "skip_download": True,
             "ignoreerrors": True,
+            # Keep entries returned by the YouTube search page flat. Without this,
+            # YoutubeDL resolves every search result as a full video page, causing
+            # unavailable/private/deleted results to be dropped and logged noisily.
+            "extract_flat": "in_playlist",
             "playlistend": max(1, limit),
             "socket_timeout": 20,
             "retries": 1,
+            "logger": logger,
+            "extractor_args": {
+                "youtube": {
+                    # Request approximate publication date where yt-dlp can infer it.
+                    "approximate_date": ["true"],
+                }
+            },
         }
-        with YoutubeDL(options) as ydl:
-            result = ydl.extract_info(f"ytsearch{max(1, limit)}:{query}", download=False)
+
+        try:
+            with YoutubeDL(options) as ydl:
+                result = ydl.extract_info(
+                    f"ytsearch{max(1, limit)}:{query}",
+                    download=False,
+                )
+        except Exception as exc:
+            self.errors.append(f"ytsearch query failed: {str(exc)[:300]}")
+            return
+
+        self.warnings.extend(logger.warnings[:30])
+        self.errors.extend(logger.errors[:30])
         entries = result.get("entries", []) if isinstance(result, dict) else []
+        seen: set[str] = set()
         for entry in entries or []:
             if not isinstance(entry, dict):
                 continue
             candidate = candidate_from_ytdlp(entry)
-            if candidate is not None:
-                yield candidate
+            if candidate is None or candidate.source_id in seen:
+                continue
+            seen.add(candidate.source_id)
+            yield candidate
 
 
 class InstagramSearchProvider:
-    """Find public Reel URLs with a search engine, then read metadata via Instaloader.
+    """Find indexed public Reel URLs with DDGS, then resolve them using Instaloader.
 
-    DDGS is a web-search client, not an Instagram API client. Instaloader resolves
-    the public shortcode and exposes video_view_count/video_play_count when Instagram
-    makes those fields available. An optional existing Instaloader session can be
-    loaded from a local session file; passwords/cookies are never accepted as CLI args.
+    Search uses DDGS' documented region/backend/page options. Metadata lookup is
+    per Reel, but failures are collected and do not flood the terminal or abort a
+    complete search run.
     """
 
     def __init__(
@@ -69,11 +119,17 @@ class InstagramSearchProvider:
         session_username: str | None = None,
         session_file: str | None = None,
         request_pause_seconds: float = 1.5,
+        region: str = "in-en",
+        backend: str = "auto",
+        pages: int = 2,
     ) -> None:
         self.session_username = session_username
         self.session_file = session_file
         self.errors: list[str] = []
         self.request_pause_seconds = max(0.0, request_pause_seconds)
+        self.region = region
+        self.backend = backend
+        self.pages = max(1, min(pages, 5))
 
     def _loader(self) -> Any:
         try:
@@ -98,45 +154,74 @@ class InstagramSearchProvider:
             )
         return loader
 
-    def search(self, query: str, *, limit: int = 30) -> Iterator[DiscoveredCandidate]:
+    def _search_urls(self, query: str, *, limit: int) -> list[str]:
         try:
-            import instaloader
             from ddgs import DDGS
         except ImportError as exc:
             raise ProviderUnavailable(
-                'Instagram discovery requires DDGS and Instaloader: '
+                'Instagram URL search requires DDGS: pip install -e ".[discovery]"'
+            ) from exc
+
+        found: list[str] = []
+        seen: set[str] = set()
+        search_query = f"site:instagram.com/reel/ {query}"
+        with DDGS() as search:
+            for page in range(1, self.pages + 1):
+                try:
+                    results = search.text(
+                        search_query,
+                        region=self.region,
+                        safesearch="moderate",
+                        max_results=max(1, limit),
+                        page=page,
+                        backend=self.backend,
+                    ) or []
+                except Exception as exc:
+                    self.errors.append(
+                        f"DDGS page {page} for '{query}': {str(exc)[:250]}"
+                    )
+                    continue
+                for result in results:
+                    if not isinstance(result, dict):
+                        continue
+                    url = str(result.get("href") or result.get("url") or "")
+                    shortcode = instagram_shortcode_from_url(url)
+                    if shortcode and shortcode not in seen:
+                        seen.add(shortcode)
+                        found.append(url)
+        return found
+
+    def search(self, query: str, *, limit: int = 30) -> Iterator[DiscoveredCandidate]:
+        try:
+            import instaloader  # noqa: F401
+        except ImportError as exc:
+            raise ProviderUnavailable(
+                'Instagram metadata discovery requires Instaloader: '
                 'pip install -e ".[discovery]"'
             ) from exc
 
-        with DDGS() as search:
-            results = list(search.text(
-                f"site:instagram.com/reel/ {query}",
-                max_results=max(1, limit),
-            ) or [])
+        urls = self._search_urls(query, limit=limit)
+        if not urls:
+            return
         loader = self._loader()
-        seen: set[str] = set()
-        for result in results:
-            if not isinstance(result, dict):
-                continue
-            url = str(result.get("href") or result.get("url") or "")
+        for url in urls:
             shortcode = instagram_shortcode_from_url(url)
-            if not shortcode or shortcode in seen:
+            if not shortcode:
                 continue
-            seen.add(shortcode)
             try:
                 post = instaloader.Post.from_shortcode(loader.context, shortcode)
                 candidate = candidate_from_instagram_post(post, from_reel_search=True)
                 if candidate is not None:
                     yield candidate
             except Exception as exc:
-                # One unavailable/deleted/restricted post should not abort the run.
-                self.errors.append(f"{shortcode}: {str(exc)[:250]}")
-                continue
+                # Deleted, private, temporarily unavailable and login-gated results
+                # are individual source failures, not fatal provider failures.
+                self.errors.append(f"Instagram Reel {shortcode}: {str(exc)[:250]}")
             if self.request_pause_seconds:
                 time.sleep(self.request_pause_seconds)
 
     def search_hashtag(self, hashtag: str, *, limit: int = 50) -> Iterator[DiscoveredCandidate]:
-        """Optional authenticated hashtag search; requires a valid user session."""
+        """Optional authenticated hashtag search; requires an existing local session."""
         if not self.session_username:
             raise ValueError(
                 "Instagram hashtag search requires --instagram-session-user and a valid local session."
@@ -145,6 +230,7 @@ class InstagramSearchProvider:
             import instaloader
         except ImportError as exc:
             raise ProviderUnavailable("Install the discovery extra first.") from exc
+
         loader = self._loader()
         tag = instaloader.Hashtag.from_name(loader.context, hashtag.lstrip("#"))
         iterator = tag.get_posts_resumable()
@@ -156,21 +242,15 @@ class InstagramSearchProvider:
             if scanned > max(limit * 12, limit + 25):
                 break
             try:
-                shortcode = str(getattr(post, "shortcode", "") or "")
-            except Exception as exc:
-                self.errors.append(f"hashtag #{hashtag}: shortcode read failed: {str(exc)[:150]}")
-                continue
-            if not shortcode or shortcode in seen:
-                continue
-            seen.add(shortcode)
-            try:
                 candidate = candidate_from_instagram_post(post, from_reel_search=False)
             except Exception as exc:
-                self.errors.append(f"hashtag #{hashtag} {shortcode}: {str(exc)[:200]}")
+                self.errors.append(f"hashtag #{hashtag}: {str(exc)[:200]}")
                 continue
-            if candidate is not None:
-                yield candidate
-                count += 1
+            if candidate is None or candidate.source_id in seen:
+                continue
+            seen.add(candidate.source_id)
+            yield candidate
+            count += 1
             if count >= limit:
                 break
             if self.request_pause_seconds:
