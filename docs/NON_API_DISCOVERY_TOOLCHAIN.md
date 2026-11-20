@@ -25,7 +25,7 @@
 
 ### YouTube
 
-- Search runs with yt-dlp's ytsearchN:search phrase extractor.
+- Search runs with yt-dlp's ytsearchN:search phrase extractor and extract_flat=in_playlist. Individual video URLs are not resolved just to read search results.
 - Metadata such as title, description, duration, upload date, dimensions, tags and view count is captured when returned.
 - A candidate is confirmed as short when a Shorts URL is returned or metadata supports a square/vertical format and the duration/upload-date rule.
 - For standard channels, the current Shorts format guidance allows eligible square/vertical videos up to three minutes for uploads on/after 15 October 2024. Older uploads use the earlier shorter-duration rule.
@@ -33,7 +33,7 @@
 
 ### Instagram
 
-- DDGS searches public indexed Reel links using site:instagram.com/reel/.
+- DDGS searches public indexed Reel links using site:instagram.com/reel/ with a default India English region (in-en) and multiple pages per query.
 - Instaloader resolves a result via Post.from_shortcode.
 - The code stores video_view_count as view_count and video_play_count separately as play_count.
 - The default 1M filter uses view_count only. --instagram-use-play-count explicitly permits using play_count only when view_count is missing; the source metric name remains visible.
@@ -43,7 +43,7 @@
 
 ## 3. SQLite and uniqueness
 
-The local database is .shortslm/discovery.sqlite3 and is never committed. It stores:
+The local database is .shortslm/discovery.sqlite3 and is never committed. A repeat search that omits a previously observed count or format field keeps the prior non-null metadata and calculates eligibility from the merged record. The latest report separates raw hits, unique IDs, repeated IDs, previously known IDs, missing metrics, below-threshold results, uncertain formats and provider errors by platform. It stores:
 - discovery runs and query-level outcomes;
 - platform + source ID unique candidate rows;
 - permitted title/caption, description, creator handle, view/play snapshots, tags/hashtags and duration;
@@ -66,7 +66,7 @@ Use Windows PowerShell in the cloned repository:
     py -3.11 -m venv .venv
     .venv\Scripts\Activate.ps1
     python -m pip install --upgrade pip
-    pip install -e ".[dev,discovery,audio]"
+    pip install -e ".[dev,discovery,audio]" --upgrade
 
 Install FFmpeg and make sure both ffmpeg and ffprobe are on PATH. For the optional gallery-dl fallback:
 
@@ -110,6 +110,19 @@ The example at examples/rights_manifest.example.jsonl is deliberately non-author
     shorts-lm discover download --rights-manifest data/private/rights.jsonl --limit 25 --output-dir data/private/acquired
 
 The acquisition command refuses items without a matching rights row. It writes the MP4 and a private metadata/rights sidecar. FFmpeg is used by yt-dlp to remux to MP4.
+
+
+## 4.1 YouTube flat search and EJS requirements
+
+The previous search path allowed yt-dlp to resolve playlist/search entries as full video pages. Individual unavailable videos could therefore produce repeated "This video is not available" errors even though the search page had returned the entry. ShortsLM now uses extract_flat=in_playlist to retain flat search entries, reads view_count/duration from search metadata where exposed and captures yt-dlp log messages instead of printing each result failure.
+
+The EJS challenge solver and JavaScript runtime are separate from flat search. Full YouTube media extraction/download needs the yt-dlp EJS scripts and a supported JS runtime. The discovery extra installs yt-dlp's default dependency group (including yt-dlp-ejs); install Deno 2.3+ or Node.js 22+ separately. The doctor command checks both.
+
+- EJS instructions: https://github.com/yt-dlp/yt-dlp/wiki/EJS
+- Deno installation: https://docs.deno.com/runtime/getting_started/installation/
+- Node.js: https://nodejs.org/en/download/
+
+See PHASE_1_DISCOVERY_RELIABILITY.md for Windows setup, diagnostics, the previous-run interpretation and local rerun commands.
 
 ## 5. Run output states
 
