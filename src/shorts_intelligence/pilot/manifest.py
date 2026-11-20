@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -61,7 +61,7 @@ def load_and_validate_manifest(
     manifest_path = manifest_path.expanduser().resolve(strict=True)
     if not manifest_path.is_file():
         raise ValueError("Manifest path must be a JSONL file.")
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     config = AnalyzerConfig(
         max_file_size_mb=max_file_size_mb,
         max_duration_seconds=max_duration_seconds,
