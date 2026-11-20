@@ -1,6 +1,6 @@
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from shorts_intelligence.config import AnalyzerConfig
@@ -27,7 +27,7 @@ def _selected_record(media: Path) -> SelectedRecord:
         language="en",
         topic="sports",
         speech_mode="silent",
-        published_at=datetime(2026, 10, 1, tzinfo=timezone.utc),
+        published_at=datetime(2026, 10, 1, tzinfo=UTC),
         duration_seconds=8,
         duration_band="00-15s",
         age_band="31-90d",
