@@ -95,6 +95,9 @@ class PilotRecord(StrictModel):
                 "model_training requires media_analysis, temporary_processing "
                 "and derived_artifact_retention capabilities"
             )
+        if self.performance and self.published_at:
+            if self.performance.observed_at < self.published_at:
+                raise ValueError("performance observed_at cannot precede published_at")
         return self
 
 
@@ -110,6 +113,7 @@ class SelectedRecord(StrictModel):
     creator_group: str | None = None
     rights_basis: RightsBasis
     rights_reference_hash: str
+    rights_expires_at: datetime | None = None
     media_analysis_permitted: bool
     temporary_processing_permitted: bool
     derived_artifact_retention_permitted: bool
