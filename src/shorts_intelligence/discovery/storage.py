@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS candidates (
     first_run_id TEXT,
     last_run_id TEXT,
     download_path TEXT,
+    media_sha256 TEXT,
+    downloaded_at TEXT,
     download_status TEXT NOT NULL DEFAULT 'not_downloaded',
     last_error TEXT,
     PRIMARY KEY (platform, source_id),
@@ -64,6 +66,11 @@ class DiscoveryStore:
         self.connection.row_factory = sqlite3.Row
         self.connection.execute("PRAGMA journal_mode=WAL")
         self.connection.executescript(_SCHEMA)
+        columns = {row["name"] for row in self.connection.execute("PRAGMA table_info(candidates)")}
+        if "media_sha256" not in columns:
+            self.connection.execute("ALTER TABLE candidates ADD COLUMN media_sha256 TEXT")
+        if "downloaded_at" not in columns:
+            self.connection.execute("ALTER TABLE candidates ADD COLUMN downloaded_at TEXT")
         self.connection.commit()
 
     def close(self) -> None:
@@ -165,12 +172,33 @@ class DiscoveryStore:
         ).fetchone()
         return self._candidate_from_row(row) if row else None
 
-    def mark_download(self, platform: str, source_id: str, *, path: str | None, error: str | None) -> None:
-        status = "downloaded" if path else "download_failed"
+    def find_media_hash(self, media_sha256: str) -> sqlite3.Row | None:
+        return self.connection.execute(
+            "SELECT platform, source_id, download_path FROM candidates "
+            "WHERE media_sha256=? AND download_status='downloaded' LIMIT 1",
+            (media_sha256,),
+        ).fetchone()
+
+    def mark_download(
+        self, platform: str, source_id: str, *, path: str, media_sha256: str
+    ) -> None:
+        now = datetime.now(UTC).isoformat()
         self.connection.execute(
-            "UPDATE candidates SET download_status=?, download_path=?, last_error=?, updated_at=? "
+            "UPDATE candidates SET download_status='downloaded', download_path=?, "
+            "media_sha256=?, downloaded_at=?, last_error=NULL, updated_at=? "
             "WHERE platform=? AND source_id=?",
-            (status, path, error, datetime.now(UTC).isoformat(), platform, source_id),
+            (path, media_sha256, now, now, platform, source_id),
+        )
+        self.connection.commit()
+
+    def mark_duplicate_media(
+        self, platform: str, source_id: str, *, duplicate_of: str, media_sha256: str
+    ) -> None:
+        self.connection.execute(
+            "UPDATE candidates SET download_status='duplicate_media', media_sha256=?, "
+            "download_path=NULL, last_error=?, updated_at=? WHERE platform=? AND source_id=?",
+            (media_sha256, f"Identical media already downloaded as {duplicate_of}",
+             datetime.now(UTC).isoformat(), platform, source_id),
         )
         self.connection.commit()
 
