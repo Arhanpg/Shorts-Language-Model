@@ -7,6 +7,7 @@ import hashlib
 import json
 import time
 from collections import Counter
+from datetime import datetime, timezone
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -72,9 +73,17 @@ def _resume_metrics(
             return None
         if sidecar.get("rights_reference_hash") != record.rights_reference_hash:
             return None
+        expiry = record.rights_expires_at.isoformat() if record.rights_expires_at else None
+        if sidecar.get("rights_expires_at") != expiry:
+            return None
         if payload.get("video", {}).get("sha256") != record.media_sha256:
             return None
-        if payload.get("rights", {}).get("model_training_permitted") != record.model_training_permitted:
+        report_rights = payload.get("rights", {})
+        if report_rights.get("reference") != record.rights_reference_hash:
+            return None
+        if report_rights.get("basis") != record.rights_basis:
+            return None
+        if report_rights.get("model_training_permitted") != record.model_training_permitted:
             return None
         stages = payload.get("stages", {})
         return {
@@ -127,15 +136,9 @@ def process_selected(
     run_started = time.perf_counter()
     metrics: list[dict[str, Any]] = []
 
-    for index, record in enumerate(records, start=1):
+    for record in records:
         output_path = telemetry_dir / f"{record.record_id}.analysis.json"
         sidecar_path = telemetry_dir / f"{record.record_id}.run.json"
-        if resume:
-            resumed = _resume_metrics(record, output_path, sidecar_path, config_hash)
-            if resumed is not None:
-                metrics.append(resumed)
-                continue
-
         started = time.perf_counter()
         status = "complete"
         message: str | None = None
@@ -148,6 +151,8 @@ def process_selected(
                 raise PermissionError(
                     "Selected record lacks required processing capabilities."
                 )
+            if record.rights_expires_at and record.rights_expires_at <= datetime.now(timezone.utc):
+                raise PermissionError("Media-processing permission has expired.")
             media_path = Path(record.media_path).expanduser().resolve(strict=True)
             if not media_path.is_file():
                 raise FileNotFoundError("Local media path is not a file.")
@@ -156,6 +161,12 @@ def process_selected(
                 raise ValueError("Media SHA-256 changed after manifest validation.")
             if media_path.stat().st_size != record.file_size_bytes:
                 raise ValueError("Media file size changed after manifest validation.")
+
+            if resume:
+                resumed = _resume_metrics(record, output_path, sidecar_path, config_hash)
+                if resumed is not None:
+                    metrics.append(resumed)
+                    continue
 
             report = analyze_video(
                 input_path=media_path,
@@ -181,6 +192,10 @@ def process_selected(
                 "schema_version": "1.0.0",
                 "media_sha256": record.media_sha256,
                 "rights_reference_hash": record.rights_reference_hash,
+                "rights_expires_at": (
+                    record.rights_expires_at.isoformat()
+                    if record.rights_expires_at else None
+                ),
                 "config_sha256": config_hash,
                 "status": status,
                 "artifact_bytes_written": artifact_bytes_written,
