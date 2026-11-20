@@ -94,8 +94,8 @@ class YouTubeSearchProvider:
 
         self.warnings.extend(logger.warnings[:30])
         self.errors.extend(logger.errors[:30])
-        entries = result.get("entries", []) if isinstance(result, dict) else []
-        self.search_results_seen += len(entries or [])
+        entries = list(result.get("entries") or []) if isinstance(result, dict) else []
+        self.search_results_seen += len(entries)
         seen: set[str] = set()
         for entry in entries or []:
             if not isinstance(entry, dict):
