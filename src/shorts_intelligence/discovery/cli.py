@@ -86,6 +86,7 @@ def run_discovery(
     rng = random.Random(seed)
     rng.shuffle(queries)
     run_id = uuid.uuid4().hex
+    run_started_at = datetime.now(UTC)
     stats: Counter[str] = Counter()
     encountered: set[tuple[str, str]] = set()
     errors: list[str] = []
@@ -185,7 +186,7 @@ def run_discovery(
 
     payload: dict[str, object] = {
         "run_id": run_id,
-        "started_at": datetime.now(UTC).isoformat(),
+        "started_at": run_started_at.isoformat(),
         "platform": platform,
         "target_new": target_new,
         "min_views": min_views,
