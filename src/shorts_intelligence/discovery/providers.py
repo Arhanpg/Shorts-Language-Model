@@ -50,6 +50,7 @@ class YouTubeSearchProvider:
     def __init__(self) -> None:
         self.errors: list[str] = []
         self.warnings: list[str] = []
+        self.search_results_seen = 0
 
     def search(self, query: str, *, limit: int = 50) -> Iterator[DiscoveredCandidate]:
         try:
@@ -94,6 +95,7 @@ class YouTubeSearchProvider:
         self.warnings.extend(logger.warnings[:30])
         self.errors.extend(logger.errors[:30])
         entries = result.get("entries", []) if isinstance(result, dict) else []
+        self.search_results_seen += len(entries or [])
         seen: set[str] = set()
         for entry in entries or []:
             if not isinstance(entry, dict):
@@ -126,6 +128,7 @@ class InstagramSearchProvider:
         self.session_username = session_username
         self.session_file = session_file
         self.errors: list[str] = []
+        self.search_results_seen = 0
         self.request_pause_seconds = max(0.0, request_pause_seconds)
         self.region = region
         self.backend = backend
@@ -201,6 +204,7 @@ class InstagramSearchProvider:
             ) from exc
 
         urls = self._search_urls(query, limit=limit)
+        self.search_results_seen += len(urls)
         if not urls:
             return
         loader = self._loader()
@@ -239,6 +243,7 @@ class InstagramSearchProvider:
         scanned = 0
         for post in iterator:
             scanned += 1
+            self.search_results_seen += 1
             if scanned > max(limit * 12, limit + 25):
                 break
             try:
