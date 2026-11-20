@@ -1,113 +1,64 @@
-# Revised Phase 2 — Rights-Gated Automatic Media Delivery
+# Phase 2 — Open-Source Media Acquisition
 
-**Status:** design only; no universal public-platform downloader is implemented.
-
-## Objective
-
-Take newly discovered, deduplicated candidates from revised Phase 1 and automatically acquire the video only when the source provides a documented authorized delivery route for media analysis and model training.
-
-The project owner should not manually download MP4s. The acquisition worker should use platform-approved sharing, creator-authorized uploads/cloud-drive handoff, or licensed dataset/provider feeds. If a candidate has metadata permission but no media delivery right, it remains metadata-only and the worker must not try another route to force a download.
+**Goal:** automatically download eligible discovered media to the local laptop without manually fetching MP4s, using the source-specific open-source extractors already selected.
 
 ## Inputs
 
-- normalized candidate from source_items;
-- current 1M+ metric snapshot and observation timestamp;
-- confirmed/candidate short-format status;
-- rights record and source delivery contract;
-- provider adapter and credential reference;
-- source-specific retention/storage policy.
+- SQLite candidate row with platform, source ID, canonical URL, current metric snapshot and discovery state.
+- Private rights JSONL entry that matches the platform/source ID and explicitly grants media retrieval, analysis, temporary processing, derived-artifact retention and model training.
+- Local output directory and optional user-created Instaloader session.
 
-## State machine
+## Provider order
 
-    DISCOVERED
-        |
-        v
-    METADATA_ELIGIBLE
-        |
-        v
-    RIGHTS_CHECK
-      /       \
-    deny      allow
-     |          |
-     v          v
-    METADATA   DELIVERY_QUEUED
-    _ONLY          |
-                   v
-           PROVIDER_DELIVERY
-             /          \
-           fail         success
-            |              |
-            v              v
-         RETRY/       CHECKSUM + FILE
-         DEFERRED       VALIDATION
-                            |
-                            v
-                      TRAINING_SCOPE
-                        /       \
-                     deny       allow
-                      |            |
-                      v            v
-                  ANALYSIS_ONLY  TRAINING_READY
+### YouTube
 
-## Provider adapters
+Use yt-dlp on the canonical video URL. Select best available video/audio format and remux to MP4 using FFmpeg. Preserve the source candidate metadata in a JSON sidecar.
 
-### YouTube platform training share
+### Instagram
 
-- Disabled until the project/company is accepted into YouTube's third-party AI-training program and provider delivery is documented.
-- Verify the video ID's third-party training state and applicable rightsholder conditions.
-- Consume content through the approved handoff only.
-- Do not call yt-dlp or browser download as a fallback.
-- Record contract, permission version, item ID, delivery timestamp, checksum and retention rules.
+Try:
+1. Instaloader Post.from_shortcode + download_post;
+2. yt-dlp Instagram extractor;
+3. optional gallery-dl command-line fallback.
 
-### Creator-authorized media inbox
+A failure in one adapter proceeds to the next ordinary extractor; if all fail, store the error and leave the item retryable. Do not use browser-cookie extraction, proxy rotation, CAPTCHA/challenge bypass or other access-control evasion.
 
-- Provide signed upload endpoint or approved cloud-drive connector.
-- Creators connect their account or deliver original assets; the project owner does not have to manually source/download each video.
-- Require explicit media-analysis, temporary-processing and training scopes, including music/rightsholder status.
-- Use resumable upload and checksum verification.
-- Support withdrawal, expiry, deletion and dataset invalidation.
+## Rights state
 
-### Licensed dataset/vendor
+A candidate cannot enter download merely because its view count is above 1M. The rights manifest row is a local declaration and evidence pointer. The downloader validates:
+- matching platform and source ID;
+- known basis and evidence reference;
+- current/unexpired permission;
+- not revoked;
+- separate retrieval, analysis, processing, retention and training permissions.
 
-- Load provider item manifest and rights terms.
-- Fetch only items explicitly covered by the license.
-- Record attribution, license version, NC/ND restrictions, takedown and retention rules.
-- Do not infer that a public dataset page grants rights beyond the item-level license.
+If no row is present, the item remains queued/blocked. The application cannot independently establish whether the consent or license is genuine.
 
-### Instagram and Meta
+## Asset validation and uniqueness
 
-- Instagram Business Discovery can discover/describe eligible public professional-account media, but it does not make every public Reel downloadable for training.
-- Meta Content Library/API is a controlled research environment and does not provide API media downloads.
-- Enable an Instagram media-delivery provider only after Meta or creator/license provider documents the permitted file-delivery method and ML-training scope.
+After each successful download:
+1. require a non-empty MP4;
+2. generate private metadata/rights sidecar;
+3. run FFprobe in the processing/validation step;
+4. calculate SHA-256;
+5. compare with already acquired assets across both platforms;
+6. if identical bytes exist, delete the redundant file and mark duplicate_media;
+7. otherwise mark downloaded and retain local path/hash.
 
-## Asset validation
+An identical SHA-256 indicates exact file equality. A future perceptual hash stage is needed for visually identical but re-encoded files.
 
-After authorized delivery, verify:
-- local/object storage path belongs to private asset root;
-- expected media type/container and non-zero file size;
-- duration/resolution limits;
-- successful FFprobe;
-- SHA-256 checksum;
-- source ID/content fingerprint consistency;
-- rights scope remains valid and unexpired;
-- duplicate byte content and perceptual near-duplicates;
-- malware/file-integrity checks where required.
+## Local execution
 
-## Retention
+Run discovery and download on the laptop. Neither operation requires the RTX 3050. The GPU will matter later for local model experiments; cloud GPU is for fine-tuning. Do not use Colab as the durable scheduler or state store.
 
-- Raw media duration follows the specific rights contract.
-- Temporary processing may delete source media after telemetry is committed only if agreement and retention policy permit it.
-- Derived frame/audio/transcript retention and model-training use are separate rights.
-- Revocation/expiry blocks future processing and starts deletion/invalidation workflow.
+## Exit criteria
 
-## Phase 2 exit criteria
-
-1. At least one authorized media provider is operational end-to-end.
-2. All acquired assets have complete provenance and permission evidence.
-3. Missing media permission causes a hard block; there is no downloader fallback.
-4. Retry/resume and partial-failure handling work.
-5. Duplicate files and repeated source IDs are handled according to retention rules.
-6. No raw media, credentials or local database are published to GitHub.
-7. System reports separate counts for discovered candidates, metadata-qualified candidates, acquisition-authorized assets and training-authorized assets.
-
-A completed discovery job does not mean media acquisition is complete. If there is no approved delivery mechanism, this phase remains blocked for that provider.
+- At least one authorized YouTube asset can be downloaded via yt-dlp.
+- At least one authorized Instagram Reel can be downloaded by Instaloader or a documented fallback.
+- Metadata sidecars contain candidate + rights provenance.
+- Missing, expired or revoked rights block download.
+- FFprobe and SHA-256 validation succeed.
+- Same platform/source ID is not downloaded twice.
+- Exact cross-platform duplicate media is removed/marked once.
+- Failures are retryable and reported.
+- No local media, DB, session or consent files are committed.

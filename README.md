@@ -1,126 +1,141 @@
 # Shorts Language Model
 
-Shorts Language Model is an automated, rights-aware short-form video discovery and intelligence project. The goal is to discover eligible YouTube Shorts and Instagram Reels without manually pasting individual links, deduplicate candidates in a local database, acquire media through authorized providers, extract multilingual audiovisual evidence, and ultimately fine-tune a compact multimodal model for local analysis.
+Shorts Language Model is an automated short-form video discovery, telemetry and intelligence pipeline. The current acquisition implementation uses **open-source public-web search and downloader repositories**, not the YouTube Data API, Instagram Graph API or Meta Content Library.
 
-> Automation does not grant media rights. A public URL or view count is not permission to download, store or train on a video. The system uses official APIs, approved research interfaces, creator-authorized delivery and licensed media providers. It will not fall back to unauthorized scraping or generic downloading.
+The objective is to search for YouTube Shorts and Instagram Reels, filter current view-count observations at 1M+, save unique candidates to a local SQLite database, and download media to the laptop through open-source extractors when a valid item-specific rights record permits it. The existing multimodal analyzer then extracts transcript, OCR, scene, motion, audio and editing evidence.
 
-## What the finished system is intended to do
+## Non-API toolchain
 
-1. Run a discovery job with a target such as 100 or 200 new candidates.
-2. Search supported sources across language, region, topic and publication windows.
-3. Filter by a current, timestamped 1M+ view/plays observation where the source exposes that metric.
-4. Check local SQLite inventory so already-seen candidates are not repeatedly selected while their identity can lawfully be retained.
-5. Store permitted title/caption, description, hashtags/tags, duration and engagement snapshots.
-6. Acquire the MP4 automatically only where a platform/provider/creator delivery route grants the required media and training rights.
-7. Run transcript, OCR, scene, motion, cut, VFX-candidate and audio extraction.
-8. Build a clean dataset and fine-tune a compact multimodal model in cloud batches.
-9. Run the resulting quantized model locally where hardware measurements support it.
+| Purpose | Open-source tool | Use |
+|---|---|---|
+| YouTube search + metadata + download | yt-dlp | ytsearchN:query, view_count, duration, dimensions and media download |
+| Instagram public-link discovery | DDGS | Search indexed public Reel URLs without an Instagram developer token |
+| Instagram Reel metadata + primary download | Instaloader | Resolve shortcode; view/play count, caption/hashtags, duration and Post download |
+| Instagram alternate extractor | yt-dlp Instagram extractor | Second download attempt on a discovered Reel URL |
+| Instagram fallback downloader | gallery-dl | Optional third attempt if Instaloader and yt-dlp fail |
+| Local deduplication and job state | SQLite | Persist source IDs, metrics, download status and SHA-256 fingerprints |
 
-A discovery target is not a guaranteed download count. If a source cannot lawfully deliver raw media or quota/search yield is lower than expected, the run reports the actual yield and why.
+The detailed rationale and limitations are in [docs/NON_API_DISCOVERY_TOOLCHAIN.md](docs/NON_API_DISCOVERY_TOOLCHAIN.md).
 
-## Platform reality
+## Important metric handling
 
-- **YouTube:** the official Data API can discover videos and return metadata/statistics. It does not grant MP4 download rights. YouTube prohibits downloading/caching audiovisual copies without prior written approval and prohibits scraping. The creator third-party AI-training opt-in is a possible authorized path, but the project/company must be admitted and creators/rightsholders must opt in.
-- **Instagram:** the Graph API can inspect eligible public Business/Creator accounts using Business Discovery; Reel view counts are available through that path. It is not a global search/download API for every public Reel. Meta Content Library is controlled research access; API data cannot be downloaded from the API.
-- **Browser agent:** Playwright may automate a specific approved interface. It is not used to bypass API access, login, rate limits or download restrictions.
+- YouTube view_count is stored as the view metric where yt-dlp returns it.
+- Instagram video_view_count is stored separately from video_play_count.
+- The default filter uses view_count only. The optional --instagram-use-play-count switch permits play_count when the view_count field is absent, but preserves the metric label.
+- Missing metrics are unknown, not zero, and never pass the default 1M threshold.
+- YouTube format confirmation uses Shorts URL evidence or metadata dimensions/duration. An eligible duration alone is not proof that a landscape video is a Short.
+- Instagram search results are confirmed Reels when they came from a /reel/ search result and the resolved media is video. Profile/hashtag discoveries are candidates unless more source evidence is available.
 
-Read [Automated Discovery and Rights-Gated Media Acquisition](AUTOMATED_DISCOVERY_AND_ACQUISITION.md) for the detailed source matrix and acquisition routes.
+## Current commands
 
-## Current implementation status
-
-- **Implemented:** local single-video telemetry CLI, media validation, frame sampling, cut/motion candidates, ASR/OCR adapters, audio measurements and validated JSON reports.
-- **Not implemented yet:** automated API discovery, local discovery SQLite database, 100/200 target-based query planner, policy-aware metadata retention, rights-gated media delivery providers and autonomous end-to-end ingestion.
-- **Not yet trained:** no ShortsLM fine-tuned checkpoint or 300-video empirical dataset is claimed.
-
-The existing single-video analyzer is retained as the media-processing engine. The old local-manifest Phase 2 pilot is useful as downstream processing/QA code, but it is not the automated source-discovery solution.
-
-## Revised architecture
-
-    Discovery scheduler
-        |
-        v
-    YouTube Data API / Instagram Business Discovery / approved research / licensed feeds
-        |
-        v
-    Provider normalizer -> 1M+ candidate filter -> SQLite dedup + retention
-        |
-        v
-    Rights and media-delivery gate
-       / \
-      /   \
-    authorized  metadata-only/deferred
-      |
-      v
-    Approved asset delivery -> private staging + checksum
-      |
-      v
-    ShortsLM telemetry: ASR + OCR + shots + motion + audio
-      |
-      v
-    Evidence store + human review + dataset quality/splits
-      |
-      v
-    Frozen model baseline -> cloud LoRA fine-tuning -> evaluation
-      |
-      v
-    Quantized local multimodal model + report app
-
-## Hardware strategy
-
-**Local Windows/WSL laptop:** discovery, SQLite, API calls, metadata normalization, deduplication, job scheduling, FFmpeg smoke tests and CPU telemetry. RTX 3050 4 GB is optional for small experiments and quantized inference.
-
-**Cloud GPU:** batch fine-tuning and higher-throughput VLM evaluation after data rights and quality gates pass. Colab is useful for short experiments, not as the durable acquisition scheduler or database.
-
-## Existing local analyzer quickstart
-
-Install FFmpeg (including ffprobe), create the Python environment, then run:
+Install on Windows PowerShell:
 
     py -3.11 -m venv .venv
     .venv/Scripts/Activate.ps1
     python -m pip install --upgrade pip
-    pip install -e ".[dev,audio]"
+    pip install -e ".[dev,discovery,audio]"
+
+Install FFmpeg and ffprobe and ensure both are on PATH. The gallery-dl Instagram fallback is optional:
+
+    pip install -e ".[instagram-fallback]"
+
+Check dependencies:
+
     shorts-lm doctor
 
-Analyze a file that you are authorized to process:
+### Discover 100 new unique candidates
 
-    shorts-lm analyze --input authorized_clip.mp4 --output outputs/analysis.json --rights-basis creator_owned --asr-model small --asr-device cpu
+    shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
 
-This is the existing media processor, not the future autonomous acquisition command.
+Add search phrases by repeating --query:
+
+    shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --query "cricket viral shorts India" --query "education facts short videos" --query "comedy viral reels India"
+
+YouTube only:
+
+    shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000
+
+Instagram indexed Reel search only:
+
+    shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000
+
+Optional Instagram hashtag discovery requires an existing local Instaloader session:
+
+    instaloader --login YOUR_USERNAME --no-posts --no-profile-pic YOUR_USERNAME
+    shorts-lm discover run --platform instagram --instagram-session-user YOUR_USERNAME --instagram-hashtag cricket --instagram-hashtag comedy --target-new 100 --min-views 1000000
+
+The password is prompted interactively by Instaloader; never pass it as a command-line argument or commit a session file.
+
+### Download candidates
+
+Discovery does not automatically equate a public URL with training permission. Downloading requires a private JSONL rights manifest with an item-specific, current grant for media retrieval, analysis, temporary processing, derived-artifact retention and model training.
+
+The example manifest at examples/rights_manifest.example.jsonl is deliberately non-authorizing. Replace it only with real permission evidence and keep the actual manifest under data/private/.
+
+    shorts-lm discover download --rights-manifest data/private/rights.jsonl --limit 25 --output-dir data/private/acquired
+
+The downloader rejects missing, expired, revoked or incomplete permission records. It writes a local MP4 and a private metadata/rights sidecar.
+
+## Local persistence and deduplication
+
+Default SQLite database: .shortslm/discovery.sqlite3. It is private and gitignored.
+
+- Unique platform/source ID prevents the same link being selected again.
+- SHA-256 after download catches byte-identical content found on different platforms.
+- Download failures remain retryable.
+- Metadata records store title/caption, description, creator, hashtags, observed metric, duration, publication date and discovery status.
+- Run summaries are written under outputs/discovery/.
+
+Search results are indexed and ranked. Shuffling queries/results makes selection less tied to a single result ordering; it does not create a mathematically uniform random sample of all YouTube or Instagram videos. The requested target is not guaranteed: source coverage, rate limits, duplicate results and missing view counts can produce a partial yield.
+
+## Instagram session and access limits
+
+Public indexed Reel links are attempted without a session first. Some Instagram content, hashtag searches or metadata fields may require the user's own Instaloader session. Instaloader respects its own rate controller. If an item is login-gated, blocked, deleted or unavailable, the crawler records/skips the error. It does not use proxy rotation, CAPTCHA bypass, stolen cookies or other access-control workarounds.
+
+## Existing local video analyzer
+
+The Phase 1 analyzer remains the downstream processor for a permitted local MP4:
+
+    shorts-lm doctor
+    shorts-lm analyze --input data/private/acquired/VIDEO.mp4 --output outputs/analysis.json --rights-basis creator_permission --rights-reference PRIVATE_CONSENT_REFERENCE --training-permitted
+
+The 4 GB RTX 3050 is not required for discovery, SQLite or download. The local laptop is appropriate for discovery and CPU media preprocessing. Use a rented GPU for substantial multimodal fine-tuning after the dataset and rights gates pass.
 
 ## Revised phases
 
-1. Provider and rights foundation
-2. Automated discovery + SQLite deduplication — next coding phase
-3. Rights-gated media acquisition
-4. Automated multimodal processing
-5. Dataset QA and annotation
-6. Model bake-off and baselines
-7. Cloud fine-tuning
-8. Quantized local deployment and controlled scale
+1. Non-API discovery + SQLite — current implementation.
+2. Authorized media acquisition + robust metadata/asset validation.
+3. Batch multimodal processing using the existing analyzer.
+4. Dataset QA, duplicate control and annotation.
+5. Model bake-off and frozen baselines.
+6. Cloud fine-tuning.
+7. Quantized local deployment.
+8. Controlled expansion with measured cost and data quality.
 
-## Project documentation
+## Security and data safety
 
-- [Global Master Plan](docs/GLOBAL_MASTER_PLAN.md)
-- [Automated Discovery and Media Acquisition](docs/AUTOMATED_DISCOVERY_AND_ACQUISITION.md)
-- [ADR-002: Automated Discovery Without Unauthorized Scraping](docs/ADR-002-AUTOMATED-DISCOVERY.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Data and Compliance](docs/DATA_AND_COMPLIANCE.md)
-- [Dataset and Labeling](docs/DATASET_AND_LABELING.md)
-- [Evaluation](docs/EVALUATION.md)
-- [Roadmap](docs/ROADMAP.md)
-- [References](docs/REFERENCES.md)
-- [Research Comparison](docs/RESEARCH_COMPARISON.md)
-- [Original Phase 1 Design and Testing](docs/PHASE_1_DESIGN.md)
+Never commit the discovery SQLite database, downloaded MP4s, Instagram session files, cookies, credentials, private rights manifests, consent documents, raw transcripts or private metadata reports. The .gitignore includes these local artifacts.
+
+Only acquire and train on media for which the exact intended use is authorized. Publicly viewable content is not automatically licensed for bulk copying, persistent storage or model training. This project does not attempt to bypass platform login, technical restrictions or rate limits.
 
 ## Tests
 
     ruff check src tests
     pytest -q
 
-## Data safety
+## Documentation
 
-Keep API credentials in environment variables or a local secret manager. Never commit cookies, access tokens, source media, private SQLite files, creator data, transcripts, consent documents or private reports. API-derived metadata and IDs must expire/refresh according to provider policy; hashing an ID does not automatically remove those obligations.
+- [Non-API Discovery and Downloader Toolchain](docs/NON_API_DISCOVERY_TOOLCHAIN.md)
+- [Global Master Plan](docs/GLOBAL_MASTER_PLAN.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Data and Compliance](docs/DATA_AND_COMPLIANCE.md)
+- [Dataset and Labeling](docs/DATASET_AND_LABELING.md)
+- [Phase 1 Design](docs/PHASE_1_DESIGN.md)
+- [Phase 2 Design](docs/PHASE_2_DESIGN.md)
+- [Phase 2 Testing](docs/PHASE_2_TESTING.md)
+- [References](docs/REFERENCES.md)
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+Apache-2.0. See LICENSE.

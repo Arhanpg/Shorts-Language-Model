@@ -1,64 +1,61 @@
-# Revised Phase 2 — Media Delivery Setup and Validation
+# Phase 2 — Download and Acquisition Validation
 
-## Before enabling a downloader
+## Environment
 
-Do not install/run yt-dlp against arbitrary public YouTube or Instagram links as the first test. First record which authorized provider will deliver the media and which agreement permits that exact method.
+Use the Windows PowerShell environment on the local laptop. Install Python 3.11 and FFmpeg (ffmpeg.exe and ffprobe.exe on PATH). RTX 3050 is not needed for discovery, SQLite or file downloads.
 
-## Local environment
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e ".[dev,discovery,audio]"
+pip install -e ".[instagram-fallback]"
+shorts-lm doctor
+```
 
-Media-delivery workers and telemetry can run on the local Windows/WSL laptop initially. Use a private SSD staging area. The RTX 3050 is not required for source delivery, hashing, FFprobe or SQLite.
+The last optional gallery-dl install may be skipped if it is not needed.
 
-Cloud object storage may be introduced if creators/providers deliver large batches or local disk is insufficient. Use private buckets, signed URLs, expiry and deletion lifecycle rules.
+## Phase 2 validation checklist
 
-## Provider onboarding checklist
+1. Create a private item-specific rights manifest for one YouTube test video and one creator-authorized Instagram Reel.
+2. Verify that missing rights row blocks the item.
+3. Verify incomplete, expired or revoked permissions block the item.
+4. Download the authorized YouTube video with yt-dlp; check MP4 exists and is non-empty.
+5. Download the Instagram Reel with Instaloader; force/test fallback adapters separately only where needed.
+6. Run FFprobe; compare duration/dimensions/audio with expected metadata.
+7. Confirm metadata/rights sidecar created beside the MP4.
+8. Verify SHA-256 is stored in SQLite.
+9. Replay download; already downloaded record is not queued again.
+10. Register same bytes under another platform in a test DB; duplicate_media state must be set and redundant file removed.
+11. Simulate provider/network failure; state is download_failed and is eligible for retry.
+12. Confirm .shortslm DB, session files, rights manifest, MP4 and sidecar are gitignored.
 
-For each provider, document:
-- provider name and official documentation/contract URL;
-- application/app-review status;
-- credentials/scopes required;
-- rate limits and quota;
-- candidate discovery capability;
-- whether media retrieval is explicitly permitted;
-- whether model training is explicitly permitted;
-- raw/derived-data retention;
-- music and third-party rights requirements;
-- attribution, withdrawal, takedown and deletion procedure.
+## Commands
 
-If any required field is unknown, provider remains disabled or metadata-only.
+Discover 100 candidates:
 
-## Validation tests for an authorized provider
+```powershell
+shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
+```
 
-1. Register one test candidate.
-2. Verify its rights capability map and permission expiry.
-3. Execute the provider's documented media handoff.
-4. Confirm the asset arrives in the private media root.
-5. Run FFprobe and verify duration, dimensions, codec and audio presence.
-6. Compute SHA-256 and compare with provider metadata if supplied.
-7. Repeat the same delivery and verify duplicate detection.
-8. Change permission to revoked/expired and verify new delivery/processing is blocked.
-9. Test network interruption/resume without duplicate files.
-10. Verify raw and derived artifacts follow retention policy after deletion/withdrawal.
-11. Confirm SQLite DB, credentials, media and logs remain ignored by Git.
-12. Confirm a metadata-only candidate cannot enter media processing.
+Download permitted candidates:
 
-## No-provider behavior
+```powershell
+shorts-lm discover download --rights-manifest data/private/rights.jsonl --limit 25 --output-dir data/private/acquired
+```
 
-When a source has no approved media provider:
-- discovery may continue if metadata access is permitted;
-- candidate remains metadata_only or delivery_unavailable;
-- run report explains the blocker;
-- no downloader fallback is attempted;
-- processing continues for other sources with authorized media.
+Process one authorized asset with existing analyzer:
 
-## Batch test
+```powershell
+shorts-lm analyze --input data/private/acquired/VIDEO.mp4 --output outputs/analysis.json --rights-basis creator_permission --rights-reference PRIVATE_CONSENT_REFERENCE --training-permitted
+```
 
-Once one provider passes the single-item test, run a 10-item authorized batch, then 50, then 100. Measure actual delivery success, latency, volume, duplicate rate, failed jobs and storage. Do not infer capacity from a mock run.
+## Acceptance criteria
 
-## CLI design target (not implemented yet)
-
-    shorts-lm acquisition status
-    shorts-lm acquisition validate --candidate-id LOCAL_ID
-    shorts-lm acquisition run --provider creator_media_inbox --limit 10
-    shorts-lm acquisition report --run-id RUN_ID
-
-The actual provider/options will be fixed only after a source with a real authorized handoff has been selected.
+- All download decisions are per-item and auditable.
+- No metadata-only candidate silently downloads.
+- Unknown view metric does not qualify as 1M+.
+- A partial provider result is reported instead of forced through infinite retries.
+- Failed extraction leaves a retryable state.
+- SHA-256 prevents exact duplicate bytes from entering the telemetry queue twice.
+- Test failures and CI status are reported honestly.
