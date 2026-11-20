@@ -253,7 +253,7 @@ def download_eligible(
         console.print(f"[bold red]Cannot read rights manifest:[/bold red] {exc}")
         raise typer.Exit(code=2) from exc
 
-    success = failed = blocked = 0
+    success = failed = blocked = duplicate_media = 0
     errors: list[str] = []
     with DiscoveryStore(database) as store:
         queued = store.eligible_candidates(limit=limit)
@@ -280,7 +280,7 @@ def download_eligible(
                         candidate.platform, candidate.source_id,
                         duplicate_of=duplicate_of, media_sha256=media_hash,
                     )
-                    blocked += 1
+                    duplicate_media += 1
                     continue
                 store.mark_download(
                     candidate.platform, candidate.source_id,
@@ -288,7 +288,7 @@ def download_eligible(
                 )
                 success += 1
             except Exception as exc:
-                store.mark_download(candidate.platform, candidate.source_id, path=None, error=str(exc)[:500])
+                store.mark_download_failure(candidate.platform, candidate.source_id, error=str(exc)[:500])
                 failed += 1
                 errors.append(f"{candidate.platform}:{candidate.source_id}: {str(exc)[:250]}")
 
@@ -299,6 +299,7 @@ def download_eligible(
         ("Downloaded MP4", success),
         ("Failed", failed),
         ("Blocked (no matching permission)", blocked),
+        ("Duplicate media files (same SHA-256)", duplicate_media),
     ]:
         table.add_row(label, str(count))
     console.print(table)
