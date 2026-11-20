@@ -7,8 +7,9 @@ venv/
 .env.*
 !.env.example
 
-# Private data, media, databases and model artifacts
+# Private user data and acquisition artifacts
 /data/
+/data/private/
 /raw/
 /processed/
 /outputs/
@@ -29,14 +30,23 @@ venv/
 *.wav
 *.mp3
 *.flac
+*.jsonl.private
+*rights*.jsonl
+*consent*
+*session*
+*cookie*
+*token*.json
+*.session
+*.session-journal
+*.metadata.json
+
+# Model artifacts and temporary files
 *.gguf
 *.safetensors
 *.pt
 *.pth
 *.ckpt
 *.tmp
-*cookie*.txt
-*token*.json
 
 # OS/editor
 .DS_Store
@@ -44,7 +54,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Test/type-check caches
+# Test and type-check caches
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
