@@ -1,0 +1,103 @@
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+from shorts_intelligence.pilot.manifest import ValidatedCandidate
+from shorts_intelligence.pilot.matching import build_matched_pairs
+from shorts_intelligence.pilot.sampling import (
+    age_band, duration_band, pseudonymize_creator, select_stratified,
+)
+from shorts_intelligence.pilot.schemas import (
+    PerformanceSnapshot, PilotRecord, RightsScope, SelectedRecord,
+)
+
+
+def _candidate(index: int, *, creator: str, value: int) -> ValidatedCandidate:
+    published = datetime(2026, 10, 1, tzinfo=timezone.utc) + timedelta(days=index)
+    observed = datetime(2026, 11, 20, tzinfo=timezone.utc)
+    record = PilotRecord(
+        record_id=f"clip_{index:04d}",
+        platform="creator_upload",
+        media_path=f"clip_{index}.mp4",
+        creator_id=creator,
+        rights=RightsScope(
+            basis="creator_owned", evidence_ref=f"owner-{creator}",
+            media_analysis=True, temporary_processing=True,
+            derived_artifact_retention=True,
+        ),
+        language="hi",
+        topic="cricket",
+        speech_mode="music_only",
+        published_at=published,
+        performance=PerformanceSnapshot(
+            metric_name="views", value=value, observed_at=observed,
+        ),
+    )
+    return ValidatedCandidate(
+        row_number=index + 1, record=record,
+        media_path=Path(f"/tmp/clip_{index}.mp4"),
+        media_sha256=f"{index:064x}", file_size_bytes=1000,
+        duration_seconds=24.0,
+    )
+
+
+def test_duration_and_age_bands() -> None:
+    assert duration_band(15) == "00-15s"
+    assert duration_band(30) == "16-30s"
+    assert age_band(None, None) == "unknown"
+
+
+def test_creator_pseudonym_is_stable_and_platform_scoped() -> None:
+    salt = b"x" * 32
+    first = pseudonymize_creator("creator_upload", "creator-1", salt)
+    assert first == pseudonymize_creator("creator_upload", "creator-1", salt)
+    assert first != pseudonymize_creator("youtube_shorts", "creator-1", salt)
+
+
+def test_stratified_sampler_is_deterministic_and_respects_cap() -> None:
+    candidates = [
+        _candidate(i, creator=f"creator-{i // 3}", value=1000 + i * 100)
+        for i in range(30)
+    ]
+    first, summary1 = select_stratified(
+        candidates, target=12, seed=7, max_per_creator=2, salt=b"z" * 32
+    )
+    second, summary2 = select_stratified(
+        candidates, target=12, seed=7, max_per_creator=2, salt=b"z" * 32
+    )
+    assert [item.record_id for item in first] == [item.record_id for item in second]
+    assert summary1["selected"] == 12
+    assert summary1["unique_creator_groups_in_selection"] >= 6
+    assert summary1["coverage"] == summary2["coverage"]
+
+
+def test_matched_pairs_require_same_creator_and_outlier_thresholds() -> None:
+    base = dict(
+        platform="creator_upload", media_path="/tmp/a.mp4",
+        media_sha256="a" * 64, file_size_bytes=1000,
+        creator_group="creator-hash", rights_basis="creator_owned",
+        rights_reference_hash="b" * 64, media_analysis_permitted=True,
+        temporary_processing_permitted=True, derived_artifact_retention_permitted=True,
+        model_training_permitted=False, language="hi", topic="cricket",
+        speech_mode="music_only", duration_seconds=24.0, duration_band="16-30s",
+        age_band="31-90d", metric_name="views", metric_value=10000,
+        observed_at=datetime(2026, 11, 20, tzinfo=timezone.utc),
+    )
+    positive = SelectedRecord(
+        record_id="positive", published_at=datetime(2026, 10, 10, tzinfo=timezone.utc),
+        creator_relative_log_score=1.4, creator_relative_multiple=4.0,
+        performance_tier="breakout_2x_5x", **base
+    )
+    control_fields = {
+        key: value for key, value in base.items()
+        if key not in {"media_path", "media_sha256"}
+    }
+    control = SelectedRecord(
+        record_id="control", media_path="/tmp/b.mp4", media_sha256="c" * 64,
+        published_at=datetime(2026, 10, 12, tzinfo=timezone.utc),
+        creator_relative_log_score=-1.0, creator_relative_multiple=0.35,
+        performance_tier="below_baseline", **control_fields
+    )
+    pairs = build_matched_pairs([positive, control])
+    assert len(pairs) == 1
+    assert pairs[0].positive_record_id == "positive"
+    assert pairs[0].control_record_id == "control"
