@@ -8,6 +8,7 @@ import hmac
 import math
 import os
 import random
+from contextlib import suppress
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -54,17 +55,15 @@ def create_or_load_salt(path: Path) -> bytes:
         return salt
     salt = os.urandom(32)
     path.write_bytes(salt)
-    try:
+    with suppress(OSError):
         os.chmod(path, 0o600)
-    except OSError:
-        pass
     return salt
 
 
 def pseudonymize_creator(platform: str, creator_id: str | None, salt: bytes) -> str | None:
     if not creator_id or not creator_id.strip():
         return None
-    message = f"{platform}:{creator_id.strip()}".encode("utf-8")
+    message = f"{platform}:{creator_id.strip()}".encode()
     return hmac.new(salt, message, hashlib.sha256).hexdigest()[:24]
 
 
