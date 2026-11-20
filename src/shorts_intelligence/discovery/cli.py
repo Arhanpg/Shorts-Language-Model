@@ -236,7 +236,7 @@ def _load_rights_manifest(path: Path) -> dict[tuple[str, str], AcquisitionAuthor
     return rights
 
 
-@app.command("download")
+@discovery_app.command("download")
 def download_eligible(
     rights_manifest: Path = typer.Option(..., "--rights-manifest", exists=True, readable=True),
     limit: int = typer.Option(25, "--limit", min=1, max=500),
