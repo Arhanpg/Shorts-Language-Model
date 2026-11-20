@@ -71,27 +71,42 @@ def extract_hashtags(*texts: str | None) -> list[str]:
     return found
 
 
-def _youtube_format_status(info: dict[str, object], title: str | None, description: str | None,
-                           duration: float | None, upload_date: str | None,
-                           webpage_url: str) -> str:
+def _youtube_format_status(
+    info: dict[str, object],
+    *,
+    duration: float | None,
+    upload_date: str | None,
+    webpage_url: str,
+) -> str:
     if "/shorts/" in webpage_url:
         return "confirmed"
+    if duration is None:
+        return "unknown"
+
+    # YouTube's standard-channel Shorts duration window changed on 15 Oct 2024.
+    # When upload_date is missing, do not assume which duration rule applies.
+    if upload_date and upload_date >= "20241015":
+        max_duration = 180.0
+    elif upload_date:
+        max_duration = 60.0
+    else:
+        max_duration = 180.0
+
+    if duration > max_duration:
+        return "not_short"
+
     width_raw, height_raw = info.get("width"), info.get("height")
     width = int(width_raw) if isinstance(width_raw, (int, float)) and width_raw > 0 else None
     height = int(height_raw) if isinstance(height_raw, (int, float)) and height_raw > 0 else None
-    if duration is None:
-        return "unknown"
-    if upload_date and upload_date >= "20241015":
-        max_short_duration = 180.0
-    else:
-        max_short_duration = 60.0
-    if duration > max_short_duration:
-        return "not_short"
+
     if width is not None and height is not None:
-        return "confirmed" if height >= width else "not_short"
-    text = f"{title or ''} {description or ''}".casefold()
-    if "#shorts" in text:
+        if height < width:
+            return "not_short"
+        if upload_date and (upload_date >= "20241015" or duration <= 60.0):
+            return "confirmed"
         return "candidate"
+
+    # Missing dimensions mean short-form format cannot be confirmed from duration alone.
     return "candidate"
 
 
@@ -104,19 +119,34 @@ def candidate_from_ytdlp(info: dict[str, object]) -> DiscoveredCandidate | None:
         return None
 
     duration_raw = info.get("duration")
-    duration = float(duration_raw) if isinstance(duration_raw, (int, float)) and duration_raw > 0 else None
+    duration = (
+        float(duration_raw)
+        if isinstance(duration_raw, (int, float)) and duration_raw > 0
+        else None
+    )
     upload_date = str(info.get("upload_date") or "") or None
     title = str(info.get("title") or "") or None
     description = str(info.get("description") or "") or None
     canonical_source = webpage_url or f"https://www.youtube.com/watch?v={video_id}"
     format_status = _youtube_format_status(
-        info, title, description, duration, upload_date, canonical_source
+        info,
+        duration=duration,
+        upload_date=upload_date,
+        webpage_url=canonical_source,
     )
     canonical = canonical_youtube_url(canonical_source, video_id)
     view_count_raw = info.get("view_count")
-    view_count = int(view_count_raw) if isinstance(view_count_raw, (int, float)) and view_count_raw >= 0 else None
+    view_count = (
+        int(view_count_raw)
+        if isinstance(view_count_raw, (int, float)) and view_count_raw >= 0
+        else None
+    )
     tags_raw = info.get("tags")
-    tags = [str(item).lstrip("#").casefold() for item in tags_raw] if isinstance(tags_raw, list) else []
+    tags = (
+        [str(item).lstrip("#").casefold() for item in tags_raw]
+        if isinstance(tags_raw, list)
+        else []
+    )
     hashtags = list(dict.fromkeys(tags + extract_hashtags(title, description)))
     return DiscoveredCandidate(
         platform="youtube",
@@ -140,44 +170,57 @@ def candidate_from_ytdlp(info: dict[str, object]) -> DiscoveredCandidate | None:
     )
 
 
-def candidate_from_instagram_post(post: object, *, from_reel_search: bool = True) -> DiscoveredCandidate | None:
-    """Normalize an Instaloader Post without guessing absent metrics."""
-    if not bool(getattr(post, "is_video", False)):
+def _safe_post_value(post: object, name: str) -> object | None:
+    try:
+        return getattr(post, name, None)
+    except Exception:
+        # Instaloader's lazy GraphQL properties can be absent or unavailable for
+        # a particular post. Missing metrics are recorded as unknown, not zero.
         return None
-    shortcode = str(getattr(post, "shortcode", "") or "")
+
+
+def candidate_from_instagram_post(
+    post: object,
+    *,
+    from_reel_search: bool = True,
+) -> DiscoveredCandidate | None:
+    """Normalize an Instaloader Post without guessing absent metrics."""
+    if not bool(_safe_post_value(post, "is_video")):
+        return None
+    shortcode = str(_safe_post_value(post, "shortcode") or "")
     if not shortcode:
         return None
-    caption = getattr(post, "caption", None)
-    view_count = getattr(post, "video_view_count", None)
-    try:
-        play_count = getattr(post, "video_play_count", None)
-    except (AttributeError, NotImplementedError):
-        play_count = None
-    duration = getattr(post, "video_duration", None)
-    date = getattr(post, "date_utc", None)
-    hashtags = list(getattr(post, "caption_hashtags", []) or [])
+
+    caption = _safe_post_value(post, "caption")
+    view_count = _safe_post_value(post, "video_view_count")
+    play_count = _safe_post_value(post, "video_play_count")
+    duration = _safe_post_value(post, "video_duration")
+    date = _safe_post_value(post, "date_utc")
+    hashtags = list(_safe_post_value(post, "caption_hashtags") or [])
+    likes = _safe_post_value(post, "likes")
+    comments = _safe_post_value(post, "comments")
     return DiscoveredCandidate(
         platform="instagram",
         source_id=shortcode,
         canonical_url=f"https://www.instagram.com/reel/{shortcode}/",
-        title=getattr(post, "title", None),
-        description=caption,
-        creator=getattr(post, "owner_username", None),
-        view_count=int(view_count) if view_count is not None else None,
-        play_count=int(play_count) if play_count is not None else None,
+        title=_safe_post_value(post, "title"),
+        description=str(caption) if caption is not None else None,
+        creator=_safe_post_value(post, "owner_username"),
+        view_count=int(view_count) if isinstance(view_count, (int, float)) else None,
+        play_count=int(play_count) if isinstance(play_count, (int, float)) else None,
         metric_source=(
-            "instaloader_video_view_count" if view_count is not None
-            else "instaloader_video_play_count" if play_count is not None
+            "instaloader_video_view_count" if isinstance(view_count, (int, float))
+            else "instaloader_video_play_count" if isinstance(play_count, (int, float))
             else None
         ),
-        duration_seconds=float(duration) if duration is not None else None,
-        upload_date=date.date().isoformat() if date is not None else None,
-        hashtags=hashtags,
+        duration_seconds=float(duration) if isinstance(duration, (int, float)) and duration > 0 else None,
+        upload_date=date.date().isoformat() if isinstance(date, datetime) else None,
+        hashtags=[str(tag).casefold() for tag in hashtags],
         short_format_status="confirmed" if from_reel_search else "candidate",
         discovered_at=datetime.now(UTC),
         metadata={
-            "likes": int(getattr(post, "likes", 0) or 0),
-            "comments": int(getattr(post, "comments", 0) or 0),
-            "typename": str(getattr(post, "typename", "")),
+            "likes": int(likes or 0) if isinstance(likes, (int, float)) else None,
+            "comments": int(comments or 0) if isinstance(comments, (int, float)) else None,
+            "typename": str(_safe_post_value(post, "typename") or ""),
         },
     )
