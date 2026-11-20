@@ -14,7 +14,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from shorts_intelligence.discovery.downloader import DownloadError, download_candidate
+from shorts_intelligence.discovery.downloader import download_candidate
 from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
 from shorts_intelligence.discovery.providers import (
     InstagramSearchProvider,
@@ -22,6 +22,7 @@ from shorts_intelligence.discovery.providers import (
     YouTubeSearchProvider,
 )
 from shorts_intelligence.discovery.storage import DiscoveryStore
+from shorts_intelligence.media.probe import sha256_file
 
 discovery_app = typer.Typer(
     name="discover",
@@ -81,7 +82,7 @@ def run_discovery(
     keys are not used; yt-dlp and DDGS search public web results, while Instaloader
     resolves public Reel metadata.
     """
-    queries = query or _DEFAULT_QUERIES
+    queries = list(query) if query else list(_DEFAULT_QUERIES)
     rng = random.Random(seed)
     rng.shuffle(queries)
     run_id = uuid.uuid4().hex
@@ -269,7 +270,22 @@ def download_eligible(
                     instagram_session_username=instagram_session_user,
                     instagram_session_file=str(instagram_session_file) if instagram_session_file else None,
                 )
-                store.mark_download(candidate.platform, candidate.source_id, path=str(media_path), error=None)
+                media_hash = sha256_file(media_path)
+                duplicate = store.find_media_hash(media_hash)
+                if duplicate:
+                    media_path.unlink(missing_ok=True)
+                    media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
+                    duplicate_of = f"{duplicate['platform']}:{duplicate['source_id']}"
+                    store.mark_duplicate_media(
+                        candidate.platform, candidate.source_id,
+                        duplicate_of=duplicate_of, media_sha256=media_hash,
+                    )
+                    blocked += 1
+                    continue
+                store.mark_download(
+                    candidate.platform, candidate.source_id,
+                    path=str(media_path), media_sha256=media_hash,
+                )
                 success += 1
             except Exception as exc:
                 store.mark_download(candidate.platform, candidate.source_id, path=None, error=str(exc)[:500])
