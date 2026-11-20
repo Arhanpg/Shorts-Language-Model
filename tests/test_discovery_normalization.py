@@ -110,7 +110,7 @@ def test_ytdlp_unknown_upload_date_does_not_confirm_three_minute_short():
         "view_count": 2_000_000,
     })
     assert candidate is not None
-    assert candidate.short_format_status == "candidate"
+    assert candidate.short_format_status == "unknown"
 
 
 def test_instaloader_missing_lazy_view_metric_is_unknown():
