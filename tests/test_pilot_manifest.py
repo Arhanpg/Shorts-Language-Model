@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from shorts_intelligence.pilot.manifest import _can_analyze
 from shorts_intelligence.pilot.schemas import PilotRecord
@@ -21,7 +21,7 @@ def _record() -> PilotRecord:
 
 
 def test_rights_gate_accepts_permitted_record() -> None:
-    ok, reason = _can_analyze(_record(), datetime.now(timezone.utc))
+    ok, reason = _can_analyze(_record(), datetime.now(UTC))
     assert ok is True
     assert reason is None
 
