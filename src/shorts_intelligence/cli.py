@@ -16,6 +16,7 @@ from shorts_intelligence import __version__
 from shorts_intelligence.analyzer import analyze_video
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.media.probe import MediaError
+from shorts_intelligence.pilot.cli import pilot_app
 
 app = typer.Typer(
     name="shorts-lm",
@@ -158,8 +159,5 @@ def version() -> None:
     """Print package version."""
     typer.echo(__version__)
 
-
-# Phase 2 pilot commands
-from shorts_intelligence.pilot.cli import pilot_app
 
 app.add_typer(pilot_app, name="pilot")
