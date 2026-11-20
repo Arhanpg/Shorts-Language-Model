@@ -1,237 +1,152 @@
-# Automated Discovery and Rights-Gated Media Acquisition
+# Automated Non-API Discovery and Media Acquisition
 
-**Research checked:** 21 November 2026  
-**Status:** accepted architecture proposal; provider implementation not yet started.
+**Updated:** 21 November 2026  
+**Selected tools:** yt-dlp, DDGS, Instaloader, optional gallery-dl, SQLite.
 
-## 1. Objective and system boundary
+## 1. Requirements
 
-The project owner should not have to paste individual URLs or manually download MP4 files during normal operation. Build an automated Discovery Agent that searches configured sources, filters candidates, stores them in a local SQLite inventory, prevents repeats within the source's lawful retention period, and queues media acquisition only through an authorized delivery provider.
+The system should search for new YouTube Shorts and Instagram Reels without the owner pasting URLs or manually downloading MP4s. It should collect available metadata, filter candidates by a 1M+ view/play threshold, save source identity in SQLite, avoid repeats, and download media automatically through open-source extractors for items whose intended acquisition/training rights are documented.
 
-The system must separate these facts:
+No YouTube Data API, Instagram Graph API, Meta Content Library API or platform developer token is used by the discovery commands.
 
-1. A video is discoverable.
-2. A metadata record and view-count observation are available.
-3. The media file can lawfully be retrieved.
-4. The media can be analyzed and derived artifacts retained.
-5. The media and derived examples may be used for model training.
-6. The resulting trained weights may be redistributed.
+## 2. Tool selection
 
-None of these permissions should be inferred from another. A public URL and a million views do not grant download or training permission.
-
-A candidate may be stored as metadata-only or delivery-unavailable. It is not sent to the media processor or training dataset until its required rights and delivery checks pass.
-
-## 2. Platform capability matrix
-
-| Source | Discovery | 1M+ metric | Raw media delivery | Role |
-|---|---|---|---|---|
-| YouTube Data API v3 | Video search and metadata, within quota | Yes, from current statistics response | No general MP4 download right | Candidate metadata discovery |
-| YouTube third-party AI-training program | Eligible creator/rightsholder opt-in | Eligibility can be checked by video ID | YouTube may share eligible content with an approved selected company; exact handoff is program-dependent | Potential approved training source |
-| Instagram Graph API Business Discovery | Eligible public Business/Creator accounts whose usernames are known | Reel view_count is documented through Business Discovery | Not a global arbitrary-Reel download API; media_url can be omitted | Narrow professional-account discovery |
-| Instagram hashtag API | Limited hashtag discovery | Do not assume view_count is exposed | No general training-media grant | Topic discovery only |
-| Meta Content Library/API | Controlled research access, subject to eligibility | Product-specific research filters | API data cannot be downloaded from the API/cleanroom | Institutional research |
-| Licensed provider/dataset | Provider-specific API or catalogue | Depends on contract/feed | Yes only when license permits delivery and ML training | Scalable media source |
-| Creator-authorized media inbox | Automated upload/drive handoff | Creator-authorized snapshots | Yes within the explicit creator/license grant | Reliable media/training source |
-
-**Important conclusion:** there is no single unrestricted official API that discovers every public YouTube Short and Instagram Reel and returns a downloadable MP4 for model training. YouTube metadata discovery is feasible. Instagram discovery is narrower unless the project obtains approved research access or works from known eligible professional accounts. Neither access path creates universal download rights.
-
-## 3. YouTube provider
-
-### 3.1 Metadata discovery
-
-Use the official YouTube Data API v3, not HTML scraping.
-
-The provider should:
-- create seeded, stratified search queries across language, region, topic and publication window;
-- call search.list with video-only results and supported region/language/date filters;
-- batch-enrich IDs with videos.list fields for title, description, tags, duration and statistics;
-- preserve raw title/description separately from extracted hashtags;
-- filter the current view-count observation at the configured threshold (default 1,000,000);
-- record the observation timestamp and metric source;
-- construct a canonical Shorts URL for navigation while keeping source identity only as long as its retention rules allow.
-
-Published default quota documentation describes a separate 100-call/day search.list bucket and 10,000 quota units/day for other standard methods. A search call can return up to 50 results. This is not a guarantee of 5,000 new useful Shorts or 100 new 1M+ candidates per run.
-
-### 3.2 Shorts classification
-
-Do not label every video shorter than three minutes as a Short. YouTube's current help guidance says that standard-channel square or vertical videos uploaded on/after 15 October 2024 and up to three minutes are categorized as Shorts. Duration alone does not prove the format. Store short_format_status as confirmed, candidate or unknown. Confirm aspect ratio and upload-date eligibility only where a permitted source exposes the evidence.
-
-### 3.3 API metadata retention and derived metrics
-
-For non-authorized API data, YouTube's developer policies generally require temporary data to be refreshed or deleted within 30 calendar days. A June 2026 additional-derived-metrics policy provides a longer retention path for specific statistical data and approved derived metrics for audited developers who explicitly accept the applicable amendment for an approved analytics use case. Other fields, such as titles, creator names and descriptions, remain subject to the shorter refresh/deletion requirements.
-
-The application must attach provider-specific retention and refresh deadlines to fields, not apply one indefinite retention rule to the whole candidate record. The standard policy restricts aggregation and derived metrics. Do not enable YouTube creator-normalized performance calculations until the project has accepted the required amendment and confirmed that the proposed use is in scope.
-
-Hashing a video ID does not automatically remove source retention obligations. The deduplication ledger must respect the same source-specific limits.
-
-### 3.4 Media delivery
-
-The Data API does not supply the MP4. Do not fall back to scraping or an unofficial downloader.
-
-The first route to investigate is YouTube's third-party AI-training program. Creator/rightsholder opt-in is off by default; all applicable rights holders must consent; creators select approved third-party companies. YouTube may share eligible content with a selected company, and companies may apply to be included in that selection list.
-
-This requires project/company acceptance, creator/rightsholder opt-in and a documented asset-delivery protocol. It is not a generic public download endpoint and does not authorize yt-dlp against arbitrary videos.
-
-## 4. Instagram / Meta provider
-
-### 4.1 Instagram Graph API Business Discovery
-
-Instagram Media endpoints are scoped to professional accounts. Business Discovery can inspect eligible public Business/Creator accounts when their usernames are known and the app has the required token and permissions.
-
-For Reels, view_count is documented through Business Discovery. Meta notes that this count may include paid and cross-posted activity. The media_url field may be omitted for copyrighted or flagged media. Preserve the source metric definition; do not treat it as directly interchangeable with YouTube views.
-
-The standard Graph API is not a global index of every public Reel. Hashtag search is narrower; do not assume it returns Business Discovery's view_count field.
-
-Implementation approach:
-- maintain an approved seed list of eligible public professional-account usernames;
-- query Business Discovery and paginate within API limits;
-- normalize Reel metadata and source metric definitions;
-- filter the current view-count snapshot;
-- record the username seed source and discovery query;
-- mark a candidate metadata-only unless a separate authorized media-delivery route exists.
-
-### 4.2 Meta Content Library
-
-Meta Content Library/API is a controlled research product for eligible researchers affiliated with qualified academic or not-for-profit research institutions, subject to application and review.
-
-The API operates in a secure research environment. Meta says API data cannot be downloaded from the API, including from the Secure Research Environment. The web interface has a separate downloadable subset for approved researchers and permitted content types; that is not a universal MP4 training feed.
-
-This route may support institutional research discovery, but it does not solve local video delivery by itself.
-
-## 5. Browser agent and downloaders
-
-Playwright may automate a specifically approved interface, for example:
-- navigating an approved research UI;
-- exporting a dataset subset where the interface and agreement permit it;
-- automating a creator's own connected-account workflow;
-- checking a licensed provider's approved handoff or job status.
-
-It must not be used to:
-- scrape YouTube/Instagram pages instead of documented APIs;
-- bypass login, CAPTCHA, rate limits, robots rules or technical protections;
-- use logged-in cookies to evade access rules;
-- extract hidden media URLs or circumvent DRM;
-- bulk-copy arbitrary public platform videos.
-
-The browser agent is an orchestrator, not a policy bypass. API connectors should handle normal discovery; browser automation is optional and restricted to approved UI tasks.
-
-yt-dlp and similar projects are media transport software. Their ability to parse a URL does not grant download, retention or model-training rights. Keep them out of the default public-platform path. A downloader can be added only for a source/item whose contract explicitly authorizes that method.
-
-## 6. Rights-aware delivery providers
-
-Use one provider interface, but enable only providers with a real authorized delivery route.
-
-| Provider adapter | Input | Output | Required evidence |
-|---|---|---|---|
-| youtube_training_share | Video ID and approved opt-in state | Platform-authorized training asset/handoff | Project approval, applicable rightsholder opt-ins, program delivery terms |
-| creator_media_inbox | Signed upload or creator-authorized cloud-drive handoff | Original media and rights record | Creator grant for analysis, processing, derivatives and model training |
-| licensed_dataset | Dataset/item manifest | Media file and provenance | Item-level license explicitly allows required use |
-| instagram_creator_handoff | Creator-authorized original media | Original file and rights record | Creator and third-party/music rights |
-| meta_research | Approved research workspace | Analysis in approved environment | Institutional access and cleanroom rules; no API download |
-| youtube_public_metadata | Video ID | Metadata candidate only | API policy; no media retrieval right |
-| instagram_business_discovery | Professional-account username | Metadata candidate; media URL only if returned | App permissions and separate use rights |
-
-Each item needs independent scopes for metadata read, identifier retention, media retrieval, media analysis, temporary processing, raw retention, derived-artifact retention, model training and redistribution.
-
-## 7. Local SQLite inventory
-
-Use SQLite on the laptop first. It is appropriate for a single-user discovery/job ledger. Migrate only if concurrent workers or data volume later justify a server database.
-
-Proposed tables:
-
-| Table | Purpose |
-|---|---|
-| discovery_runs | Run ID, provider, query-plan version, start/end, target, yield and quota use |
-| source_items | Platform/provider item ID, URL, first/last seen, state and dedup key |
-| metadata_snapshots | Title/caption, description, hashtags/tags, duration, view/like/comment snapshot, metric definition and observed time |
-| rights_records | Evidence reference, capability flags, agreement, permission version, expiry and revocation |
-| media_assets | Authorized private path/URI, checksum, size, codec, delivery provider and retention |
-| jobs | Queued/downloading/processing/complete/failed/blocked state, retries and last error |
-| provider_state | Pagination cursor, query cells, quota and rate-limit state |
-
-Use a unique source identity key while the source's policy permits retaining it. After an authorized media delivery, compute SHA-256 and, where lawful, perceptual video/audio fingerprints to detect cross-platform reposts.
-
-### Retention-safe uniqueness
-
-The local database can prevent repeats while the source identity or fingerprint can lawfully be retained. For assets covered by a durable training license, a durable dedup record may be kept if the contract permits it. For non-authorized public YouTube API records, source retention rules still apply. Do not promise lifetime non-repetition for data that must later be deleted or refreshed.
-
-## 8. Discovery run behavior
-
-Planned CLI shape (not implemented yet):
-
-    shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
-
-Each run:
-1. loads enabled providers and checks credentials/permissions without printing secrets;
-2. creates a seeded query plan across language, region, topic and publication windows;
-3. queries each provider within quotas and rate limits;
-4. normalizes records into a provider-neutral schema;
-5. filters by current metric and short-format confidence;
-6. checks the local dedup ledger;
-7. stores permitted metadata and retention deadlines;
-8. checks media acquisition and model-training rights separately;
-9. queues only assets with a verified delivery route;
-10. reports new candidates, duplicates, below-threshold items, format uncertainty, metadata-only records, media-authorized assets, training-authorized assets, quota use and partial-target reasons.
-
-Default target is 100 new candidates; 200 can be selected. The target is not guaranteed. If source quotas, provider access, view threshold or deduplication prevent the target, return the actual yield and reason rather than retry indefinitely.
-
-“Random” means randomized order across declared strata. Search results are ranked/indexed and cannot be called a uniform sample of every platform video. Record query cells and sampling decisions so bias can be measured.
-
-## 9. Metadata and media processing
-
-For candidates whose media is lawfully delivered:
-- retain title/caption, description, tags/hashtags and metric snapshot with source and observation time;
-- parse hashtags separately without overwriting original source text;
-- use official captions/transcript only where permitted and available;
-- otherwise run the existing faster-whisper/ASR pipeline on the delivered file;
-- run OCR, keyframe selection, shot/cut candidates, motion and audio features;
-- write checksums and extractor/model versions to the evidence manifest.
-
-Instagram may expose a caption rather than a distinct title. Instagram view-count semantics may include paid/cross-posted activity. Keep the platform metric definitions separate.
-
-Do not update model weights after every arriving video. Build a versioned, quality-checked dataset and fine-tune in reproducible batches with checkpoints. Per-video online updates are order-dependent and complicate leakage control and evaluation.
-
-## 10. Technology choices
-
-| Concern | Choice | Reason |
+| Task | Tool | Why selected |
 |---|---|---|
-| YouTube metadata | YouTube Data API v3 with google-api-python-client or httpx | Documented metadata/search route |
-| Instagram professional metadata | Instagram Graph API Business Discovery | Narrow official account discovery |
-| Institutional research | Meta Content Library | Controlled research source |
-| Browser automation | Playwright, optional | Approved UI workflows only |
-| Local database | SQLite, optionally SQLAlchemy | Persistent local dedup/job ledger |
-| Data schemas | Pydantic | Provider-neutral validation |
-| Scheduling | CLI and resumable worker first; Prefect later if needed | Avoid premature orchestration complexity |
-| Media delivery | Provider-specific signed/download adapters | No generic scrape-and-download fallback |
-| Media analysis | Existing ShortsLM/VidTrace/FFmpeg components | Reuse telemetry |
-| Model training | Transformers/PEFT or a compatible framework on rented GPUs | Reproducible batch training |
+| YouTube search | yt-dlp | Contains the ytsearch extractor; no Data API key |
+| YouTube metadata/download | yt-dlp | Same tool resolves URL, metadata and local media |
+| Instagram URL discovery | DDGS | Searches publicly indexed Reel URLs via search engine |
+| Instagram metadata | Instaloader | Resolves shortcode; exposes available caption, hashtags, duration, view/play metrics |
+| Instagram hashtag expansion | Instaloader | Supported post iterator; login may be required |
+| Instagram downloader | Instaloader | Native Post download support |
+| Instagram fallback | yt-dlp extractor | Second independent extractor |
+| Instagram secondary fallback | gallery-dl | Optional third-party URL extractor |
+| Persistent store | SQLite | Local candidate identity, state and dedup |
+| Binary dedup | SHA-256 | Exact duplicate cross-platform media check |
 
-## 11. Acceptance tests
+Repository links:
+- https://github.com/yt-dlp/yt-dlp
+- https://github.com/instaloader/instaloader
+- https://github.com/deedy5/ddgs
+- https://github.com/mikf/gallery-dl
+- https://codeberg.org/mikf/gallery-dl
 
-Before a 100-candidate batch:
-- provider mock records normalize to one versioned schema;
-- every candidate has source, observation time, metric definition and retention deadline;
-- replaying the same provider page creates zero duplicate rows;
-- a second run selects unseen items while dedup records remain valid;
-- expired metadata is refreshed or deleted according to provider policy;
-- view_count below 1,000,000 is rejected; missing view count is unknown, not zero;
-- YouTube short-format candidates with unknown aspect ratio remain unconfirmed;
-- Instagram hashtag results are not assigned a Business-Discovery-only view_count field;
-- media acquisition is blocked when permission is missing;
-- quota/provider outage returns a partial report without infinite retries;
-- no secrets, cookies, video files, transcripts or database are committed to GitHub.
+## 3. Provider workflow
 
-## 12. Official source links
+### YouTube
 
-- YouTube Data API overview and quota: https://developers.google.com/youtube/data/getting-started
-- YouTube search.list: https://developers.google.com/youtube/v3/docs/search/list
-- YouTube videos.list: https://developers.google.com/youtube/v3/docs/videos/list
-- YouTube developer policies: https://developers.google.com/youtube/terms/developer-policies
-- Additional derived metrics and storage: https://developers.google.com/youtube/terms/derived-metrics-policy
-- YouTube third-party AI training opt-in: https://support.google.com/youtube/answer/15509945
-- Three-minute Shorts eligibility: https://support.google.com/youtube/answer/15424877
-- Instagram Media endpoint: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/
-- Instagram IG User / Business Discovery: https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/
-- Instagram Graph API rate limits: https://developers.facebook.com/docs/graph-api/overview/rate-limiting/
-- Meta Content Library/API overview: https://developers.facebook.com/docs/content-library-and-api/content-library-api/overview
-- Meta Content Library access: https://developers.facebook.com/docs/content-library-and-api/get-access
-- yt-dlp project: https://github.com/yt-dlp/yt-dlp
+1. Build topic/language search phrases.
+2. Call yt-dlp's search extractor with `ytsearchN:phrase`.
+3. Parse returned video entries.
+4. Keep title, description, channel, tags, view_count, upload date, duration and dimensions when provided.
+5. Confirm short status from a Shorts URL or format evidence; otherwise use candidate/unknown.
+6. Store the normalized candidate in SQLite.
+7. Use yt-dlp to download a permitted item and FFmpeg to remux to MP4.
+
+### Instagram
+
+1. DDGS searches `site:instagram.com/reel/` with configured topic phrases.
+2. Extract and deduplicate public Reel shortcodes from results.
+3. Use Instaloader `Post.from_shortcode` to retrieve available Reel metadata.
+4. Preserve caption, hashtags, creator, duration, view_count and play_count separately.
+5. Use view_count for the default 1M threshold; if not returned, classify metric as unknown. The optional play-count switch is explicit and keeps its metric name.
+6. Optional hashtag discovery uses Instaloader's hashtag iterator and requires a user-created local session for login-restricted queries.
+7. Download via Instaloader, then yt-dlp, then optional gallery-dl.
+
+The providers use public indexed search and upstream extractors. They do not guarantee full Instagram coverage or availability of every metadata field. Deleted, restricted, challenge-gated or unavailable items may be skipped and reported.
+
+## 4. SQLite data model
+
+Default path: `.shortslm/discovery.sqlite3`.
+
+- discovery_runs: requested target, threshold, time, provider results, duplicate and error counts.
+- candidates: unique (platform, source_id), canonical URL, title/caption, description, creator, metric snapshots, tags/hashtags, format status, download status, local path, error.
+- media identity: SHA-256 and downloaded timestamp.
+
+The source identity key prevents a discovered Reel/Short from appearing again on future runs while the local inventory exists. SHA-256 catches exact same-file cross-posts after download; re-encoded visual duplicates require a future perceptual hash stage.
+
+The SQLite DB is local and excluded from Git. It is not a shared multi-user database. Back it up locally if the user wants to preserve discovery history.
+
+## 5. Run configuration
+
+Command design:
+
+```powershell
+shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
+```
+
+Parameters:
+- platform: all, youtube, instagram.
+- target-new: new eligible source records to find, default 100.
+- min-views: threshold, default 1,000,000.
+- max-candidates: upper bound on result records to inspect.
+- results-per-query: number of results requested from each query.
+- query: repeatable custom search phrase.
+- seed: reproducible query/result shuffle.
+- database/report: local paths.
+- Instagram session/hashtags: optional, private session file only.
+- instagram-use-play-count: opt-in fallback metric; separate from view_count.
+
+The target is best-effort. Search result indexes may not return sufficient new high-view records. A shorter yield is reported honestly.
+
+## 6. Download state machine and rights
+
+A candidate is not automatically a training asset. Before acquiring media, the download command requires a local rights manifest row keyed by platform/source_id. The permission record must separately grant:
+- media_retrieval;
+- media_analysis;
+- temporary_processing;
+- derived_artifact_retention;
+- model_training.
+
+It also needs a basis, private evidence reference, expiry and revocation state. The code checks the declaration but cannot independently authenticate the underlying evidence; the owner must ensure it is genuine. An example rights manifest is deliberately non-authorizing.
+
+The downloader's order:
+- YouTube: yt-dlp.
+- Instagram: Instaloader → yt-dlp → optional gallery-dl.
+
+No login, CAPTCHA, technical protection, DRM, rate limit or platform access control bypass is implemented. Instaloader sessions are supplied as local files created through its normal login flow; password and cookies are never committed or placed on a CLI argument.
+
+After download:
+1. require non-empty MP4;
+2. attach private metadata/rights JSON sidecar;
+3. calculate SHA-256;
+4. compare with already downloaded assets across platforms;
+5. mark exact duplicate and remove redundant bytes;
+6. retain download failures in a retryable state.
+
+## 7. Metrics and format uncertainty
+
+- YouTube view_count: store as observed by yt-dlp.
+- Instagram video_view_count: store as view_count.
+- Instagram video_play_count: store separately as play_count.
+- Default view threshold checks view_count only.
+- Play count is optionally allowed when view_count is absent, never relabeled as views.
+- Missing metric remains unknown.
+- YouTube Shorts: an explicit /shorts/ URL confirms format; otherwise dimensions, duration and upload date provide evidence. Missing dates/dimensions keep the status as candidate/unknown.
+- Instagram search URL under /reel/ confirms the link type, but the resolved post must still be a video.
+
+## 8. Acceptance tests
+
+- YouTube and Instagram URLs normalize to canonical URL + stable ID.
+- Same source item reappearing across runs does not create a second row.
+- 999,999 metrics fail a 1,000,000 threshold.
+- Missing metrics stay unknown.
+- Instagram play count is not counted unless explicitly enabled.
+- Horizontal YouTube metadata is rejected as a Short.
+- Unknown upload date does not over-confirm the three-minute Shorts rule.
+- Expired/revoked/incomplete rights block download.
+- A failed download can be retried.
+- Byte-identical media discovered under two platforms downloads only once into the processing corpus.
+- No SQLite, MP4, session, rights file, cookie or token is committed.
+
+## 9. Known limits
+
+- DDGS returns search-engine-indexed results, not every Instagram Reel.
+- Search engine ranking means sampling is biased and not uniform.
+- Instagram extractor metadata can be missing or stale.
+- Upstream extractors can break following site changes.
+- Exact file hashes do not catch re-encoded duplicate clips.
+- A fixed target such as 100 new items per run is not guaranteed.
+- A local rights manifest is an attestation/evidence pointer, not an automated legal clearance engine.
+
+See [NON_API_DISCOVERY_TOOLCHAIN.md](NON_API_DISCOVERY_TOOLCHAIN.md) for installation and exact commands.
