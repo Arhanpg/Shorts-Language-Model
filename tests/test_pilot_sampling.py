@@ -4,14 +4,17 @@ from pathlib import Path
 from shorts_intelligence.pilot.manifest import ValidatedCandidate
 from shorts_intelligence.pilot.matching import build_matched_pairs
 from shorts_intelligence.pilot.sampling import (
-    age_band, duration_band, pseudonymize_creator, select_stratified,
+    _relative_performance, age_band, duration_band, pseudonymize_creator,
+    select_stratified,
 )
 from shorts_intelligence.pilot.schemas import (
     PerformanceSnapshot, PilotRecord, RightsScope, SelectedRecord,
 )
 
 
-def _candidate(index: int, *, creator: str, value: int) -> ValidatedCandidate:
+def _candidate(
+    index: int, *, creator: str, value: int, topic: str = "cricket"
+) -> ValidatedCandidate:
     published = datetime(2026, 10, 1, tzinfo=timezone.utc) + timedelta(days=index)
     observed = datetime(2026, 11, 20, tzinfo=timezone.utc)
     record = PilotRecord(
@@ -25,7 +28,7 @@ def _candidate(index: int, *, creator: str, value: int) -> ValidatedCandidate:
             derived_artifact_retention=True,
         ),
         language="hi",
-        topic="cricket",
+        topic=topic,
         speech_mode="music_only",
         published_at=published,
         performance=PerformanceSnapshot(
@@ -101,3 +104,28 @@ def test_matched_pairs_require_same_creator_and_outlier_thresholds() -> None:
     assert len(pairs) == 1
     assert pairs[0].positive_record_id == "positive"
     assert pairs[0].control_record_id == "control"
+
+def test_creator_baseline_is_separated_by_language_and_topic() -> None:
+    candidates = [
+        _candidate(0, creator="creator-A", value=1000, topic="cricket"),
+        _candidate(1, creator="creator-A", value=1100, topic="cricket"),
+        _candidate(2, creator="creator-A", value=900, topic="cricket"),
+        _candidate(3, creator="creator-A", value=100000, topic="cooking"),
+    ]
+    groups = {item.record.record_id: "same-pseudonymous-creator" for item in candidates}
+    scores = _relative_performance(candidates, groups)
+    assert all(item.record.record_id in scores for item in candidates[:3])
+    assert candidates[3].record.record_id not in scores
+
+
+def test_sampler_reports_shortfall_when_creator_cap_is_reached() -> None:
+    candidates = [
+        _candidate(index, creator="one-creator", value=1000 + index * 10)
+        for index in range(6)
+    ]
+    selected, summary = select_stratified(
+        candidates, target=4, seed=11, max_per_creator=2, salt=b"s" * 32
+    )
+    assert len(selected) == 2
+    assert summary["target"] == 4
+    assert summary["shortfall"] == 2
