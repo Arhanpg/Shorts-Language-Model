@@ -139,3 +139,36 @@ Every dataset size, performance value, video count, cost, throughput and license
 ## 7. Overall verdict
 
 The best combined plan is **rights-aware stratified ingestion + deterministic telemetry + compact multimodal reasoning + separate creator-relative performance predictor**. It takes the strongest structural ideas from all proposals without inheriting speculative global-supply estimates, exact cloud-cost claims or unverified 4 GB performance promises.
+
+
+## 8. Updated acquisition research — 21 November 2026
+
+This section supersedes the earlier working assumption that a generic browser agent can discover and download arbitrary public Reels/Shorts.
+
+### YouTube Data API
+
+Official documentation gives a separate default 100-call/day quota for search.list and 10,000 quota units/day for other standard methods. videos.list returns snippet fields such as title, description and tags, content details and statistics. This supports candidate metadata discovery and a current view-count filter, but not MP4 delivery.
+
+The Developer Policies prohibit copying audiovisual content without prior written approval and prohibit scraping YouTube applications. Non-authorized API data has a 30-day refresh/delete limit. The additional-derived-metrics policy, updated 1 June 2026, provides an approval/amendment pathway for specific Analytics & Reporting metrics and longer retention of approved statistical data; it does not automatically grant raw-video training permission.
+
+YouTube's third-party AI-training option is off by default and requires all applicable rights holders to opt in. Approved third-party companies can be selected by creators, and YouTube may share eligible videos with them. Companies can apply to join the list. This is a plausible media-delivery path only if accepted and the handoff is documented.
+
+### YouTube Shorts identification
+
+Official Shorts guidance says that, for standard channels, square or vertical videos up to three minutes uploaded from 15 October 2024 are categorized as Shorts. Public Data API fields used in ordinary candidate discovery do not provide a reliable universal aspect-ratio flag. Discovery therefore stores candidate/unknown/confirmed format state rather than equating every video under 180 seconds with a Short.
+
+### Instagram Graph API
+
+Meta's media documentation says media endpoints return media belonging to professional accounts, not personal accounts. Business Discovery is a narrow path for eligible public Business/Creator accounts whose usernames are known. Reels view_count is available through Business Discovery; its definition can include paid/cross-posted views. Hashtag search does not expose all Business Discovery fields, so hashtag results cannot be assumed to provide the same 1M+ filter. media_url may be omitted for copyrighted/flagged content.
+
+### Meta Content Library
+
+Meta Content Library is a controlled-access research product with institutional eligibility/review. Its API is used in a secure research environment and Meta says API data cannot be downloaded from it. The UI has a separate downloadable subset for approved researchers, subject to additional requirements. This may support institutional research discovery, but it is not a general local MP4 feed.
+
+### Decision
+
+- Build official metadata discovery and a rights-aware SQLite dedup ledger.
+- Treat metadata candidate discovery and media acquisition as separate subsystems.
+- Keep arbitrary public-platform downloader/scraper out of default design.
+- Make YouTube third-party-training partner admission, Meta institutional access, creator handoff and licensed providers explicit onboarding workstreams.
+- Do not promise 100/200 media files per run; report actual unique candidates and separately report authorized media assets.
