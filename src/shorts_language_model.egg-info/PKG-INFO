@@ -1,0 +1,181 @@
+Metadata-Version: 2.4
+Name: shorts-language-model
+Version: 0.2.0
+Summary: Rights-aware multimodal short-form video telemetry and understanding
+Author: Shorts Language Model contributors
+License: Apache-2.0
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pydantic<3,>=2.7
+Requires-Dist: typer<1,>=0.12
+Requires-Dist: rich<15,>=13.7
+Requires-Dist: numpy<3,>=1.26
+Requires-Dist: opencv-python<5,>=4.9
+Provides-Extra: audio
+Requires-Dist: librosa<1,>=0.10; extra == "audio"
+Requires-Dist: faster-whisper<2,>=1.0; extra == "audio"
+Provides-Extra: ocr
+Requires-Dist: paddleocr<4,>=2.7; extra == "ocr"
+Provides-Extra: discovery
+Requires-Dist: yt-dlp>=2024.10; extra == "discovery"
+Requires-Dist: instaloader>=4.14.3; extra == "discovery"
+Requires-Dist: ddgs>=9; extra == "discovery"
+Provides-Extra: instagram-fallback
+Requires-Dist: gallery-dl>=1.32; extra == "instagram-fallback"
+Provides-Extra: vidtrace
+Requires-Dist: vidtrace[ocr,whisper] @ git+https://github.com/Arhanpg/VidTrace.git@910c6d2add21079c0d26316b1b7a2862a8db50e9 ; extra == "vidtrace"
+Provides-Extra: all
+Requires-Dist: librosa<1,>=0.10; extra == "all"
+Requires-Dist: faster-whisper<2,>=1.0; extra == "all"
+Requires-Dist: paddleocr<4,>=2.7; extra == "all"
+Requires-Dist: yt-dlp>=2024.10; extra == "all"
+Requires-Dist: instaloader>=4.14.3; extra == "all"
+Requires-Dist: ddgs>=9; extra == "all"
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: ruff>=0.6; extra == "dev"
+Requires-Dist: mypy>=1.11; extra == "dev"
+Dynamic: license-file
+
+# Shorts Language Model
+
+Shorts Language Model is an automated short-form video discovery, telemetry and intelligence pipeline. The current acquisition implementation uses **open-source public-web search and downloader repositories**, not the YouTube Data API, Instagram Graph API or Meta Content Library.
+
+The objective is to search for YouTube Shorts and Instagram Reels, filter current view-count observations at 1M+, save unique candidates to a local SQLite database, and download media to the laptop through open-source extractors when a valid item-specific rights record permits it. The existing multimodal analyzer then extracts transcript, OCR, scene, motion, audio and editing evidence.
+
+## Non-API toolchain
+
+| Purpose | Open-source tool | Use |
+|---|---|---|
+| YouTube search + metadata + download | yt-dlp | ytsearchN:query, view_count, duration, dimensions and media download |
+| Instagram public-link discovery | DDGS | Search indexed public Reel URLs without an Instagram developer token |
+| Instagram Reel metadata + primary download | Instaloader | Resolve shortcode; view/play count, caption/hashtags, duration and Post download |
+| Instagram alternate extractor | yt-dlp Instagram extractor | Second download attempt on a discovered Reel URL |
+| Instagram fallback downloader | gallery-dl | Optional third attempt if Instaloader and yt-dlp fail |
+| Local deduplication and job state | SQLite | Persist source IDs, metrics, download status and SHA-256 fingerprints |
+
+The detailed rationale and limitations are in [docs/NON_API_DISCOVERY_TOOLCHAIN.md](docs/NON_API_DISCOVERY_TOOLCHAIN.md).
+
+## Important metric handling
+
+- YouTube view_count is stored as the view metric where yt-dlp returns it.
+- Instagram video_view_count is stored separately from video_play_count.
+- The default filter uses view_count only. The optional --instagram-use-play-count switch permits play_count when the view_count field is absent, but preserves the metric label.
+- Missing metrics are unknown, not zero, and never pass the default 1M threshold.
+- YouTube format confirmation uses Shorts URL evidence or metadata dimensions/duration. An eligible duration alone is not proof that a landscape video is a Short.
+- Instagram search results are confirmed Reels when they came from a /reel/ search result and the resolved media is video. Profile/hashtag discoveries are candidates unless more source evidence is available.
+
+## Current commands
+
+Install on Windows PowerShell:
+
+    py -3.11 -m venv .venv
+    .venv/Scripts/Activate.ps1
+    python -m pip install --upgrade pip
+    pip install -e ".[dev,discovery,audio]"
+
+Install FFmpeg and ffprobe and ensure both are on PATH. The gallery-dl Instagram fallback is optional:
+
+    pip install -e ".[instagram-fallback]"
+
+Check dependencies:
+
+    shorts-lm doctor
+
+### Discover 100 new unique candidates
+
+    shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
+
+Add search phrases by repeating --query:
+
+    shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --query "cricket viral shorts India" --query "education facts short videos" --query "comedy viral reels India"
+
+YouTube only:
+
+    shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000
+
+Instagram indexed Reel search only:
+
+    shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000
+
+Optional Instagram hashtag discovery requires an existing local Instaloader session:
+
+    instaloader --login YOUR_USERNAME --no-posts --no-profile-pic YOUR_USERNAME
+    shorts-lm discover run --platform instagram --instagram-session-user YOUR_USERNAME --instagram-hashtag cricket --instagram-hashtag comedy --target-new 100 --min-views 1000000
+
+The password is prompted interactively by Instaloader; never pass it as a command-line argument or commit a session file.
+
+### Download candidates
+
+Discovery does not automatically equate a public URL with training permission. Downloading requires a private JSONL rights manifest with an item-specific, current grant for media retrieval, analysis, temporary processing, derived-artifact retention and model training.
+
+The example manifest at examples/rights_manifest.example.jsonl is deliberately non-authorizing. Replace it only with real permission evidence and keep the actual manifest under data/private/.
+
+    shorts-lm discover download --rights-manifest data/private/rights.jsonl --limit 25 --output-dir data/private/acquired
+
+The downloader rejects missing, expired, revoked or incomplete permission records. It writes a local MP4 and a private metadata/rights sidecar.
+
+## Local persistence and deduplication
+
+Default SQLite database: .shortslm/discovery.sqlite3. It is private and gitignored.
+
+- Unique platform/source ID prevents the same link being selected again.
+- SHA-256 after download catches byte-identical content found on different platforms.
+- Download failures remain retryable.
+- Metadata records store title/caption, description, creator, hashtags, observed metric, duration, publication date and discovery status.
+- Run summaries are written under outputs/discovery/.
+
+Search results are indexed and ranked. Shuffling queries/results makes selection less tied to a single result ordering; it does not create a mathematically uniform random sample of all YouTube or Instagram videos. The requested target is not guaranteed: source coverage, rate limits, duplicate results and missing view counts can produce a partial yield.
+
+## Instagram session and access limits
+
+Public indexed Reel links are attempted without a session first. Some Instagram content, hashtag searches or metadata fields may require the user's own Instaloader session. Instaloader respects its own rate controller. If an item is login-gated, blocked, deleted or unavailable, the crawler records/skips the error. It does not use proxy rotation, CAPTCHA bypass, stolen cookies or other access-control workarounds.
+
+## Existing local video analyzer
+
+The Phase 1 analyzer remains the downstream processor for a permitted local MP4:
+
+    shorts-lm doctor
+    shorts-lm analyze --input data/private/acquired/VIDEO.mp4 --output outputs/analysis.json --rights-basis creator_permission --rights-reference PRIVATE_CONSENT_REFERENCE --training-permitted
+
+The 4 GB RTX 3050 is not required for discovery, SQLite or download. The local laptop is appropriate for discovery and CPU media preprocessing. Use a rented GPU for substantial multimodal fine-tuning after the dataset and rights gates pass.
+
+## Revised phases
+
+1. Non-API discovery + SQLite — current implementation.
+2. Authorized media acquisition + robust metadata/asset validation.
+3. Batch multimodal processing using the existing analyzer.
+4. Dataset QA, duplicate control and annotation.
+5. Model bake-off and frozen baselines.
+6. Cloud fine-tuning.
+7. Quantized local deployment.
+8. Controlled expansion with measured cost and data quality.
+
+## Security and data safety
+
+Never commit the discovery SQLite database, downloaded MP4s, Instagram session files, cookies, credentials, private rights manifests, consent documents, raw transcripts or private metadata reports. The .gitignore includes these local artifacts.
+
+Only acquire and train on media for which the exact intended use is authorized. Publicly viewable content is not automatically licensed for bulk copying, persistent storage or model training. This project does not attempt to bypass platform login, technical restrictions or rate limits.
+
+## Tests
+
+    ruff check src tests
+    pytest -q
+
+## Documentation
+
+- [Non-API Discovery and Downloader Toolchain](docs/NON_API_DISCOVERY_TOOLCHAIN.md)
+- [Global Master Plan](docs/GLOBAL_MASTER_PLAN.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Data and Compliance](docs/DATA_AND_COMPLIANCE.md)
+- [Dataset and Labeling](docs/DATASET_AND_LABELING.md)
+- [Phase 1 Design](docs/PHASE_1_DESIGN.md)
+- [Phase 2 Design](docs/PHASE_2_DESIGN.md)
+- [Phase 2 Testing](docs/PHASE_2_TESTING.md)
+- [References](docs/REFERENCES.md)
+
+## License
+
+Apache-2.0. See LICENSE.
