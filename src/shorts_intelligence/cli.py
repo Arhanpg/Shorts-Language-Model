@@ -57,7 +57,7 @@ def analyze(
         500, "--max-file-size-mb", min=1, max=10000,
         help="Maximum input size in MB.",
     ),
-    max_keyframes: int = typer.Option(48, "--max-keyframes", min=4, max=256),
+    max_keyframes: int = typer.Option(48, "--max-keyframes", min=4, max=96),
     max_ocr_frames: int = typer.Option(12, "--max-ocr-frames", min=1, max=64),
     asr_model: str = typer.Option(
         "small", "--asr-model",

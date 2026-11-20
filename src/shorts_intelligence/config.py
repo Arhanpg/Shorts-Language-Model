@@ -32,11 +32,17 @@ class AnalyzerConfig:
             raise ValueError("max_file_size_mb must be positive")
         if self.max_duration_seconds <= 0:
             raise ValueError("max_duration_seconds must be positive")
-        if self.max_keyframes < 4:
-            raise ValueError("max_keyframes must be at least 4")
+        if not 4 <= self.max_keyframes <= 96:
+            raise ValueError("max_keyframes must be between 4 and 96 to bound image memory")
         if self.max_ocr_frames < 1:
             raise ValueError("max_ocr_frames must be at least 1")
         if not 0.0 < self.cut_threshold <= 1.0:
             raise ValueError("cut_threshold must be in (0, 1]")
+        if self.hook_sample_interval_seconds <= 0 or self.analysis_sample_interval_seconds <= 0:
+            raise ValueError("frame sampling intervals must be positive")
+        if self.motion_resize_width <= 0 or self.keyframe_width <= 0:
+            raise ValueError("frame widths must be positive")
+        if not 1 <= self.jpeg_quality <= 100:
+            raise ValueError("jpeg_quality must be between 1 and 100")
         if self.asr_device not in {"cpu", "cuda", "auto"}:
             raise ValueError("asr_device must be cpu, cuda or auto")
