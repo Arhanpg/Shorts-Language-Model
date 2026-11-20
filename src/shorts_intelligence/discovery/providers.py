@@ -12,7 +12,11 @@ from collections.abc import Iterator
 from typing import Any
 
 from shorts_intelligence.discovery.models import DiscoveredCandidate
-from shorts_intelligence.discovery.normalization import candidate_from_ytdlp, instagram_shortcode_from_url
+from shorts_intelligence.discovery.normalization import (
+    candidate_from_instagram_post,
+    candidate_from_ytdlp,
+    instagram_shortcode_from_url,
+)
 
 
 class ProviderUnavailable(RuntimeError):
@@ -94,48 +98,6 @@ class InstagramSearchProvider:
             )
         return loader
 
-    @staticmethod
-    def _candidate_from_post(post: Any, *, from_reel_search: bool) -> DiscoveredCandidate | None:
-        if not bool(getattr(post, "is_video", False)):
-            return None
-        shortcode = str(getattr(post, "shortcode", "") or "")
-        if not shortcode:
-            return None
-
-        caption = getattr(post, "caption", None)
-        view_count = getattr(post, "video_view_count", None)
-        play_count = getattr(post, "video_play_count", None)
-        duration = getattr(post, "video_duration", None)
-        date = getattr(post, "date_utc", None)
-        is_reel = from_reel_search
-        metric_source = (
-            "instaloader_video_view_count" if view_count is not None
-            else "instaloader_video_play_count" if play_count is not None
-            else None
-        )
-        hashtags = list(getattr(post, "caption_hashtags", []) or [])
-        return DiscoveredCandidate(
-            platform="instagram",
-            source_id=shortcode,
-            canonical_url=f"https://www.instagram.com/reel/{shortcode}/",
-            title=getattr(post, "title", None),
-            description=caption,
-            creator=getattr(post, "owner_username", None),
-            view_count=int(view_count) if view_count is not None else None,
-            play_count=int(play_count) if play_count is not None else None,
-            metric_source=metric_source,
-            duration_seconds=float(duration) if duration is not None else None,
-            upload_date=date.date().isoformat() if date is not None else None,
-            hashtags=hashtags,
-            short_format_status="confirmed" if is_reel else "candidate",
-            metadata={
-                "likes": int(getattr(post, "likes", 0) or 0),
-                "comments": int(getattr(post, "comments", 0) or 0),
-                "typename": str(getattr(post, "typename", "")),
-                "discovery_method": "search_engine_reel_url" if is_reel else "instagram_profile_or_hashtag",
-            },
-        )
-
     def search(self, query: str, *, limit: int = 30) -> Iterator[DiscoveredCandidate]:
         try:
             from ddgs import DDGS
@@ -163,7 +125,7 @@ class InstagramSearchProvider:
             seen.add(shortcode)
             try:
                 post = instaloader.Post.from_shortcode(loader.context, shortcode)
-                candidate = self._candidate_from_post(post, from_reel_search=True)
+                candidate = candidate_from_instagram_post(post, from_reel_search=True)
                 if candidate is not None:
                     yield candidate
             except Exception as exc:
@@ -193,11 +155,19 @@ class InstagramSearchProvider:
             scanned += 1
             if scanned > max(limit * 12, limit + 25):
                 break
-            shortcode = str(getattr(post, "shortcode", "") or "")
+            try:
+                shortcode = str(getattr(post, "shortcode", "") or "")
+            except Exception as exc:
+                self.errors.append(f"hashtag #{hashtag}: shortcode read failed: {str(exc)[:150]}")
+                continue
             if not shortcode or shortcode in seen:
                 continue
             seen.add(shortcode)
-            candidate = self._candidate_from_post(post, from_reel_search=False)
+            try:
+                candidate = candidate_from_instagram_post(post, from_reel_search=False)
+            except Exception as exc:
+                self.errors.append(f"hashtag #{hashtag} {shortcode}: {str(exc)[:200]}")
+                continue
             if candidate is not None:
                 yield candidate
                 count += 1
