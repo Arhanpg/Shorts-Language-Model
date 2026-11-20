@@ -7,7 +7,7 @@ venv/
 .env.*
 !.env.example
 
-# Data / media / training artifacts
+# Private data, media and model artifacts
 /data/
 /raw/
 /processed/
@@ -16,6 +16,7 @@ venv/
 /runs/
 /wandb/
 /mlruns/
+.shortslm/
 *.mp4
 *.mov
 *.mkv
@@ -28,6 +29,7 @@ venv/
 *.pt
 *.pth
 *.ckpt
+*.tmp
 
 # OS/editor
 .DS_Store
@@ -35,18 +37,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Phase 1 generated artifacts
-*.tmp
-outputs/
-*_frames/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-
-# Phase 1 generated artifacts
-*.tmp
-outputs/
-*_frames/
+# Test and type-check caches
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
