@@ -1,158 +1,126 @@
 # Shorts Language Model
 
-A rights-aware, local-first multimodal system for analyzing short-form videos. The project combines deterministic audiovisual telemetry with a compact video-language model in later phases; **Phase 1 implements the local single-video telemetry pipeline only**.
+Shorts Language Model is an automated, rights-aware short-form video discovery and intelligence project. The goal is to discover eligible YouTube Shorts and Instagram Reels without manually pasting individual links, deduplicate candidates in a local database, acquire media through authorized providers, extract multilingual audiovisual evidence, and ultimately fine-tune a compact multimodal model for local analysis.
 
-<p align="center">
-  <img src="docs/research/images/telemetry-training-architecture.jpg" alt="Stratified ingestion, telemetry, training and local inference architecture" width="760" />
-</p>
+> Automation does not grant media rights. A public URL or view count is not permission to download, store or train on a video. The system uses official APIs, approved research interfaces, creator-authorized delivery and licensed media providers. It will not fall back to unauthorized scraping or generic downloading.
 
-## Phase 1 — Single-video telemetry
+## What the finished system is intended to do
 
-The first working command accepts a local video file and writes a validated JSON evidence report:
+1. Run a discovery job with a target such as 100 or 200 new candidates.
+2. Search supported sources across language, region, topic and publication windows.
+3. Filter by a current, timestamped 1M+ view/plays observation where the source exposes that metric.
+4. Check local SQLite inventory so already-seen candidates are not repeatedly selected while their identity can lawfully be retained.
+5. Store permitted title/caption, description, hashtags/tags, duration and engagement snapshots.
+6. Acquire the MP4 automatically only where a platform/provider/creator delivery route grants the required media and training rights.
+7. Run transcript, OCR, scene, motion, cut, VFX-candidate and audio extraction.
+8. Build a clean dataset and fine-tune a compact multimodal model in cloud batches.
+9. Run the resulting quantized model locally where hardware measurements support it.
 
-    shorts-lm analyze --input "D:\Videos\my_short.mp4" --output outputs\my_short.analysis.json --rights-basis creator_owned
+A discovery target is not a guaranteed download count. If a source cannot lawfully deliver raw media or quota/search yield is lower than expected, the run reports the actual yield and why.
 
-It extracts:
-- media metadata, dimensions, FPS, duration, codec and SHA-256;
-- dense opening-window frames plus selected frames across the rest of the clip;
-- visual shot-boundary candidates using frame-histogram discontinuities;
-- optical-flow motion measurements;
-- multilingual timestamped ASR through faster-whisper;
-- timestamped on-screen text through PaddleOCR;
-- acoustic energy, silence, onset, tempo and estimated beat times;
-- a validated JSON report with warnings, provenance and timestamp bounds.
+## Platform reality
 
-**Important:** cut, motion and beat events are measured candidates, not human-verified labels. The hook window is measured only; Phase 1 does not judge hook quality or predict views. The pipeline does not crawl websites, download platform videos or upload media to a cloud service.
+- **YouTube:** the official Data API can discover videos and return metadata/statistics. It does not grant MP4 download rights. YouTube prohibits downloading/caching audiovisual copies without prior written approval and prohibits scraping. The creator third-party AI-training opt-in is a possible authorized path, but the project/company must be admitted and creators/rightsholders must opt in.
+- **Instagram:** the Graph API can inspect eligible public Business/Creator accounts using Business Discovery; Reel view counts are available through that path. It is not a global search/download API for every public Reel. Meta Content Library is controlled research access; API data cannot be downloaded from the API.
+- **Browser agent:** Playwright may automate a specific approved interface. It is not used to bypass API access, login, rate limits or download restrictions.
 
-## Hardware recommendation
+Read [Automated Discovery and Rights-Gated Media Acquisition](AUTOMATED_DISCOVERY_AND_ACQUISITION.md) for the detailed source matrix and acquisition routes.
 
-**Run Phase 1 on your local Windows laptop first.** Your RTX 3050 4 GB is not required for this phase. Start with CPU ASR (`--asr-device cpu`) and CPU OCR to avoid VRAM contention. Colab is unnecessary for this preprocessing/telemetry phase; later rented GPUs will be used for model fine-tuning after the pilot and baselines.
+## Current implementation status
 
-## Installation
+- **Implemented:** local single-video telemetry CLI, media validation, frame sampling, cut/motion candidates, ASR/OCR adapters, audio measurements and validated JSON reports.
+- **Not implemented yet:** automated API discovery, local discovery SQLite database, 100/200 target-based query planner, policy-aware metadata retention, rights-gated media delivery providers and autonomous end-to-end ingestion.
+- **Not yet trained:** no ShortsLM fine-tuned checkpoint or 300-video empirical dataset is claimed.
 
-### 1. System dependency
+The existing single-video analyzer is retained as the media-processing engine. The old local-manifest Phase 2 pilot is useful as downstream processing/QA code, but it is not the automated source-discovery solution.
 
-Install FFmpeg (including ffprobe) and make sure both executables are on PATH:
+## Revised architecture
 
-    ffmpeg -version
-    ffprobe -version
+    Discovery scheduler
+        |
+        v
+    YouTube Data API / Instagram Business Discovery / approved research / licensed feeds
+        |
+        v
+    Provider normalizer -> 1M+ candidate filter -> SQLite dedup + retention
+        |
+        v
+    Rights and media-delivery gate
+       / \
+      /   \
+    authorized  metadata-only/deferred
+      |
+      v
+    Approved asset delivery -> private staging + checksum
+      |
+      v
+    ShortsLM telemetry: ASR + OCR + shots + motion + audio
+      |
+      v
+    Evidence store + human review + dataset quality/splits
+      |
+      v
+    Frozen model baseline -> cloud LoRA fine-tuning -> evaluation
+      |
+      v
+    Quantized local multimodal model + report app
 
-### 2. Python environment (Windows PowerShell)
+## Hardware strategy
 
-Python 3.11 is recommended:
+**Local Windows/WSL laptop:** discovery, SQLite, API calls, metadata normalization, deduplication, job scheduling, FFmpeg smoke tests and CPU telemetry. RTX 3050 4 GB is optional for small experiments and quantized inference.
+
+**Cloud GPU:** batch fine-tuning and higher-throughput VLM evaluation after data rights and quality gates pass. Colab is useful for short experiments, not as the durable acquisition scheduler or database.
+
+## Existing local analyzer quickstart
+
+Install FFmpeg (including ffprobe), create the Python environment, then run:
 
     py -3.11 -m venv .venv
-    .\.venv\Scripts\Activate.ps1
+    .venv/Scripts/Activate.ps1
     python -m pip install --upgrade pip
     pip install -e ".[dev,audio]"
-
-### 3. Reuse your existing VidTrace project (recommended)
-
-VidTrace already contains a maintained PaddleOCR wrapper, faster-whisper transcription, adaptive frame sampling and a common event model. ShortsLM integrates its OCR and ASR adapters when VidTrace is installed; it does not copy VidTrace's implementation.
-
-With both repositories as sibling folders and the ShortsLM environment activated:
-
-    pip install -e "..\VidTrace[whisper,ocr]"
-
-Adjust the relative path if your two repositories are not sibling folders. Alternatively:
-
-    pip install -e ".[ocr]"
-
-PaddlePaddle GPU installation is platform/CUDA-specific. Follow the official PaddlePaddle installation instructions for your platform. Do not install CPU and GPU Paddle builds together.
-
-## Check setup
-
     shorts-lm doctor
-    shorts-lm doctor --json
 
-FFmpeg, ffprobe and OpenCV are required. faster-whisper, PaddleOCR and librosa are optional engines; missing extras are reported as skipped stages rather than silently fabricated results.
+Analyze a file that you are authorized to process:
 
-## Analyze one permitted video
+    shorts-lm analyze --input authorized_clip.mp4 --output outputs/analysis.json --rights-basis creator_owned --asr-model small --asr-device cpu
 
-    shorts-lm analyze --input "D:\Videos\my_short.mp4" --output "outputs\my_short.analysis.json" --rights-basis creator_owned --asr-model small --asr-device cpu --keep-artifacts
+This is the existing media processor, not the future autonomous acquisition command.
 
-Supported rights-basis values:
-- `creator_owned`
-- `creator_permission`
-- `licensed_dataset`
-- `approved_research`
+## Revised phases
 
-This is an explicit user declaration, not an automatic legal check. Model-training permission is a separate field and defaults to false. Use `--training-permitted` only when that permission is explicitly covered by the relevant rights/consent record.
+1. Provider and rights foundation
+2. Automated discovery + SQLite deduplication — next coding phase
+3. Rights-gated media acquisition
+4. Automated multimodal processing
+5. Dataset QA and annotation
+6. Model bake-off and baselines
+7. Cloud fine-tuning
+8. Quantized local deployment and controlled scale
 
-For a quick pipeline smoke run without downloading model weights or initializing OCR:
+## Project documentation
 
-    shorts-lm analyze --input "D:\Videos\my_short.mp4" --output outputs\smoke.json --rights-basis creator_owned --no-asr --no-ocr
-
-Useful controls: `--max-duration 180`, `--max-file-size-mb 500`, `--max-keyframes 48`, `--max-ocr-frames 12`, `--no-asr`, `--no-ocr`, `--no-audio-analysis`, `--keep-artifacts`.
-
-## Output
-
-- `outputs/my_short.analysis.json` — timestamped telemetry report.
-- `outputs/my_short.analysis_frames/` — selected JPEG evidence frames, only when `--keep-artifacts` is supplied.
-
-Extracted WAV audio lives in a temporary directory and is deleted when processing ends. Do not commit videos, audio, generated frames, private analytics, transcripts or training data to GitHub.
+- [Global Master Plan](docs/GLOBAL_MASTER_PLAN.md)
+- [Automated Discovery and Media Acquisition](docs/AUTOMATED_DISCOVERY_AND_ACQUISITION.md)
+- [ADR-002: Automated Discovery Without Unauthorized Scraping](docs/ADR-002-AUTOMATED-DISCOVERY.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Data and Compliance](docs/DATA_AND_COMPLIANCE.md)
+- [Dataset and Labeling](docs/DATASET_AND_LABELING.md)
+- [Evaluation](docs/EVALUATION.md)
+- [Roadmap](docs/ROADMAP.md)
+- [References](docs/REFERENCES.md)
+- [Research Comparison](docs/RESEARCH_COMPARISON.md)
+- [Original Phase 1 Design and Testing](docs/PHASE_1_DESIGN.md)
 
 ## Tests
 
     ruff check src tests
     pytest -q
 
-For the 25–50-video manual acceptance checklist, setup troubleshooting, GPU experiment and test log template, see [Phase 1 Setup and Test Guide](docs/PHASE_1_TESTING.md). For component contracts and limitations, see [Phase 1 Design](docs/PHASE_1_DESIGN.md).
+## Data safety
 
-## Research architecture and next phases
-
-- [Full Global Master Plan](docs/GLOBAL_MASTER_PLAN.md)
-- [Architecture Decision Record](docs/ARCHITECTURE.md)
-- [Phase 1 Design](docs/PHASE_1_DESIGN.md)
-- [Phase 1 Setup and Test Guide](docs/PHASE_1_TESTING.md)
-- [Dataset and Labeling](docs/DATASET_AND_LABELING.md)
-- [Evaluation Protocol](docs/EVALUATION.md)
-- [Data and Compliance](docs/DATA_AND_COMPLIANCE.md)
-- [Roadmap](docs/ROADMAP.md)
+Keep API credentials in environment variables or a local secret manager. Never commit cookies, access tokens, source media, private SQLite files, creator data, transcripts, consent documents or private reports. API-derived metadata and IDs must expire/refresh according to provider policy; hashing an ID does not automatically remove those obligations.
 
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
-
-
-## Phase 2 — 300-video diagnostic pilot
-
-Phase 2 adds a private, rights-aware data workflow around the Phase 1 analyzer. It validates candidate manifests and local media, deduplicates by SHA-256, pseudonymizes creator groups using a private local HMAC salt, and selects a reproducible stratified sample across platform, language, topic, duration, performance tier and speech mode.
-
-It also creates same-creator comparison candidates (only where enough comparable uploads exist), a human-review queue, resumable sequential telemetry processing, per-video processing metrics and quality summaries by stratum. It **does not scrape YouTube/Instagram, download URLs, train a model, or claim causal virality drivers**.
-
-### Quickstart
-
-Create and edit a private candidate manifest:
-
-    shorts-lm pilot template --output data/private/manifest.example.jsonl
-
-Copy the template to `data/private/candidates.jsonl`. Add one JSONL record per locally stored video you are permitted to process. Model-training permission is a separate explicit flag and defaults to false.
-
-Validate rights, file paths, size/duration, media metadata and duplicates:
-
-    shorts-lm pilot validate --manifest data/private/candidates.jsonl --report outputs/pilot/validation.json
-
-Select the 300-video stratified diagnostic sample:
-
-    shorts-lm pilot sample --manifest data/private/candidates.jsonl --output-dir outputs/pilot --target 300 --seed 42 --max-per-creator 5
-
-First process a few videos:
-
-    shorts-lm pilot process --manifest outputs/pilot/selected_manifest.jsonl --output-dir outputs/pilot --limit 10 --asr-model tiny --asr-device cpu
-
-Then process all selected videos:
-
-    shorts-lm pilot process --manifest outputs/pilot/selected_manifest.jsonl --output-dir outputs/pilot --asr-model small --asr-device cpu
-
-Build the report:
-
-    shorts-lm pilot report --pilot-dir outputs/pilot --output outputs/pilot/final_pilot_report.json
-
-The processor is sequential and resumable. Completed reports are reused only if the source checksum, size, rights reference/expiry and pipeline configuration match. Use `--no-resume` to reprocess. If fewer than 300 eligible records exist, the command stops unless `--allow-shortfall` is explicitly supplied; the requested target and shortfall remain in the selection report.
-
-**Keep all files under `data/`, `outputs/` and `.shortslm/` private.** The selected manifest contains local paths and pseudonymous creator IDs; the creator salt must never be published. The CLI measures local wall time and artifact sizes, not cloud bills or human-review cost.
-
-Full instructions:
-- [Phase 2 design](docs/PHASE_2_DESIGN.md)
-- [Phase 2 setup, commands and manual audit](docs/PHASE_2_TESTING.md)
