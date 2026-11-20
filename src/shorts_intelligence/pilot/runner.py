@@ -7,8 +7,8 @@ import hashlib
 import json
 import time
 from collections import Counter
-from datetime import datetime, timezone
 from dataclasses import asdict
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -156,7 +156,7 @@ def process_selected(
                 raise PermissionError(
                     "Selected record lacks required processing capabilities."
                 )
-            if record.rights_expires_at and record.rights_expires_at <= datetime.now(timezone.utc):
+            if record.rights_expires_at and record.rights_expires_at <= datetime.now(UTC):
                 raise PermissionError("Media-processing permission has expired.")
             media_path = Path(record.media_path).expanduser().resolve(strict=True)
             if not media_path.is_file():
