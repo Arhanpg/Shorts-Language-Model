@@ -15,6 +15,7 @@ from rich.table import Table
 from shorts_intelligence import __version__
 from shorts_intelligence.analyzer import analyze_video
 from shorts_intelligence.config import AnalyzerConfig
+from shorts_intelligence.discovery.cli import discovery_app
 from shorts_intelligence.media.probe import MediaError
 from shorts_intelligence.pilot.cli import pilot_app
 
@@ -137,6 +138,9 @@ def doctor(
         "faster_whisper": importlib.util.find_spec("faster_whisper") is not None,
         "paddleocr": importlib.util.find_spec("paddleocr") is not None,
         "vidtrace": importlib.util.find_spec("vidtrace") is not None,
+        "yt_dlp": importlib.util.find_spec("yt_dlp") is not None,
+        "instaloader": importlib.util.find_spec("instaloader") is not None,
+        "ddgs": importlib.util.find_spec("ddgs") is not None,
     }
     if as_json:
         typer.echo(json.dumps({"version": __version__, "checks": checks}, indent=2))
@@ -161,3 +165,4 @@ def version() -> None:
 
 
 app.add_typer(pilot_app, name="pilot")
+app.add_typer(discovery_app, name="discover")
