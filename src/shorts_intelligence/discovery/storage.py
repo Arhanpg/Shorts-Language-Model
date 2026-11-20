@@ -133,9 +133,9 @@ class DiscoveryStore:
         effective_format = candidate.short_format_status
         if existing:
             previous_format = existing["short_format_status"]
-            if effective_format == "unknown":
-                effective_format = previous_format
-            elif effective_format == "candidate" and previous_format in {"confirmed", "not_short"}:
+            if effective_format == "unknown" or (
+                effective_format == "candidate" and previous_format in {"confirmed", "not_short"}
+            ):
                 effective_format = previous_format
 
         previous_metadata = (
