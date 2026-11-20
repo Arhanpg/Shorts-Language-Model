@@ -131,8 +131,19 @@ class DiscoveryStore:
             else existing["play_count"] if existing else None
         )
         effective_format = candidate.short_format_status
-        if effective_format == "unknown" and existing:
-            effective_format = existing["short_format_status"]
+        if existing:
+            previous_format = existing["short_format_status"]
+            if effective_format == "unknown":
+                effective_format = previous_format
+            elif effective_format == "candidate" and previous_format in {"confirmed", "not_short"}:
+                effective_format = previous_format
+
+        previous_metadata = (
+            json.loads(existing["metadata_json"])
+            if existing and existing["metadata_json"]
+            else {}
+        )
+        effective_metadata = {**previous_metadata, **candidate.metadata}
 
         metric = effective_view_count
         if (
@@ -198,7 +209,7 @@ class DiscoveryStore:
                 status,
                 candidate.discovered_at.isoformat(),
                 now,
-                json.dumps(candidate.metadata, ensure_ascii=False, default=str),
+                json.dumps(effective_metadata, ensure_ascii=False, default=str),
                 run_id if is_new else existing["first_run_id"],
                 run_id,
             ),
