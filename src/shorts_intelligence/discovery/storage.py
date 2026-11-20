@@ -82,10 +82,17 @@ class DiscoveryStore:
     def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
         self.close()
 
-    def start_run(self, run_id: str, requested_target: int, min_views: int) -> None:
+    def start_run(
+        self,
+        run_id: str,
+        requested_target: int,
+        min_views: int,
+        *,
+        started_at: datetime | None = None,
+    ) -> None:
         self.connection.execute(
             "INSERT INTO discovery_runs(run_id, started_at, requested_target, min_views) VALUES(?,?,?,?)",
-            (run_id, datetime.now(UTC).isoformat(), requested_target, min_views),
+            (run_id, (started_at or datetime.now(UTC)).isoformat(), requested_target, min_views),
         )
         self.connection.commit()
 
