@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.media.probe import MediaError, _parse_rate, validate_input

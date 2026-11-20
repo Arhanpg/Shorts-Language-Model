@@ -1,6 +1,6 @@
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
+import pytest
 from pydantic import ValidationError
 
 from shorts_intelligence.schemas import AnalysisReport, RightsDeclaration
@@ -8,7 +8,7 @@ from shorts_intelligence.schemas import AnalysisReport, RightsDeclaration
 
 def _report(**overrides: object) -> AnalysisReport:
     payload: dict[str, object] = {
-        "generated_at": datetime.now(timezone.utc),
+        "generated_at": datetime.now(UTC),
         "rights": {"basis": "creator_owned"},
         "video": {
             "file_name": "clip.mp4",

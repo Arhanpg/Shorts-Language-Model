@@ -114,8 +114,11 @@ def analyze_video(
                     status="skipped", engine="ffmpeg",
                     detail="Audio extraction failed; ASR was not attempted.",
                 )
-        if metadata.audio_present and extracted_audio is None:
-            if stages["audio_features"].status == "skipped":
+        if (
+            metadata.audio_present
+            and extracted_audio is None
+            and stages["audio_features"].status == "skipped"
+        ):
                 stages["audio_features"] = StageStatus(
                     status="skipped", engine="ffmpeg",
                     detail="No usable audio stream was extracted.",

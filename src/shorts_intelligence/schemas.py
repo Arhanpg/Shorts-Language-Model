@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -81,7 +81,7 @@ class TranscriptSegment(StrictModel):
     words: list[dict[str, object]] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def validate_interval(self) -> "TranscriptSegment":
+    def validate_interval(self) -> TranscriptSegment:
         if self.end_seconds < self.start_seconds:
             raise ValueError("transcript end_seconds must be >= start_seconds")
         return self
@@ -126,7 +126,7 @@ class HookWindow(StrictModel):
 
 class AnalysisReport(StrictModel):
     schema_version: str = "1.0.0"
-    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     project: str = "Shorts Language Model"
     phase: str = "phase-1-single-video-telemetry"
     source_type: Literal["local_file"] = "local_file"
@@ -148,7 +148,7 @@ class AnalysisReport(StrictModel):
     ])
 
     @model_validator(mode="after")
-    def validate_timestamps_within_video(self) -> "AnalysisReport":
+    def validate_timestamps_within_video(self) -> AnalysisReport:
         duration = self.video.duration_seconds
         timestamps: list[float] = [
             item.timestamp_seconds for item in self.frame_evidence
