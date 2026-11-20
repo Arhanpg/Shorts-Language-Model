@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "shorts-language-model"
-version = "0.1.0"
-description = "Rights-aware multimodal short-form video understanding and performance research"
+version = "0.2.0"
+description = "Rights-aware multimodal short-form video telemetry and understanding"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
@@ -14,15 +14,21 @@ dependencies = [
   "pydantic>=2.7,<3",
   "typer>=0.12,<1",
   "rich>=13.7,<15",
-  "PyYAML>=6,<7",
+  "numpy>=1.26,<3",
+  "opencv-python>=4.9,<5",
 ]
 
 [project.optional-dependencies]
-media = ["opencv-python>=4.9", "scenedetect[opencv]>=0.6", "Pillow>=10"]
-audio = ["librosa>=0.10", "faster-whisper>=1.0"]
-ocr = ["paddleocr>=2.7"]
-ml = ["torch>=2.3", "transformers>=4.45", "datasets>=2.20", "peft>=0.12", "accelerate>=0.34"]
-dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11", "types-PyYAML>=6"]
+audio = ["librosa>=0.10,<1", "faster-whisper>=1.0,<2"]
+ocr = ["paddleocr>=2.7,<4"]
+vidtrace = [
+  "vidtrace[whisper,ocr] @ git+https://github.com/Arhanpg/VidTrace.git@910c6d2add21079c0d26316b1b7a2862a8db50e9",
+]
+all = ["librosa>=0.10,<1", "faster-whisper>=1.0,<2", "paddleocr>=2.7,<4"]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+shorts-lm = "shorts_intelligence.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -31,5 +37,10 @@ where = ["src"]
 line-length = 100
 target-version = "py311"
 
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-ra"
