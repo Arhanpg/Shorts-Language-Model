@@ -157,3 +157,9 @@ def doctor(
 def version() -> None:
     """Print package version."""
     typer.echo(__version__)
+
+
+# Phase 2 pilot commands
+from shorts_intelligence.pilot.cli import pilot_app
+
+app.add_typer(pilot_app, name="pilot")
