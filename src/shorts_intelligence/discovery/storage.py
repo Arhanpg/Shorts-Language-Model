@@ -162,7 +162,7 @@ class DiscoveryStore:
     def eligible_candidates(self, limit: int = 100) -> list[DiscoveredCandidate]:
         rows = self.connection.execute(
             "SELECT * FROM candidates WHERE status='eligible' AND download_status IN ('not_downloaded','download_failed') "
-            "ORDER BY view_count DESC LIMIT ?", (limit,),
+            "ORDER BY COALESCE(view_count, play_count) DESC LIMIT ?", (limit,),
         ).fetchall()
         return [self._candidate_from_row(row) for row in rows]
 
