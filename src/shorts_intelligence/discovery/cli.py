@@ -259,7 +259,7 @@ def run_discovery(
     encountered: set[tuple[str, str]] = set()
 
     with DiscoveryStore(database) as store:
-        store.start_run(run_id, target_new, min_views)
+        store.start_run(run_id, target_new, min_views, started_at=run_started_at)
         for candidate in candidates:
             identity = (candidate.platform, candidate.source_id)
             if identity in encountered:
@@ -308,6 +308,10 @@ def run_discovery(
 
         run_summary: dict[str, object] = {
             **dict(stats),
+            "scanned": stats["unique_evaluated"],
+            "new_eligible": stats["new_eligible"],
+            "duplicates": stats["duplicate_search_results"],
+            "errors": sum(provider_errors.values()) + unexpected_errors,
             "status_counts": dict(status_counts),
             "status_counts_by_platform": {
                 name: dict(counts) for name, counts in status_by_platform.items()
