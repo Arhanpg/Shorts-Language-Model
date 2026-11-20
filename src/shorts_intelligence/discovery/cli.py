@@ -79,8 +79,8 @@ def _add_provider_errors(
 ) -> None:
     if not provider_messages:
         return
+    provider_errors[platform] += len(provider_messages)
     for message in provider_messages:
-        provider_errors.append(platform)
         errors.append(f"{platform}: {message[:300]}")
     provider_messages.clear()
 
@@ -153,7 +153,8 @@ def run_discovery(
     errors: list[str] = []
     warnings: list[str] = []
     candidates: list[DiscoveredCandidate] = []
-    provider_errors: list[str] = []
+    provider_errors: Counter[str] = Counter()
+    unexpected_errors = 0
     raw_by_platform: Counter[str] = Counter()
     query_count: Counter[str] = Counter()
 
@@ -184,9 +185,10 @@ def run_discovery(
                     results_per_query,
                     per_platform_budget - raw_by_platform["youtube"],
                 )
+                previous_search_results = youtube.search_results_seen
                 results = list(youtube.search(search_phrase, limit=remaining))
                 candidates.extend(results)
-                raw_by_platform["youtube"] += len(results)
+                raw_by_platform["youtube"] += youtube.search_results_seen - previous_search_results
                 query_count["youtube"] += 1
                 _add_provider_errors(
                     provider_errors, errors, "youtube", youtube.errors
@@ -210,9 +212,10 @@ def run_discovery(
                     results_per_query,
                     per_platform_budget - raw_by_platform["instagram"],
                 )
+                previous_search_results = instagram.search_results_seen
                 results = list(instagram.search(phrase, limit=remaining))
                 candidates.extend(results)
-                raw_by_platform["instagram"] += len(results)
+                raw_by_platform["instagram"] += instagram.search_results_seen - previous_search_results
                 query_count["instagram"] += 1
                 _add_provider_errors(
                     provider_errors, errors, "instagram", instagram.errors
@@ -221,6 +224,7 @@ def run_discovery(
             for tag in instagram_hashtag:
                 if raw_by_platform["instagram"] >= per_platform_budget:
                     break
+                previous_search_results = instagram.search_results_seen
                 results = list(
                     instagram.search_hashtag(
                         tag,
@@ -231,7 +235,7 @@ def run_discovery(
                     )
                 )
                 candidates.extend(results)
-                raw_by_platform["instagram"] += len(results)
+                raw_by_platform["instagram"] += instagram.search_results_seen - previous_search_results
                 _add_provider_errors(
                     provider_errors, errors, "instagram", instagram.errors
                 )
@@ -240,6 +244,7 @@ def run_discovery(
         console.print(f"[bold red]Discovery dependency missing:[/bold red] {exc}")
         raise typer.Exit(code=2) from exc
     except Exception as exc:
+        unexpected_errors += 1
         errors.append(f"Unexpected discovery error: {str(exc)[:300]}")
 
     # Randomize the interleaving, but never claim search-engine results are a
@@ -335,7 +340,8 @@ def run_discovery(
         "format_uncertain": stats["format_uncertain"],
         "not_short": stats["not_short"],
         "storage_errors": stats["storage_errors"],
-        "provider_errors": len(provider_errors) + len(errors),
+        "provider_errors": sum(provider_errors.values()) + unexpected_errors,
+        "provider_errors_by_platform": dict(provider_errors),
         "provider_error_details": errors[:50],
         "yt_dlp_warnings": warnings[:30],
         "run_status_counts": dict(status_counts),
@@ -368,7 +374,7 @@ def run_discovery(
         ("Below view threshold", stats["below_threshold"]),
         ("Format uncertain", stats["format_uncertain"]),
         ("Not a Short/Reel", stats["not_short"]),
-        ("Provider / metadata errors", len(provider_errors) + len(errors)),
+        ("Provider / metadata errors", sum(provider_errors.values()) + unexpected_errors),
     ]
     for label, value in metrics:
         table.add_row(label, str(value))
