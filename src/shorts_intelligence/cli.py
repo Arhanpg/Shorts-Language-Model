@@ -145,7 +145,7 @@ def _supported_js_runtime(executable: str, minimum: tuple[int, int]) -> tuple[bo
     except (OSError, subprocess.TimeoutExpired):
         return False, None
     output = (result.stdout or result.stderr).strip()
-    match = re.search(r"(\\d+)\\.(\\d+)", output)
+    match = re.search(r"([0-9]+)[.]([0-9]+)", output)
     if not match or result.returncode != 0:
         return False, output.splitlines()[0] if output else None
     version = (int(match.group(1)), int(match.group(2)))
