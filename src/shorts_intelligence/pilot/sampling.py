@@ -8,8 +8,8 @@ import hmac
 import math
 import os
 import random
-from contextlib import suppress
 from collections import Counter, defaultdict
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from statistics import median
