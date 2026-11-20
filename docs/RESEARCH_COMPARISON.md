@@ -172,3 +172,25 @@ Meta Content Library is a controlled-access research product with institutional 
 - Keep arbitrary public-platform downloader/scraper out of default design.
 - Make YouTube third-party-training partner admission, Meta institutional access, creator handoff and licensed providers explicit onboarding workstreams.
 - Do not promise 100/200 media files per run; report actual unique candidates and separately report authorized media assets.
+
+
+## 9. Final toolchain decision — non-API request (21 November 2026)
+
+The earlier API-first recommendation is superseded by the project owner's explicit direction to avoid official platform APIs and use open-source GitHub tools.
+
+**Accepted implementation:**
+- yt-dlp's YouTube search extractor (ytsearch) for link discovery, metadata and video retrieval;
+- DDGS public web search to find indexed Instagram Reel URLs;
+- Instaloader to resolve Instagram shortcode metadata, hashtags, view/play metrics and download posts;
+- yt-dlp Instagram extraction as a secondary download attempt;
+- gallery-dl as an optional third-party extraction fallback;
+- SQLite for durable local platform/source-ID dedup and job status;
+- SHA-256 to detect exact duplicate media bytes across platforms.
+
+**Why not a single Instagram crawler:** no reviewed open-source project can guarantee a complete, current global listing of every public Instagram Reel without depending on the site search/login behaviour. The implemented approach combines indexed link search with Instaloader. It is intentionally best-effort and reports incomplete metadata, blocked pages and failures.
+
+**Metric decision:** never convert missing Instagram view/play fields into zero. Keep video_view_count and video_play_count separately. Default 1M filter uses view_count; play_count requires an explicit CLI option and keeps its source metric label. YouTube short format uses explicit Shorts URL or available upload-date/dimensions/duration evidence; ambiguous format stays a candidate/unknown.
+
+**Acquisition decision:** the open-source downloader is not the rights authority. A matching private manifest is required before media retrieval and training. The code checks required scopes, revocation and expiry; the project owner remains responsible for authentic permission evidence and third-party music/rights. No CAPTCHA, login, rate-limit, DRM or access-control bypass is part of the implementation.
+
+**What remains uncertain:** platform extractor compatibility and search engine coverage can change without notice. The 100/200 target is a best-effort target; actual new eligible candidates per run depend on public indexing, search rank, metric availability and dedup history. No claim of uniform/random sampling or universal Instagram coverage is made.
