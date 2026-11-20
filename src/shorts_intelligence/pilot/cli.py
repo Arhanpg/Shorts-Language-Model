@@ -132,6 +132,9 @@ def sample(
                 f"Per-creator cap reduced selection to {len(selected)} of {target}. "
                 "Increase --max-per-creator or pass --allow-shortfall."
             )
+        # Preserve the original requested target when a diagnostic shortfall is allowed.
+        summary["target"] = target
+        summary["shortfall"] = max(0, target - len(selected))
         pairs = build_matched_pairs(selected)
         write_selection_outputs(
             output_dir, selected, summary,
@@ -171,6 +174,10 @@ def process(
     no_ocr: bool = typer.Option(False, "--no-ocr"),
     no_audio_analysis: bool = typer.Option(False, "--no-audio-analysis"),
     keep_artifacts: bool = typer.Option(False, "--keep-artifacts"),
+    resume: bool = typer.Option(
+        True, "--resume/--no-resume",
+        help="Reuse completed reports only when input checksum, rights reference and config match.",
+    ),
 ) -> None:
     """Run Phase 1 telemetry for selected Phase 2 records, sequentially and locally."""
     try:
@@ -185,7 +192,9 @@ def process(
             enable_audio_analysis=not no_audio_analysis,
             keep_artifacts=keep_artifacts,
         )
-        summary = process_selected(manifest, output_dir, limit=limit, config=config)
+        summary = process_selected(
+            manifest, output_dir, limit=limit, config=config, resume=resume
+        )
     except Exception as exc:
         console.print(f"[bold red]Pilot processing failed:[/bold red] {exc}")
         raise typer.Exit(code=2) from exc
@@ -193,8 +202,9 @@ def process(
     for key in (
         "processed_records", "complete_records", "partial_records",
         "failed_records", "total_wall_seconds", "mean_seconds_per_record",
-        "input_media_bytes_read", "telemetry_report_bytes_written",
-        "training_permitted_processed_records",
+        "resumed_records", "analyzed_new_records",
+        "input_media_file_bytes_total", "telemetry_report_json_bytes_total",
+        "keyframe_artifact_bytes_total", "training_permitted_processed_records",
     ):
         console.print(f"{key}: {summary.get(key)}")
     console.print(f"Metrics: {(output_dir / 'processing_metrics.csv').resolve()}")
