@@ -55,3 +55,15 @@ def test_language_topic_normalize() -> None:
     )
     assert record.language == "hi"
     assert record.topic == "cricket edit"
+
+def test_performance_snapshot_cannot_precede_publication() -> None:
+    payload = _record(
+        published_at="2026-10-01T12:00:00+00:00",
+        performance={
+            "metric_name": "views",
+            "value": 1000,
+            "observed_at": "2026-09-30T12:00:00+00:00",
+        },
+    )
+    with pytest.raises(ValidationError, match="cannot precede published_at"):
+        PilotRecord.model_validate(payload)
