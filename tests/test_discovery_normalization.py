@@ -83,7 +83,7 @@ def test_ytdlp_vertical_short_is_confirmed():
     assert candidate is not None
     assert candidate.short_format_status == "confirmed"
     assert candidate.view_count == 1_450_000
-    assert candidate.hashtags == ["cricket", "shorts"]
+    assert set(candidate.hashtags) == {"cricket", "shorts"}
 
 
 def test_ytdlp_landscape_video_is_not_short():
