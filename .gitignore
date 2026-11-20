@@ -7,7 +7,7 @@ venv/
 .env.*
 !.env.example
 
-# Private data, media and model artifacts
+# Private data, media, databases and model artifacts
 /data/
 /raw/
 /processed/
@@ -17,6 +17,11 @@ venv/
 /wandb/
 /mlruns/
 .shortslm/
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
 *.mp4
 *.mov
 *.mkv
@@ -30,6 +35,8 @@ venv/
 *.pth
 *.ckpt
 *.tmp
+*cookie*.txt
+*token*.json
 
 # OS/editor
 .DS_Store
@@ -37,7 +44,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Test and type-check caches
+# Test/type-check caches
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
