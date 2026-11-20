@@ -34,3 +34,11 @@ venv/
 Thumbs.db
 .vscode/
 .idea/
+
+# Phase 1 generated artifacts
+*.tmp
+outputs/
+*_frames/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
