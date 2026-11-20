@@ -72,7 +72,7 @@ def _write_report(path: Path, payload: dict[str, object]) -> None:
 
 
 def _add_provider_errors(
-    provider_errors: list[str],
+    provider_errors: Counter[str],
     errors: list[str],
     platform: str,
     provider_messages: list[str],
