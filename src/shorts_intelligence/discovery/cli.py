@@ -127,6 +127,9 @@ def run_discovery(
                     candidates.extend(results)
                     stats["instagram_results"] += len(results)
                     stats["queries"] += 1
+                    stats["errors"] += len(instagram.errors)
+                    errors.extend(instagram.errors[:100])
+                    instagram.errors.clear()
                 except ProviderUnavailable:
                     raise
                 except Exception as exc:
