@@ -68,6 +68,7 @@ class InstagramSearchProvider:
     ) -> None:
         self.session_username = session_username
         self.session_file = session_file
+        self.errors: list[str] = []
         self.request_pause_seconds = max(0.0, request_pause_seconds)
 
     def _loader(self) -> Any:
@@ -165,9 +166,9 @@ class InstagramSearchProvider:
                 candidate = self._candidate_from_post(post, from_reel_search=True)
                 if candidate is not None:
                     yield candidate
-            except Exception:
+            except Exception as exc:
                 # One unavailable/deleted/restricted post should not abort the run.
-                # The caller reports provider errors and continues with other results.
+                self.errors.append(f"{shortcode}: {str(exc)[:250]}")
                 continue
             if self.request_pause_seconds:
                 time.sleep(self.request_pause_seconds)
@@ -187,7 +188,11 @@ class InstagramSearchProvider:
         iterator = tag.get_posts_resumable()
         seen: set[str] = set()
         count = 0
+        scanned = 0
         for post in iterator:
+            scanned += 1
+            if scanned > max(limit * 12, limit + 25):
+                break
             shortcode = str(getattr(post, "shortcode", "") or "")
             if not shortcode or shortcode in seen:
                 continue
