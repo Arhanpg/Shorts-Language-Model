@@ -17,7 +17,6 @@ from shorts_intelligence.analyzer import analyze_video
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.media.probe import MediaError
 from shorts_intelligence.pilot.cli import pilot_app
-from shorts_intelligence.pilot.cli import pilot_app
 
 app = typer.Typer(
     name="shorts-lm",
