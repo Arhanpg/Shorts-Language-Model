@@ -143,6 +143,9 @@ def run_discovery(
                     results = list(instagram.search_hashtag(tag, limit=results_per_query))
                     candidates.extend(results)
                     stats["instagram_hashtag_results"] += len(results)
+                    stats["errors"] += len(instagram.errors)
+                    errors.extend(instagram.errors[:100])
+                    instagram.errors.clear()
                 except Exception as exc:
                     stats["errors"] += 1
                     errors.append(f"Instagram hashtag '#{tag}': {str(exc)[:250]}")
@@ -173,7 +176,7 @@ def run_discovery(
             stored = store.get_candidate(candidate.platform, candidate.source_id)
             if not is_new:
                 stats["duplicates"] += 1
-            if stored and stored.status == "eligible" and (is_new or became_eligible):
+            if is_new and stored and stored.status == "eligible":
                 stats["new_eligible"] += 1
             if stats["new_eligible"] >= target_new:
                 break
