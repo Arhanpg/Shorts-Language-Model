@@ -102,27 +102,62 @@ class DiscoveryStore:
         self.connection.commit()
 
     def upsert_candidate(
-        self, candidate: DiscoveredCandidate, *, min_views: int, run_id: str,
+        self,
+        candidate: DiscoveredCandidate,
+        *,
+        min_views: int,
+        run_id: str,
         accept_instagram_play_count: bool = False,
     ) -> tuple[bool, bool]:
-        metric = candidate.qualifying_metric(accept_instagram_play_count=accept_instagram_play_count)
-        if candidate.short_format_status == "not_short":
-            status = "not_short"
-        elif candidate.view_count is None and not (accept_instagram_play_count and candidate.play_count is not None):
-            status = "metric_unknown"
-        elif metric is not None and metric < min_views:
-            status = "below_threshold"
-        elif candidate.short_format_status == "unknown":
-            status = "format_unknown"
-        else:
-            status = "eligible"
-        now = datetime.now(UTC).isoformat()
+        """Insert/update one candidate without downgrading known metadata to unknown."""
         existing = self.connection.execute(
-            "SELECT status, download_status FROM candidates WHERE platform=? AND source_id=?",
+            "SELECT * FROM candidates WHERE platform=? AND source_id=?",
             (candidate.platform, candidate.source_id),
         ).fetchone()
         is_new = existing is None
-        was_eligible = bool(existing and existing["status"] == "eligible" and existing["download_status"] == "not_downloaded")
+        was_eligible = bool(existing and existing["status"] == "eligible")
+
+        # Search metadata can be incomplete on a later run. Retain previously
+        # observed counts and a prior format classification when the new result
+        # does not supply stronger information.
+        effective_view_count = (
+            candidate.view_count
+            if candidate.view_count is not None
+            else existing["view_count"] if existing else None
+        )
+        effective_play_count = (
+            candidate.play_count
+            if candidate.play_count is not None
+            else existing["play_count"] if existing else None
+        )
+        effective_format = candidate.short_format_status
+        if effective_format == "unknown" and existing:
+            effective_format = existing["short_format_status"]
+
+        metric = effective_view_count
+        if (
+            metric is None
+            and candidate.platform == "instagram"
+            and accept_instagram_play_count
+        ):
+            metric = effective_play_count
+
+        if effective_format == "not_short":
+            status = "not_short"
+        elif metric is None:
+            status = "metric_unknown"
+        elif metric < min_views:
+            status = "below_threshold"
+        elif effective_format == "unknown":
+            status = "format_unknown"
+        else:
+            status = "eligible"
+
+        now = datetime.now(UTC).isoformat()
+        effective_metric_source = candidate.metric_source
+        if effective_metric_source is None and existing:
+            effective_metric_source = existing["metric_source"]
+
         self.connection.execute(
             """INSERT INTO candidates(
                 platform, source_id, canonical_url, title, description, creator, view_count,
@@ -147,12 +182,25 @@ class DiscoveryStore:
                 metadata_json=excluded.metadata_json,
                 last_run_id=excluded.last_run_id""",
             (
-                candidate.platform, candidate.source_id, str(candidate.canonical_url),
-                candidate.title, candidate.description, candidate.creator, candidate.view_count,
-                candidate.play_count, candidate.metric_source, candidate.duration_seconds,
-                candidate.upload_date, json.dumps(candidate.hashtags), candidate.short_format_status,
-                status, candidate.discovered_at.isoformat(), now,
-                json.dumps(candidate.metadata, ensure_ascii=False, default=str), run_id, run_id,
+                candidate.platform,
+                candidate.source_id,
+                str(candidate.canonical_url),
+                candidate.title,
+                candidate.description,
+                candidate.creator,
+                effective_view_count,
+                effective_play_count,
+                effective_metric_source,
+                candidate.duration_seconds,
+                candidate.upload_date,
+                json.dumps(candidate.hashtags),
+                effective_format,
+                status,
+                candidate.discovered_at.isoformat(),
+                now,
+                json.dumps(candidate.metadata, ensure_ascii=False, default=str),
+                run_id if is_new else existing["first_run_id"],
+                run_id,
             ),
         )
         self.connection.commit()
@@ -215,6 +263,16 @@ class DiscoveryStore:
             "SELECT status, COUNT(*) AS n FROM candidates GROUP BY status"
         ).fetchall()
         return {str(row["status"]): int(row["n"]) for row in rows}
+
+    def summary_by_platform(self) -> dict[str, dict[str, int]]:
+        rows = self.connection.execute(
+            "SELECT platform, status, COUNT(*) AS n FROM candidates "
+            "GROUP BY platform, status ORDER BY platform, status"
+        ).fetchall()
+        result: dict[str, dict[str, int]] = {}
+        for row in rows:
+            result.setdefault(str(row["platform"]), {})[str(row["status"])] = int(row["n"])
+        return result
 
     @staticmethod
     def _candidate_from_row(row: sqlite3.Row) -> DiscoveredCandidate:
