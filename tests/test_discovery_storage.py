@@ -66,10 +66,7 @@ def test_download_sha256_detects_cross_platform_duplicate(tmp_path: Path):
             duplicate_of="youtube:AbCdEfGh123",
             media_sha256="a" * 64,
         )
-        assert store.eligible_candidates(limit=10) == [
-            candidate for candidate in store.eligible_candidates(limit=10)
-            if candidate.platform == "youtube"
-        ]
+        assert store.eligible_candidates(limit=10) == []
 
 
 def test_failed_download_remains_retryable(tmp_path: Path):
