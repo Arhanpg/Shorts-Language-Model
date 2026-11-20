@@ -1,94 +1,73 @@
 # Architecture Decision Record
 
-**Status:** Accepted for research MVP; implementation candidates remain benchmark-gated.  
-**Date:** 2026-11-20
+**Status:** accepted for revised automated-discovery architecture; provider implementation pending  
+**Date:** 21 November 2026
 
 ## Decision
 
-Use a hybrid neuro-symbolic design: deterministic video/audio telemetry provides temporal facts; a compact multimodal VLM explains and combines evidence; a separate tabular model estimates normalized performance patterns. Acquisition is rights-aware and provider-pluggable.
+Build a provider-based system with automated discovery, a policy-aware local SQLite inventory, explicit rights gates and separate authorized media-delivery adapters. Keep the existing deterministic telemetry front-end. Use a compact multimodal VLM and a separate performance model only after dataset QA and evaluation.
 
-## Why not a single video LLM?
-
-Sparse frame sampling can miss short events between selected frames. A general VLM can describe visible content, but should not be trusted to infer exact cut timestamps, BPM, OCR strings or speed-ramp intervals without measurements. A deterministic front-end reduces the burden on the language model and enables consistency checks.
+The normal workflow should not require pasting one link or manually downloading one MP4 per video. It may still require initial API credentials, institutional approval, creator agreements or a platform partnership. Those are source-access prerequisites, not per-video manual work.
 
 ## Component contracts
 
-### Acquisition adapter
+### Discovery provider
 
-Input: provider query, creator upload or licensed dataset manifest.  
-Output: SourceRecord plus permission capabilities.  
-Must report provenance, quota, observation time and rights. It must not bypass access controls or assume API access grants media/training rights.
+Input: stratified query cell, provider credentials and quota budget. Output: normalized candidate records with provider ID, canonical URL, returned metadata fields, metric definition, observation timestamp, source retention deadline and provenance.
 
-### Media processor
+Must use documented API/approved UI only; respect quotas/pagination; expose unsupported fields as missing; support deterministic query plans and resumable cursors; never imply media/training permission.
 
-Input: authorized temporary media artifact.  
-Output: normalized stream metadata, audio, frames and scene candidates.  
-Must be idempotent, resource-capped, resumable where possible, and record exact tool/configuration versions.
+### Local discovery inventory
 
-### Telemetry extractors
+Input: normalized provider response. Output: unique retained candidate row and run-level discovery statistics.
 
-Each extractor emits events, evidence references, confidence, tool name/version and config hash. Extractors may abstain. The schema distinguishes a measured signal from an inferred artistic technique.
+Must enforce unique keys/upserts; store retention/refresh deadlines; support deletion/expiry; distinguish metadata-only, rights-pending, authorized, acquired, processed and rejected states; not promise indefinite retention of public API identifiers.
 
-### Annotation and review
+### Rights and policy engine
 
-Teacher outputs are drafts, not gold labels. Each annotation tracks source, model, prompt version, human reviewer and corrections. High-impact temporal labels require review and/or a validated detector.
+Check independent capabilities: metadata access, media retrieval, media analysis, temporary processing, raw retention, derived-artifact retention, model training and redistribution. Rights scope is attached per item and source. Public availability, view count, API access, Creative Commons label or temporary downloader success do not imply every capability.
 
-### Reasoning VLM
+### Media-delivery adapter
 
-Input: selected timestamped frames, telemetry JSON, transcript/OCR and permitted metadata. Output: schema-validated analysis with evidence references, confidence and missing evidence. It cannot silently override deterministic measurements.
+Accept only an item with a documented asset-delivery path and necessary permission. Return private asset location, SHA-256, file size, codec/duration, delivery timestamp and rights reference. It may use a provider API, signed upload, creator cloud-drive handoff or approved platform delivery. A generic webpage downloader is not the fallback.
 
-### Performance predictor
+### Telemetry engine
 
-Separate model, LightGBM first. It receives creator-normalized features and platform/measurement context. View count is an outcome/label field, not an input feature for blind prediction.
+Reuse existing media analyzer: validation, bounded frame/keyframe extraction, shot/cut candidates, motion, ASR, OCR and audio. Each event has timestamp, evidence reference, tool version, config hash, confidence/status and distinction between measured signal and inferred technique.
 
-### Inference service
+### Dataset factory
 
-CLI first, local API/UI later. Support CPU fallback, configurable frame/token budgets, explicit resource limits and graceful partial results.
+Build reviewed examples from media/metadata whose rights permit the exact training purpose. Track deduplication, creator/time splits, annotations, teacher provenance and quality. A discovery-URL database is not itself a media-training corpus.
+
+### Model factory
+
+Frozen VLM baseline, non-LLM feature baselines, separate performance ranker and task-specific SFT. Training is batch-based, reproducible and checkpointed. Use model-specific settings, not a universal QLoRA recipe.
+
+### Local inference
+
+CLI first, API/UI later. Include resource limits, CPU fallback, configurable frame/token budget, evidence validation and uncertainty/abstention.
 
 ## Data flow
 
-```mermaid
-flowchart LR
- A[Permitted source] --> B[Rights gate]
- B --> C[Manifest + metadata]
- C --> D[Dedup + eligibility]
- D --> E[Temporary media processing]
- E --> F[Telemetry lanes]
- F --> G[Evidence package]
- G --> H[Review + dataset builder]
- H --> I[Base model / SFT]
- I --> J[Evaluation]
- J --> K[Local quantized release]
- G --> L[Performance features]
- L --> M[Separate ranker]
- M --> N[Grounded report]
- K --> N
-```
+    Scheduled run -> seeded query planner -> official APIs / approved research / licensed providers
+        -> normalized candidates -> view threshold + short-format confidence
+        -> SQLite dedup + retention manager -> rights/capability gate
+        -> metadata-only/deferred OR approved media delivery
+        -> private staging + checksum -> telemetry engine
+        -> evidence store + review -> dataset QA/splits
+        -> baselines/SFT/evaluation -> local quantized release
 
-## Video sampling policy
+## Explicit non-goals
 
-Do not hard-code only 1 FPS. Begin with:
-- hook window (first 0–3 seconds): dense sampling within a frame budget;
-- scene/shot boundaries: sample immediately before/after candidate cuts;
-- representative shot midpoints;
-- motion peaks and low-motion intervals;
-- climax/end frames and possible loop seam.
+- Arbitrary public YouTube/Instagram bulk MP4 downloading.
+- Scraping web pages, using browser cookies or bypassing restrictions.
+- Claiming 100/200 candidate target is guaranteed every run.
+- Treating a metadata-only candidate as a trainable media asset.
+- Indefinite API-data retention without an applicable allowance.
+- One-step online fine-tuning per downloaded video.
+- Causal virality claims from observational data.
+- Training from scratch or guaranteed 4 GB GPU compatibility.
 
-A 12–16 frame budget is a first VLM experiment, not a coverage guarantee. High-cut clips may require telemetry-only summaries or a second pass. Keep all temporal measurements in JSON even when only a few images enter the VLM.
+## Revisit criteria
 
-## Failure handling
-
-- ASR unavailable or language confidence low: mark transcript missing/uncertain; do not fabricate speech.
-- OCR low confidence: preserve candidate text and confidence; show image evidence.
-- Effect detector uncertain: label as candidate, not fact.
-- Source right revoked: block future processing, mark derived artifacts for policy-based deletion and invalidate dataset membership.
-- Model output contradicts telemetry: fail validation or downgrade claim to uncertain.
-
-## Explicit non-goals for MVP
-
-- arbitrary Instagram/YouTube downloading;
-- foundation model training from scratch;
-- 100–200 million video corpus;
-- causal virality claims from observational data;
-- GRPO/RL before reliable SFT and verifiable reward metrics;
-- guaranteed support for every local GPU.
+Add a source only when its API/provider contract or creator agreement documents discovery, retrieval, storage, training and deletion rights. Revisit model choice only after candidates can be compared using the same locked dataset and input budget.
