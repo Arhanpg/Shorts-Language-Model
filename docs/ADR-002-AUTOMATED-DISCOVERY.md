@@ -1,77 +1,56 @@
-# ADR-002: Automated Discovery Without Unauthorized Media Scraping
+# ADR-002: Use Open-Source Search and Extractors for Non-API Discovery
 
-- Status: accepted architectural constraint; provider implementation pending
-- Date: 21 November 2026
-- Supersedes: assumption that a generic browser crawler can find and download every public Reel/Short
-- Related: Automated Discovery and Rights-Gated Media Acquisition
+- **Status:** supersedes previous API-first discovery decision
+- **Date:** 21 November 2026
+- **Chosen by:** project owner
+- **Implementation:** feature/non-api-discovery-ytdlp-instaloader
 
 ## Context
 
-The project owner does not want to paste video URLs or manually download MP4s. The intended workflow is to discover 100–200 new unique videos per run, filter candidates by 1M+ views, keep a local deduplication history, acquire videos, retain metadata and train/prepare the model.
-
-A browser agent or downloader can technically retrieve content from some pages. That technical capability does not mean the platform grants bulk scraping, media download, persistent storage or ML-training rights.
-
-Official access paths are asymmetric:
-- YouTube Data API v3 supports search and metadata/statistics retrieval, but its policies prohibit downloading/caching audiovisual copies without prior written approval and prohibit scraping YouTube applications.
-- YouTube has a creator/rightsholder third-party AI-training opt-in. It is off by default, requires applicable rightsholder permissions and selected-company access.
-- Instagram Business Discovery can retrieve data for known eligible public Business/Creator accounts, including Reel view_count. It does not create a universal catalogue of all public Reels.
-- Meta Content Library is controlled research access. Its API is not a local media-download service.
+The previous PR #5 plan proposed YouTube Data API and Instagram Graph API discovery. The project owner explicitly rejected that direction and requested open-source GitHub tools which can search links and download the media locally.
 
 ## Decision
 
-1. Implement a provider-pluggable discovery agent using documented APIs and approved research interfaces.
-2. Persist provider-neutral candidate identity and discovery state in local SQLite, with per-field source retention deadlines and deduplication.
-3. Make candidate discovery, media retrieval, media analysis, derived-artifact retention and model training separate permission capabilities.
-4. Do not integrate arbitrary public YouTube/Instagram downloading as a default capability.
-5. Use platform-authorized training delivery, creator-authorized original-file handoff, or a licensed dataset/vendor for raw media.
-6. Use Playwright only for an approved UI workflow; never use it to replace a prohibited API or bypass technical controls.
-7. If no approved media provider exists for a platform, permit metadata discovery where allowed, but mark the candidate metadata-only and do not process/train on media.
-8. Define a run target of 100 or 200 new candidates, but return partial yields when quota, provider availability, eligibility or deduplication prevents the target.
-9. Train in reproducible batches after dataset construction; do not update model weights once per incoming video.
+Use:
+1. yt-dlp search extractor and downloader for YouTube;
+2. DDGS public web search for Instagram Reel links;
+3. Instaloader for Instagram shortcode metadata, view/play metrics, optional hashtag/profile expansion and primary media downloading;
+4. yt-dlp Instagram extractor as secondary downloader;
+5. gallery-dl as optional third downloader;
+6. local SQLite for source-ID uniqueness and job state;
+7. SHA-256 for exact cross-platform file deduplication.
 
-## Why this is the correct engineering decision
+No official YouTube/Instagram/Meta platform API credentials are used by the discovery commands.
 
-It preserves the hands-off objective without building around brittle browser scraping, account cookies, downloader workarounds or assumed rights. It also allows new licensed providers to be added without rewriting the model and telemetry pipeline.
+## Why this stack
+
+yt-dlp offers an integrated YouTube search and download path, avoiding a separate YouTube link-harvesting API. DDGS supplies public indexed Reel URL search; Instaloader resolves the Reel shortcode and exposes available post metadata and download support. gallery-dl provides an optional alternate extractor if the primary route is unavailable.
+
+There is no open-source tool here that guarantees a complete global index of every public Instagram Reel. Search engine indexes are ranked and incomplete. Instaloader can be throttled or require a normal local session. All extractors can break as upstream sites change.
+
+## Permission and reliability boundary
+
+The toolchain's ability to download a URL is a technical capability, not proof of ownership, license or model-training permission. Downloading/training is separated from discovery by an item-specific local rights manifest. It requires retrieval, analysis, temporary processing, derived artifact retention and model-training scopes. The code validates the record but cannot authenticate underlying consent. Keep rights evidence private.
+
+Do not bypass login, CAPTCHA, challenge pages, DRM, technical controls or rate limits. The system does not scrape browser cookies or rotate proxies to evade restrictions. A blocked source is logged/skipped.
 
 ## Consequences
 
 Positive:
-- Local deduplication and resumable runs.
-- Clear distinction between discoverable candidates and trainable media.
-- Provider-specific retention/deletion enforcement.
-- Better reliability than HTML scraping.
-- A path to scale via contracts and official provider feeds.
-- Reuse of Phase 1 telemetry after media is lawfully delivered.
+- No platform developer API keys or quotas are part of the chosen discovery workflow.
+- Search and extractor packages are open source.
+- Automated local persistence and source-ID deduplication.
+- YouTube and Instagram use separate providers with independent failure reporting.
+- Exact byte duplicates are detected after download.
 
 Trade-offs:
-- The system cannot promise 100 newly acquired Instagram MP4s per run from public sources.
-- YouTube API search quotas limit discovery volume.
-- A YouTube third-party training partnership requires application and creator opt-in.
-- Meta research access is institution-gated and does not expose a general API download route.
-- Long-term identity retention for public API records is constrained by platform policy.
-
-## Rejected alternatives
-
-### Generic Playwright crawler
-
-Rejected as the default. It is fragile, search-index biased, and cannot override source access, download, storage or training terms.
-
-### yt-dlp/gallery-dl as universal acquisition service
-
-Rejected as the default. Open-source downloader support is not a rights grant and does not override platform restrictions. An approved downloader may be added for a source whose license explicitly permits that method.
-
-### Permanent raw metadata/ID archive from public APIs
-
-Rejected without a suitable retention basis. Local SQLite records have policy-aware expiry; durable deduplication is retained only where the source agreement permits it.
-
-### Train as each video downloads
-
-Rejected. Dataset QA, creator/time splits, reproducible batch scheduling and evaluation require collection and training to be separate stages.
+- Search result coverage is incomplete and biased.
+- Instagram may require the owner's own Instaloader session for some query modes.
+- Some Instagram metrics are absent; missing counts remain unknown.
+- Extractors may stop working after upstream changes.
+- 100/200 new high-view candidates per run is a best-effort target, never guaranteed.
+- SHA-256 only catches exact byte duplicates, not re-encoded near-duplicates.
 
 ## Revisit criteria
 
-Revisit this decision when:
-- YouTube approves the project/company as a third-party AI-training recipient and documents its delivery protocol;
-- Meta provides an approved media-use/delivery agreement for the project;
-- a licensed data vendor contract grants automated file delivery and ML-training rights;
-- creator agreements and an automated creator upload/handoff channel are operational.
+Reassess when upstream extractor support breaks, the search source no longer returns useful Instagram pages, or near-duplicate leakage materially affects the dataset. Any alternative must preserve provider-neutral schemas, local deduplication and rights metadata.
