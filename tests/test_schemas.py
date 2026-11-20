@@ -1,7 +1,6 @@
 from datetime import UTC, datetime
 
 import pytest
-
 from pydantic import ValidationError
 
 from shorts_intelligence.schemas import AnalysisReport, RightsDeclaration
