@@ -71,7 +71,7 @@ def pseudonymize_creator(platform: str, creator_id: str | None, salt: bytes) -> 
 def _relative_performance(
     candidates: list[ValidatedCandidate], creator_groups: dict[str, str | None]
 ) -> dict[str, tuple[float, float, str]]:
-    groups: dict[tuple[str, str, str], list[tuple[ValidatedCandidate, float]]] = defaultdict(list)
+    groups: dict[tuple[str, str, str, str, str], list[tuple[ValidatedCandidate, float]]] = defaultdict(list)
     for candidate in candidates:
         record = candidate.record
         snapshot = record.performance
@@ -79,7 +79,10 @@ def _relative_performance(
         if not creator or not snapshot or not record.published_at:
             continue
         group_age = age_band(record.published_at, snapshot.observed_at)
-        key = (creator, record.platform, f"{snapshot.metric_name}:{group_age}")
+        key = (
+            creator, record.platform, record.language, record.topic,
+            f"{snapshot.metric_name}:{group_age}",
+        )
         groups[key].append((candidate, math.log1p(snapshot.value)))
 
     result: dict[str, tuple[float, float, str]] = {}
@@ -243,6 +246,7 @@ def select_stratified(
             rights_reference_hash=hashlib.sha256(
                 record.rights.evidence_ref.encode("utf-8")
             ).hexdigest(),
+            rights_expires_at=record.rights.expires_at,
             media_analysis_permitted=record.rights.media_analysis,
             temporary_processing_permitted=record.rights.temporary_processing,
             derived_artifact_retention_permitted=record.rights.derived_artifact_retention,
