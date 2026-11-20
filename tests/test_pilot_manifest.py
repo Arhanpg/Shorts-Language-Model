@@ -29,15 +29,15 @@ def test_rights_gate_accepts_permitted_record() -> None:
 def test_rights_gate_rejects_revoked_record() -> None:
     record = _record()
     record.rights.revoked = True
-    ok, reason = _can_analyze(record, datetime.now(timezone.utc))
+    ok, reason = _can_analyze(record, datetime.now(UTC))
     assert ok is False
     assert reason == "rights_revoked"
 
 def test_rights_gate_rejects_expired_permission() -> None:
     record = _record()
-    record.rights.expires_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    record.rights.expires_at = datetime(2026, 1, 1, tzinfo=UTC)
     ok, reason = _can_analyze(
-        record, datetime(2026, 11, 20, tzinfo=timezone.utc)
+        record, datetime(2026, 11, 20, tzinfo=UTC)
     )
     assert ok is False
     assert reason == "rights_expired"
