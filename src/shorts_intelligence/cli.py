@@ -21,7 +21,7 @@ from shorts_intelligence.pilot.cli import pilot_app
 
 app = typer.Typer(
     name="shorts-lm",
-    help="Local-first short-form video telemetry. This phase analyzes local files only.",
+    help="Discover public short-form links with open-source tools, acquire permitted media, and analyze locally.",
     no_args_is_help=True,
 )
 console = Console()
@@ -141,6 +141,7 @@ def doctor(
         "yt_dlp": importlib.util.find_spec("yt_dlp") is not None,
         "instaloader": importlib.util.find_spec("instaloader") is not None,
         "ddgs": importlib.util.find_spec("ddgs") is not None,
+        "gallery_dl": importlib.util.find_spec("gallery_dl") is not None,
     }
     if as_json:
         typer.echo(json.dumps({"version": __version__, "checks": checks}, indent=2))
