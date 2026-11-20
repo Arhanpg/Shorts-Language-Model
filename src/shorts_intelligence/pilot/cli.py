@@ -205,7 +205,7 @@ def process(
     console.print("[bold green]Pilot processing finished.[/bold green]")
     for key in (
         "processed_records", "complete_records", "partial_records",
-        "failed_records", "total_wall_seconds", "mean_seconds_per_record",
+        "failed_records", "total_wall_seconds", "mean_seconds_per_record_this_run",
         "resumed_records", "analyzed_new_records",
         "input_media_file_bytes_total", "telemetry_report_json_bytes_total",
         "keyframe_artifact_bytes_total", "training_permitted_processed_records",
