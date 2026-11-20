@@ -167,7 +167,7 @@ def run_discovery(
                 stats["duplicates"] += 1
                 continue
             encountered.add(identity)
-            is_new, became_eligible = store.upsert_candidate(
+            is_new, _ = store.upsert_candidate(
                 candidate,
                 min_views=min_views,
                 run_id=run_id,
