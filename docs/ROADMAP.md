@@ -6,32 +6,36 @@
 - Define rights capability model and source registry.
 - Define versioned Pydantic schemas.
 - Add environment template, ignore rules, logging and tests.
-- Add 25–50 synthetic/authorized smoke fixtures (do not commit unlicensed media).
+- Add synthetic/authorized smoke fixtures (do not commit unlicensed media).
 - Add CI for lint, types, schema and unit tests.
 
 **Exit:** clean install and schema/rights tests pass.
 
 ## Phase 1 — Single-video telemetry MVP
 
-Command target:
+Command:
 
-    python -m shorts_intelligence analyze --input ./authorized_clip.mp4 --output ./out/analysis.json
+    shorts-lm analyze --input ./authorized_clip.mp4 --output ./out/analysis.json --rights-basis creator_owned
 
-Implement incrementally: media validation/ffprobe; audio extraction and faster-whisper; OCR; PySceneDetect and/or TransNetV2; OpenCV motion; librosa features; hook-aware keyframes; JSON report and Pydantic validation.
+Implement media validation/ffprobe; temporary audio extraction; faster-whisper; PaddleOCR; bounded hook-aware frames; cut candidates; OpenCV motion; librosa features; Pydantic evidence report.
 
-**Exit:** manually audit 25–50 clips including rapid edits, dialogue-free music edits, Hindi/English and at least one non-Indic language. Report extraction errors and unsupported labels.
+**Exit:** local Windows/WSL validation on 25–50 diverse clips, including rapid edits, dialogue-free music edits and multilingual speech. The code is implemented; laptop acceptance remains a user-side validation gate.
 
-## Phase 2 — Pilot data and annotation
+## Phase 2 — 300-video diagnostic pilot
 
-- Register 300 permitted videos.
-- Build stratified selection manifest.
-- Deduplicate and group creator identities pseudonymously.
-- Produce telemetry packages.
-- Draft labels with a model only where permitted.
-- Human-review priority labels and uncertain cases.
-- Build cost and data-quality dashboard.
+Implemented workflow:
+- Rights-capability-gated private JSONL candidate manifest.
+- Local path, file size, checksum, ffprobe and duplicate validation.
+- HMAC creator pseudonyms using a private local salt.
+- Deterministic stratified selection across platform, language, topic, duration, performance tier and speech mode.
+- Creator-relative metrics within same creator/platform/language/topic/metric/age cohorts (minimum three records).
+- Same-creator positive/control comparison candidates with documented matching thresholds.
+- Private selected manifest, coverage report and human-review queue.
+- Sequential, configuration/checksum/permission-expiry-aware resumable Phase 1 processing.
+- Processing wall-time, file/artifact-size, extractor-status and per-stratum quality reports.
+- Setup guide, tests and CI integration.
 
-**Exit:** provenance, coverage, measured costs and annotation quality.
+**Important:** code implementation is not the same as a completed empirical 300-video pilot. The exit gate requires the repository owner to supply 300 unique local videos with valid rights, run the pipeline, audit 25–50 outputs, review coverage/missingness and record human-review effort. A documented shortfall is acceptable for a diagnostic pilot; rights checks must not be bypassed.
 
 ## Phase 3 — Model bake-off
 
@@ -87,4 +91,4 @@ Implement incrementally: media validation/ffprobe; audio extraction and faster-w
 5. Add OCR and motion adapters.
 6. Validate evidence-linked analysis JSON.
 
-Avoid creating a large empty scaffold with every cloud service before Phase 1 works.
+Avoid creating a large empty scaffold with every cloud service before the data and telemetry pipeline works.
