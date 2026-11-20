@@ -22,7 +22,7 @@ def _candidate(
     index: int, *, creator: str, value: int, topic: str = "cricket"
 ) -> ValidatedCandidate:
     published = datetime(2026, 10, 1, tzinfo=UTC) + timedelta(days=index)
-    observed = datetime(2026, 11, 20, tzinfo=timezone.utc)
+    observed = datetime(2026, 11, 20, tzinfo=UTC)
     record = PilotRecord(
         record_id=f"clip_{index:04d}",
         platform="creator_upload",
@@ -89,10 +89,10 @@ def test_matched_pairs_require_same_creator_and_outlier_thresholds() -> None:
         model_training_permitted=False, language="hi", topic="cricket",
         speech_mode="music_only", duration_seconds=24.0, duration_band="16-30s",
         age_band="31-90d", metric_name="views", metric_value=10000,
-        observed_at=datetime(2026, 11, 20, tzinfo=timezone.utc),
+        observed_at=datetime(2026, 11, 20, tzinfo=UTC),
     )
     positive = SelectedRecord(
-        record_id="positive", published_at=datetime(2026, 10, 10, tzinfo=timezone.utc),
+        record_id="positive", published_at=datetime(2026, 10, 10, tzinfo=UTC),
         creator_relative_log_score=1.4, creator_relative_multiple=4.0,
         performance_tier="breakout_2x_5x", **base
     )
@@ -102,7 +102,7 @@ def test_matched_pairs_require_same_creator_and_outlier_thresholds() -> None:
     }
     control = SelectedRecord(
         record_id="control", media_path="/tmp/b.mp4", media_sha256="c" * 64,
-        published_at=datetime(2026, 10, 12, tzinfo=timezone.utc),
+        published_at=datetime(2026, 10, 12, tzinfo=UTC),
         creator_relative_log_score=-1.0, creator_relative_multiple=0.35,
         performance_tier="below_baseline", **control_fields
     )
