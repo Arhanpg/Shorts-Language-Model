@@ -32,3 +32,12 @@ def test_rights_gate_rejects_revoked_record() -> None:
     ok, reason = _can_analyze(record, datetime.now(timezone.utc))
     assert ok is False
     assert reason == "rights_revoked"
+
+def test_rights_gate_rejects_expired_permission() -> None:
+    record = _record()
+    record.rights.expires_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    ok, reason = _can_analyze(
+        record, datetime(2026, 11, 20, tzinfo=timezone.utc)
+    )
+    assert ok is False
+    assert reason == "rights_expired"
