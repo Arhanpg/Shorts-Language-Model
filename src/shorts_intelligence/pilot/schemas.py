@@ -100,7 +100,7 @@ class PilotRecord(StrictModel):
             and self.published_at
             and self.performance.observed_at < self.published_at
         ):
-                raise ValueError("performance observed_at cannot precede published_at")
+            raise ValueError("performance observed_at cannot precede published_at")
         return self
 
 
