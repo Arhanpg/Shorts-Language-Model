@@ -198,7 +198,7 @@ def doctor(
     if not checks["ffmpeg"] or not checks["ffprobe"]:
         console.print("[red]FFmpeg and ffprobe are required for media processing.[/red]")
     if checks["yt_dlp"] and not checks["yt_dlp_ejs"]:
-        console.print("[yellow]YouTube extraction: install matching EJS scripts with pip install -U \\"yt-dlp[default]\\".[/yellow]")
+        console.print("[yellow]YouTube extraction: install matching EJS scripts with pip install -U 'yt-dlp[default]'.[/yellow]")
     if checks["yt_dlp"] and not (deno_ok or node_ok):
         console.print("[yellow]YouTube full video extraction needs Deno >=2.3 (recommended) or Node.js >=22.[/yellow]")
     if deno_version:
