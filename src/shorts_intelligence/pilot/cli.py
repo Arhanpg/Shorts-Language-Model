@@ -11,13 +11,17 @@ from rich.table import Table
 
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.pilot.manifest import (
-    load_and_validate_manifest, validation_template_record, write_json,
+    load_and_validate_manifest,
+    validation_template_record,
+    write_json,
 )
 from shorts_intelligence.pilot.matching import build_matched_pairs
 from shorts_intelligence.pilot.reporting import build_pilot_report
 from shorts_intelligence.pilot.runner import process_selected
 from shorts_intelligence.pilot.sampling import (
-    create_or_load_salt, select_stratified, write_selection_outputs,
+    create_or_load_salt,
+    select_stratified,
+    write_selection_outputs,
 )
 
 pilot_app = typer.Typer(
