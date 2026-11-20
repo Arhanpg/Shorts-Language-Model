@@ -31,7 +31,7 @@ def _write_metadata(candidate: DiscoveredCandidate, authorization: AcquisitionAu
     temporary.replace(metadata_path)
 
 
-def _download_youtube(candidate: DiscoveredCandidate, output_dir: Path) -> Path:
+def _download_with_ytdlp(candidate: DiscoveredCandidate, output_dir: Path) -> Path:
     try:
         from yt_dlp import YoutubeDL
     except ImportError as exc:
@@ -170,7 +170,7 @@ def download_candidate(
     output_dir = output_dir.expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     if candidate.platform == "youtube":
-        media_path = _download_youtube(candidate, output_dir)
+        media_path = _download_with_ytdlp(candidate, output_dir)
     else:
         try:
             media_path = _download_instagram(
@@ -179,13 +179,18 @@ def download_candidate(
                 session_username=instagram_session_username,
                 session_file=instagram_session_file,
             )
-        except DownloadError as primary_error:
+        except DownloadError as instaloader_error:
             try:
-                media_path = _download_gallery_dl(candidate, output_dir)
-            except (DownloadError, subprocess.TimeoutExpired) as fallback_error:
-                raise DownloadError(
-                    f"Instaloader failed ({primary_error}); gallery-dl fallback failed ({fallback_error})."
-                ) from fallback_error
+                media_path = _download_with_ytdlp(candidate, output_dir)
+            except DownloadError as ytdlp_error:
+                try:
+                    media_path = _download_gallery_dl(candidate, output_dir)
+                except (DownloadError, subprocess.TimeoutExpired) as gallery_error:
+                    raise DownloadError(
+                        "Instagram download attempts failed: "
+                        f"Instaloader ({instaloader_error}); yt-dlp ({ytdlp_error}); "
+                        f"gallery-dl ({gallery_error})."
+                    ) from gallery_error
     if not media_path.exists() or media_path.stat().st_size == 0:
         raise DownloadError("Downloaded media file is empty or missing.")
     _write_metadata(candidate, authorization, media_path)
