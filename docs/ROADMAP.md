@@ -1,94 +1,96 @@
-# Implementation Roadmap
+# Revised Implementation Roadmap
 
-## Phase 0 — Repository foundation
+**Revised on:** 21 November 2026  
+This roadmap replaces the prior assumption that candidates are manually placed in a local MP4 manifest.
 
-- Define package structure, Python version and lockfile.
-- Define rights capability model and source registry.
-- Define versioned Pydantic schemas.
-- Add environment template, ignore rules, logging and tests.
-- Add synthetic/authorized smoke fixtures (do not commit unlicensed media).
-- Add CI for lint, types, schema and unit tests.
+## Phase 0 — Provider and rights foundation
 
-**Exit:** clean install and schema/rights tests pass.
+- Lock source matrix and permission-capability schema.
+- Register YouTube Data API project/quota and local secrets.
+- Decide whether to apply for YouTube's third-party AI-training company list.
+- Check whether the project can apply for Meta Content Library through a qualified research institution.
+- Define policy-aware API-data retention/deletion and SQLite schema.
+- Add provider contracts and mock fixtures.
 
-## Phase 1 — Single-video telemetry MVP
+**Exit:** each enabled source has documented discovery scope, permitted fields, quota, retention rules and media-delivery status. No provider is marked as a downloader by assumption.
 
-Command:
+## Phase 1 — Automated discovery and SQLite inventory
 
-    shorts-lm analyze --input ./authorized_clip.mp4 --output ./out/analysis.json --rights-basis creator_owned
+- Implement YouTube Data API metadata discovery.
+- Implement Instagram Business Discovery provider interface for eligible known professional accounts.
+- Add optional Meta research metadata provider only if access is approved.
+- Generate seeded stratified queries across language/region/topic/date.
+- Filter on a current 1M+ metric snapshot.
+- Track Shorts/Reels format confidence rather than infer from one field.
+- Deduplicate source items in SQLite within source-specific retention rules.
+- Expose target-new 100/200 and maximum candidate/query budget.
+- Add quota, retention, duplicate and partial-yield reports.
 
-Implement media validation/ffprobe; temporary audio extraction; faster-whisper; PaddleOCR; bounded hook-aware frames; cut candidates; OpenCV motion; librosa features; Pydantic evidence report.
+**Exit:** replaying provider pages creates no duplicate rows; a second run returns unseen candidates where available; expired metadata is refreshed/deleted; report shows actual yield and API quota.
 
-**Exit:** local Windows/WSL validation on 25–50 diverse clips, including rapid edits, dialogue-free music edits and multilingual speech. The code is implemented; laptop acceptance remains a user-side validation gate.
+## Phase 2 — Rights-gated automatic media delivery
 
-## Phase 2 — 300-video diagnostic pilot
+Implement only media providers with a real authorized delivery contract:
+- YouTube third-party training share, if project/company is approved and required creators/rightsholders opted in;
+- creator-authorized media inbox or connected cloud-drive delivery;
+- licensed dataset/provider downloads;
+- approved platform/research handoff only where agreement permits media export.
 
-Implemented workflow:
-- Rights-capability-gated private JSONL candidate manifest.
-- Local path, file size, checksum, ffprobe and duplicate validation.
-- HMAC creator pseudonyms using a private local salt.
-- Deterministic stratified selection across platform, language, topic, duration, performance tier and speech mode.
-- Creator-relative metrics within same creator/platform/language/topic/metric/age cohorts (minimum three records).
-- Same-creator positive/control comparison candidates with documented matching thresholds.
-- Private selected manifest, coverage report and human-review queue.
-- Sequential, configuration/checksum/permission-expiry-aware resumable Phase 1 processing.
-- Processing wall-time, file/artifact-size, extractor-status and per-stratum quality reports.
-- Setup guide, tests and CI integration.
+Keep metadata-only candidates in a deferred state. No yt-dlp or browser-scraping fallback.
 
-**Important:** code implementation is not the same as a completed empirical 300-video pilot. The exit gate requires the repository owner to supply 300 unique local videos with valid rights, run the pipeline, audit 25–50 outputs, review coverage/missingness and record human-review effort. A documented shortfall is acceptable for a diagnostic pilot; rights checks must not be bypassed.
+**Exit:** every acquired asset has delivery provenance, rights evidence, model-training permission, SHA-256, file properties, retention period and revocation/deletion route.
 
-## Phase 3 — Model bake-off
+## Phase 3 — Automated multimodal processing
 
-- Test Qwen3-VL-2B, Qwen3.5 candidates, VideoLLaMA3-2B and SmolVLM2-500M where runtime permits.
-- Compare frozen model with non-LLM baselines.
-- Version exact inputs and prompts.
+- Reuse existing Phase 1 single-video analyzer as processing engine.
+- Add batch workers, checksums, retries and resumable state.
+- Extract transcript/ASR, OCR, frames, scenes/cuts, motion, audio and VFX candidates.
+- Store per-stage tool versions, confidence and error state.
+- Process 10 videos, then 100, then 300 rights-cleared assets.
 
-**Exit:** decision memo naming best candidates per resource tier.
+**Exit:** processing metrics and manual audit demonstrate acceptable quality by language/topic/speech mode.
 
-## Phase 4 — Dataset v1 and SFT
+## Phase 4 — Dataset QA and annotation
 
-- Expand reviewed samples to 1K–2K, then 5K if pilot supports it.
-- Build creator/time-disjoint splits.
-- Run smoke/overfit checks.
-- Train LoRA/DoRA on rented GPU with exact model-supported recipe.
-- Save adapters, checkpoints, configs, logs and benchmark outputs.
+- Deduplicate byte-identical and perceptually similar cross-posts.
+- Add review queue for hook, editing taxonomy, OCR/ASR, narrative and retention hypothesis.
+- Create gold labels with reviewer/version provenance.
+- Split by creator and time; lock golden holdout.
 
-**Exit:** repeatable improvement over frozen base on locked test set.
+**Exit:** 1K–2K reviewed examples with coverage and inter-annotator agreement reported.
 
-## Phase 5 — Creator-relative performance model
+## Phase 5 — Model bake-off and baselines
 
-- Build outcomes from authorized snapshots and creator analytics.
-- Create matched controls.
-- Train LightGBM/ranker baseline.
-- Test creator/time holdout and subgroup calibration.
-- Separate descriptive hypotheses from causal conclusions.
+- Compare compact VLM prompting against visual, text, telemetry and retrieval baselines.
+- Benchmark Qwen3-VL-2B, Qwen3.5-2B, SmolVLM2-500M and VideoLLaMA3-2B candidates.
+- Add platform-specific performance models only where provider policy/rights permit.
+- Separate descriptive editing analysis from performance estimation.
 
-**Exit:** adds measurable value over metadata-only baseline and reports uncertainty.
+**Exit:** model decision report and measured frozen baseline on locked test data.
 
-## Phase 6 — Local deployment
+## Phase 6 — Cloud fine-tuning
 
-- Merge/quantize only supported checkpoints.
-- Verify exact multimodal input path.
-- Test on Windows and Linux where available.
-- Measure peak VRAM/RAM, CPU fallback, speed, latency and quality degradation.
-- Publish CLI and model card.
+- Build training shards from rights-cleared, training-permitted examples only.
+- Apply LoRA/DoRA with exact model-supported settings.
+- Use cloud GPUs, checkpoints, experiment tracking and budget caps.
+- Keep creator/time/platform leakage out of evaluation splits.
 
-**Exit:** documented hardware matrix with honest limits.
+**Exit:** repeatable improvement over the frozen model on predeclared tasks without material multilingual regressions.
 
-## Phase 7 — Product UI and expanded research
+## Phase 7 — Quantized local deployment
 
-- Gradio/Streamlit first; Next.js only when required.
-- Add batch queue, saved reports and user review.
-- Expand 10K → 20K → 50K+ only when cost/quality/rights gates pass.
-- Add optional teacher distillation and RL only after SFT evaluation.
+- Export only a supported multimodal checkpoint.
+- Benchmark CPU, RTX 3050 4 GB and other target devices.
+- Measure peak VRAM/RAM, end-to-end latency, context/frame budget and quantization quality.
+- Package CLI/API/UI and publish model card.
 
-## First pull-request-sized tasks
+**Exit:** real hardware acceptance matrix; do not promise fit on every 4 GB GPU.
 
-1. Add rights-aware source and telemetry schemas.
-2. Add ffprobe and bounded FFmpeg preprocessing.
-3. Add scene/keyframe manifest.
-4. Add ASR and acoustic feature adapters.
-5. Add OCR and motion adapters.
-6. Validate evidence-linked analysis JSON.
+## Phase 8 — Controlled expansion
 
-Avoid creating a large empty scaffold with every cloud service before the data and telemetry pipeline works.
+Expand 1K → 5K → 20K → 50K+ only when previous tier demonstrates quality, rights coverage, unit economics and marginal model improvement. Crore-scale acquisition requires platform agreements/licensed feeds and distributed infrastructure; it is not implied by local database design.
+
+## Existing work mapping
+
+- Original Phase 1 local-video analyzer is retained for revised Phase 3.
+- Earlier Phase 2 local-manifest code/PR #4 may be reused as downstream QA/processing support, but it does not implement automated discovery or authorized media delivery. Reconcile it with Phases 1–3 before treating it as the new ingestion layer.
