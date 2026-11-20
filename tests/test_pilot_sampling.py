@@ -1,21 +1,27 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from shorts_intelligence.pilot.manifest import ValidatedCandidate
 from shorts_intelligence.pilot.matching import build_matched_pairs
 from shorts_intelligence.pilot.sampling import (
-    _relative_performance, age_band, duration_band, pseudonymize_creator,
+    _relative_performance,
+    age_band,
+    duration_band,
+    pseudonymize_creator,
     select_stratified,
 )
 from shorts_intelligence.pilot.schemas import (
-    PerformanceSnapshot, PilotRecord, RightsScope, SelectedRecord,
+    PerformanceSnapshot,
+    PilotRecord,
+    RightsScope,
+    SelectedRecord,
 )
 
 
 def _candidate(
     index: int, *, creator: str, value: int, topic: str = "cricket"
 ) -> ValidatedCandidate:
-    published = datetime(2026, 10, 1, tzinfo=timezone.utc) + timedelta(days=index)
+    published = datetime(2026, 10, 1, tzinfo=UTC) + timedelta(days=index)
     observed = datetime(2026, 11, 20, tzinfo=timezone.utc)
     record = PilotRecord(
         record_id=f"clip_{index:04d}",
