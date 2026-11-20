@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 import importlib.util
 import json
+import re
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Literal
 
@@ -125,11 +128,45 @@ def analyze(
         console.print(f"[yellow]Warning:[/yellow] {warning}")
 
 
+
+def _supported_js_runtime(executable: str, minimum: tuple[int, int]) -> tuple[bool, str | None]:
+    """Return whether a supported yt-dlp EJS runtime is installed and recent enough."""
+    path = shutil.which(executable)
+    if path is None:
+        return False, None
+    try:
+        result = subprocess.run(
+            [path, "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=4,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False, None
+    output = (result.stdout or result.stderr).strip()
+    match = re.search(r"([0-9]+)[.]([0-9]+)", output)
+    if not match or result.returncode != 0:
+        return False, output.splitlines()[0] if output else None
+    version = (int(match.group(1)), int(match.group(2)))
+    return version >= minimum, output.splitlines()[0] if output else None
+
+
+def _distribution_installed(name: str) -> bool:
+    try:
+        importlib.metadata.version(name)
+        return True
+    except importlib.metadata.PackageNotFoundError:
+        return False
+
+
 @app.command()
 def doctor(
     as_json: bool = typer.Option(False, "--json", help="Print machine-readable dependency status.")
 ) -> None:
-    """Check external binaries and optional Python engines."""
+    """Check external binaries, Python engines and yt-dlp YouTube prerequisites."""
+    deno_ok, deno_version = _supported_js_runtime("deno", (2, 3))
+    node_ok, node_version = _supported_js_runtime("node", (22, 0))
     checks = {
         "ffmpeg": shutil.which("ffmpeg") is not None,
         "ffprobe": shutil.which("ffprobe") is not None,
@@ -139,6 +176,9 @@ def doctor(
         "paddleocr": importlib.util.find_spec("paddleocr") is not None,
         "vidtrace": importlib.util.find_spec("vidtrace") is not None,
         "yt_dlp": importlib.util.find_spec("yt_dlp") is not None,
+        "yt_dlp_ejs": _distribution_installed("yt-dlp-ejs"),
+        "deno_2_3_or_newer": deno_ok,
+        "node_22_or_newer": node_ok,
         "instaloader": importlib.util.find_spec("instaloader") is not None,
         "ddgs": importlib.util.find_spec("ddgs") is not None,
         "gallery_dl": importlib.util.find_spec("gallery_dl") is not None,
@@ -157,6 +197,14 @@ def doctor(
     console.print(table)
     if not checks["ffmpeg"] or not checks["ffprobe"]:
         console.print("[red]FFmpeg and ffprobe are required for media processing.[/red]")
+    if checks["yt_dlp"] and not checks["yt_dlp_ejs"]:
+        console.print("[yellow]YouTube extraction: install matching EJS scripts with pip install -U 'yt-dlp[default]'.[/yellow]")
+    if checks["yt_dlp"] and not (deno_ok or node_ok):
+        console.print("[yellow]YouTube full video extraction needs Deno >=2.3 (recommended) or Node.js >=22.[/yellow]")
+    if deno_version:
+        console.print(f"[dim]Deno: {deno_version}[/dim]")
+    if node_version:
+        console.print(f"[dim]Node.js: {node_version}[/dim]")
 
 
 @app.command()

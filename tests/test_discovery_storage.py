@@ -77,3 +77,50 @@ def test_failed_download_remains_retryable(tmp_path: Path):
         candidates = store.eligible_candidates(limit=10)
         assert len(candidates) == 1
         assert candidates[0].source_id == "AbCdEfGh123"
+
+
+def test_partial_repeat_does_not_downgrade_previous_metrics(tmp_path: Path):
+    candidate = _candidate(1_500_000)
+    incomplete_repeat = DiscoveredCandidate(
+        platform="youtube",
+        source_id="AbCdEfGh123",
+        canonical_url="https://www.youtube.com/watch?v=AbCdEfGh123",
+        view_count=None,
+        duration_seconds=None,
+        short_format_status="unknown",
+    )
+    with DiscoveryStore(tmp_path / "metadata-preserve.sqlite3") as store:
+        store.start_run("run-initial", 10, 1_000_000)
+        is_new, became_eligible = store.upsert_candidate(
+            candidate, min_views=1_000_000, run_id="run-initial"
+        )
+        assert is_new is True
+        assert became_eligible is True
+        store.start_run("run-repeat", 10, 1_000_000)
+        is_new, became_eligible = store.upsert_candidate(
+            incomplete_repeat, min_views=1_000_000, run_id="run-repeat"
+        )
+        saved = store.get_candidate("youtube", "AbCdEfGh123")
+        assert is_new is False
+        assert became_eligible is False
+        assert saved is not None
+        assert saved.view_count == 1_500_000
+        assert saved.short_format_status == "confirmed"
+        assert saved.status == "eligible"
+
+
+def test_summary_by_platform_separates_youtube_and_instagram(tmp_path: Path):
+    instagram = DiscoveredCandidate(
+        platform="instagram",
+        source_id="ReelCode123",
+        canonical_url="https://www.instagram.com/reel/ReelCode123/",
+        view_count=None,
+        short_format_status="confirmed",
+    )
+    with DiscoveryStore(tmp_path / "platform-summary.sqlite3") as store:
+        store.start_run("run-summary", 10, 1_000_000)
+        store.upsert_candidate(_candidate(), min_views=1_000_000, run_id="run-summary")
+        store.upsert_candidate(instagram, min_views=1_000_000, run_id="run-summary")
+        counts = store.summary_by_platform()
+        assert counts["youtube"]["eligible"] == 1
+        assert counts["instagram"]["metric_unknown"] == 1

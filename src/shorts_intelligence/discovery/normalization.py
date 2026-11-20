@@ -127,6 +127,10 @@ def candidate_from_ytdlp(info: dict[str, object]) -> DiscoveredCandidate | None:
         else None
     )
     upload_date = str(info.get("upload_date") or "") or None
+    if upload_date is None:
+        timestamp = info.get("timestamp") or info.get("release_timestamp")
+        if isinstance(timestamp, (int, float)) and timestamp > 0:
+            upload_date = datetime.fromtimestamp(timestamp, UTC).strftime("%Y%m%d")
     title = str(info.get("title") or "") or None
     description = str(info.get("description") or "") or None
     canonical_source = webpage_url or f"https://www.youtube.com/watch?v={video_id}"

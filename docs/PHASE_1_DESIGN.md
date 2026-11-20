@@ -1,4 +1,8 @@
-# Phase 1 — Single-Video Telemetry Pipeline
+# Existing Local Single-Video Telemetry Analyzer
+
+## Relationship to automated discovery
+
+This document describes the existing local single-video telemetry analyzer. It is not the automated discovery crawler. The separate non-API search and SQLite component is documented in [Phase 1 Discovery Reliability](PHASE_1_DISCOVERY_RELIABILITY.md). Authorized downloaded MP4 files can later be passed into this analyzer.
 
 ## Scope
 

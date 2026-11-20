@@ -14,8 +14,8 @@
 
 ## Phase 1 — Non-API discovery + SQLite
 
-- YouTube search via yt-dlp `ytsearchN`.
-- Instagram public Reel URL discovery via DDGS web search.
+- YouTube search via yt-dlp ytsearchN using flat playlist mode to avoid per-result full extraction errors.
+- Instagram public Reel URL discovery via DDGS web search using India English region and multiple result pages by default.
 - Instagram metadata resolution via Instaloader.
 - Optional Instaloader hashtag discovery with the user's own session.
 - Normalize source URLs, IDs, metadata, hashtags and metric source.
@@ -23,9 +23,9 @@
 - Confirm short format using URL/dimensions/duration evidence; keep uncertainty explicit.
 - Persist runs/candidates in local SQLite.
 - Enforce platform/source ID uniqueness and seeded shuffled queries.
-- Emit partial-yield reports rather than promising a fixed supply.
+- Emit per-platform reason counts for missing metrics, low views, format uncertainty, duplicates and provider errors.\n- Preserve previously stored metadata on incomplete repeat observations.\n- Check yt-dlp EJS and Deno/Node prerequisites for full video extraction/download.\n- Emit partial-yield reports rather than promising a fixed supply.
 
-**Exit tests:** replaying the same source pages creates no duplicate source rows; second run yields only unseen records within retained inventory; threshold and missing-metric cases are correct; report shows provider errors and partial target reasons.
+**Exit tests:** replaying the same source pages creates no duplicate source rows; unavailable individual YouTube pages do not flood the console; flat search preserves view-count metadata where present; incomplete repeat metadata does not downgrade known records; threshold and missing-metric cases are correct; report shows per-platform reasons and partial target causes. Full video extraction/download prerequisites are visible in doctor.
 
 ## Phase 2 — Open-source downloader and media QA
 

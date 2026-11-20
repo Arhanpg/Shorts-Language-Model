@@ -33,7 +33,7 @@ Install on Windows PowerShell:
     py -3.11 -m venv .venv
     .venv/Scripts/Activate.ps1
     python -m pip install --upgrade pip
-    pip install -e ".[dev,discovery,audio]"
+    pip install -e ".[dev,discovery,audio]" --upgrade
 
 Install FFmpeg and ffprobe and ensure both are on PATH. The gallery-dl Instagram fallback is optional:
 
@@ -43,7 +43,7 @@ Check dependencies:
 
     shorts-lm doctor
 
-### Discover 100 new unique candidates
+### Phase 1 diagnostics and reliability\n\nYouTube search uses yt-dlp flat playlist mode so unavailable individual video pages do not flood the terminal or discard otherwise usable search-page metadata. Instagram DDGS search defaults to India English (in-en) and checks multiple pages. The terminal and outputs/discovery/latest.json separate repeated IDs, IDs already in SQLite, missing metrics, below-threshold items, uncertain format and provider errors. A later incomplete metadata lookup will not overwrite previously known counts. See [Phase 1 Discovery Reliability](docs/PHASE_1_DISCOVERY_RELIABILITY.md).\n\n### Discover 100 new unique candidates
 
     shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
 

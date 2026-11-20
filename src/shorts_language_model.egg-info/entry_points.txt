@@ -1,2 +1,0 @@
-[console_scripts]
-shorts-lm = shorts_intelligence.cli:app

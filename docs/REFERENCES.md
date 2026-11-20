@@ -6,6 +6,10 @@ Checked 21 November 2026. Upstream site support and project versions can change.
 
 - yt-dlp GitHub repository: https://github.com/yt-dlp/yt-dlp
 - yt-dlp supported-site list: https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md
+- yt-dlp EJS challenge setup: https://github.com/yt-dlp/yt-dlp/wiki/EJS
+- yt-dlp EJS scripts: https://github.com/yt-dlp/ejs
+- Deno runtime: https://docs.deno.com/runtime/getting_started/installation/
+- Node.js runtime: https://nodejs.org/en/download/
 - yt-dlp README/search options: https://github.com/yt-dlp/yt-dlp#usage-and-options
 - Instaloader GitHub repository: https://github.com/instaloader/instaloader
 - Instaloader data structures (Post fields): https://instaloader.github.io/module/structures.html

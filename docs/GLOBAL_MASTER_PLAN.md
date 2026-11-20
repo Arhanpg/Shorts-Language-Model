@@ -75,6 +75,16 @@ A URL explicitly returned as a Shorts URL is a strong format indicator. Otherwis
 
 Store Instaloader's video_view_count as view_count and video_play_count as play_count, separately. The default threshold uses view_count only. A CLI option can explicitly use play_count when view_count is absent, and the source metric name remains attached. Missing counts remain unknown. Do not combine views and plays across services in an unlabeled common measure.
 
+### Phase 1 reliability implementation
+
+YouTube discovery uses yt-dlp's flat playlist extraction mode (extract_flat=in_playlist) so playlist search entries are not each resolved as a full individual video page. View counts and durations are taken from search-page metadata when present. The provider uses a quiet logger and records errors instead of flooding the terminal with one failure per unavailable video.
+
+The default Instagram DDGS region is India English (in-en), and the search adapter supports multiple result pages. Discovery diagnostics distinguish raw search hits, unique IDs, repeated results, source IDs already stored, missing view metrics, below-threshold counts, uncertain short format and provider failures. Per-platform counts are written to the JSON report.
+
+SQLite upserts calculate eligibility from merged incoming and previously stored metadata. A later result that omits a metric cannot downgrade a row that already has a valid observation.
+
+For full YouTube video extraction and downloading, the environment also needs yt-dlp EJS scripts and a supported JavaScript runtime (Deno 2.3+ recommended, Node.js 22+ accepted). The doctor command checks these separately from flat search prerequisites. See [Phase 1 Discovery Reliability](PHASE_1_DISCOVERY_RELIABILITY.md).
+
 ## 4. Local inventory and unique selection
 
 Default database: `.shortslm/discovery.sqlite3`.
