@@ -100,8 +100,8 @@ class InstagramSearchProvider:
 
     def search(self, query: str, *, limit: int = 30) -> Iterator[DiscoveredCandidate]:
         try:
-            from ddgs import DDGS
             import instaloader
+            from ddgs import DDGS
         except ImportError as exc:
             raise ProviderUnavailable(
                 'Instagram discovery requires DDGS and Instaloader: '
