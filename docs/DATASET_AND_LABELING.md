@@ -97,3 +97,12 @@ Choose review proportions from measured error and disagreement. Reviewing 10–2
 - Duplicate rate and cross-split leakage are reported.
 - Language/category/duration/creator coverage and missingness are reported.
 - Human agreement is measured per label, not only globally.
+
+
+## 11. Non-API acquisition integration
+
+The source identity is produced by the selected open-source extractors (yt-dlp or Instaloader) and stored in SQLite. Preserve which extractor returned the metric and the observation/discovery timestamp. Store Instagram view count and play count in separate fields; do not blend them in one training target. A result without a known metric cannot be labelled as 1M+.
+
+Before a downloaded media asset enters this specification, the local acquisition workflow must have a rights manifest granting retrieval, media analysis, temporary processing, derived artifact retention and model-training use. This manifest is an evidence pointer and local assertion, not an independent legal verification. The dataset builder should reject unresolved/revoked/expired entries.
+
+Use SHA-256 for exact file-level duplicate checks after download. This does not detect transcodes or alternate encodings; a later perceptual near-duplicate step remains required before the golden split. Candidate URL deduplication and media-byte deduplication are separate checks.
