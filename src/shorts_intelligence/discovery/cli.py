@@ -71,6 +71,14 @@ _DEFAULT_INSTAGRAM_QUERIES = [
 ]
 
 
+def _stage_deadlines(platform: str, *, started_at: float, budget_seconds: int) -> tuple[float, float]:
+    """Return fair YouTube/Instagram deadlines for a bounded discovery run."""
+    overall = started_at + budget_seconds
+    youtube = overall if platform == "youtube" else started_at + budget_seconds * 0.62
+    instagram = overall if platform == "instagram" else started_at + budget_seconds * 0.95
+    return youtube, instagram
+
+
 def _should_run_instagram_stage(platform: str, *, now: float, deadline: float) -> bool:
     """Run Instagram when selected and there is still shared runtime budget."""
     return platform in {"all", "instagram"} and now < deadline
@@ -271,13 +279,8 @@ def run_discovery(
     run_deadline = run_started_monotonic + max_runtime_seconds
     # Fair stage windows in combined mode prevent a slow provider from
     # consuming the entire runtime before the other platform can run.
-    youtube_deadline = (
-        run_deadline if platform == "youtube"
-        else run_started_monotonic + max_runtime_seconds * 0.62
-    )
-    instagram_deadline = (
-        run_deadline if platform == "instagram"
-        else run_started_monotonic + max_runtime_seconds * 0.95
+    youtube_deadline, instagram_deadline = _stage_deadlines(
+        platform, started_at=run_started_monotonic, budget_seconds=max_runtime_seconds
     )
     stop_reason = "completed"
     enrichment_budget_exhausted = False

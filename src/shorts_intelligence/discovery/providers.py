@@ -15,9 +15,9 @@ from __future__ import annotations
 import contextlib
 import time
 from collections.abc import Iterator
-from pathlib import Path
 from datetime import UTC, datetime
 from itertools import islice
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 

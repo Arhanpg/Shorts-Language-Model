@@ -549,6 +549,7 @@ def test_instagram_ytdlp_metadata_fallback_after_instaloader_parse_failure(monke
         request_pause_seconds=1,
         max_lookups=2,
         fallback_backend="",
+        enable_ytdlp_fallback=True,
     )
     results = list(provider.search("cricket reels", limit=5))
 
