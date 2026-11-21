@@ -194,7 +194,6 @@ class DiscoveryStore:
         *,
         min_views: int,
         run_id: str,
-        accept_instagram_play_count: bool = False,
     ) -> tuple[bool, bool]:
         """Insert/update one candidate without downgrading known metadata to unknown."""
         existing = self.connection.execute(
@@ -232,13 +231,9 @@ class DiscoveryStore:
         )
         effective_metadata = {**previous_metadata, **candidate.metadata}
 
+        # Keep play_count as separate metadata. The hard eligibility rule is
+        # based exclusively on the observed view_count on both platforms.
         metric = effective_view_count
-        if (
-            metric is None
-            and candidate.platform == "instagram"
-            and accept_instagram_play_count
-        ):
-            metric = effective_play_count
 
         if effective_format == "not_short":
             status = "not_short"

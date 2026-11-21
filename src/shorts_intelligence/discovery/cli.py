@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import random
 import time
@@ -21,10 +22,12 @@ from shorts_intelligence.discovery.providers import (
     InstagramSearchProvider,
     ProviderUnavailable,
     YouTubeSearchProvider,
+    YouTubeShortsSurfaceProvider,
 )
 from shorts_intelligence.discovery.query_planner import (
     SearchQuery,
     build_instagram_query_pool,
+    build_youtube_hashtag_pool,
     build_youtube_query_pool,
     select_due_queries,
 )
@@ -97,6 +100,47 @@ def _add_provider_errors(
     provider_messages.clear()
 
 
+@discovery_app.command("instagram-login")
+def instagram_login(
+    username: str = typer.Option(..., "--username", prompt=True),
+    session_file: Path = typer.Option(
+        Path(".shortslm/instagram.session"), "--session-file"
+    ),
+) -> None:
+    """Create a local Instaloader session using its normal interactive login flow."""
+    try:
+        import instaloader
+    except ImportError as exc:
+        console.print('[red]Install discovery dependencies first: pip install -e ".[discovery]"[/red]')
+        raise typer.Exit(code=2) from exc
+    session_path = session_file.expanduser().resolve()
+    session_path.parent.mkdir(parents=True, exist_ok=True)
+    loader = instaloader.Instaloader(
+        quiet=False,
+        download_pictures=False,
+        download_videos=False,
+        download_video_thumbnails=False,
+        download_comments=False,
+        save_metadata=False,
+        max_connection_attempts=1,
+        request_timeout=12.0,
+    )
+    try:
+        loader.interactive_login(username)
+        authenticated_as = loader.test_login()
+        if not authenticated_as or authenticated_as.casefold() != username.casefold():
+            raise RuntimeError("Instagram did not confirm the requested account session.")
+        loader.save_session_to_file(filename=str(session_path))
+    except Exception as exc:
+        console.print(f"[red]Instagram login/session creation failed: {type(exc).__name__}: {str(exc)[:220]}[/red]")
+        raise typer.Exit(code=1) from exc
+    finally:
+        with contextlib.suppress(Exception):
+            loader.close()
+    console.print(f"[green]Local Instagram session saved:[/green] {session_path}")
+    console.print("[yellow]Keep this file private. Never commit it, share it, or paste its contents into chat.[/yellow]")
+
+
 @discovery_app.command("run")
 def run_discovery(
     platform: Literal["all", "youtube", "instagram"] = typer.Option("all", "--platform"),
@@ -109,7 +153,10 @@ def run_discovery(
     target_new: int = typer.Option(100, "--target-new", min=1, max=2000),
     min_views: int = typer.Option(1_000_000, "--min-views", min=0),
     max_candidates: int = typer.Option(1500, "--max-candidates", min=1, max=20000),
-    results_per_query: int = typer.Option(20, "--results-per-query", min=1, max=30),
+    results_per_query: int = typer.Option(
+        30, "--results-per-query", min=1, max=50,
+        help="Maximum bounded results consumed from each search query, including continuation pages.",
+    ),
     max_runtime_seconds: int = typer.Option(
         180, "--max-runtime-seconds", min=30, max=600,
         help="Hard overall discovery-run budget. The command stops cleanly when it expires.",
@@ -128,15 +175,27 @@ def run_discovery(
     ),
     max_search_queries: int = typer.Option(
         24, "--max-search-queries", min=1, max=100,
-        help="Maximum distinct YouTube searches in this run.",
+        help="Maximum distinct YouTube text searches in this run.",
+    ),
+    max_hashtag_shelves: int = typer.Option(
+        8, "--max-hashtag-shelves", min=0, max=30,
+        help="Maximum independent YouTube hashtag Shorts shelves to inspect.",
+    ),
+    max_channel_expansion: int = typer.Option(
+        8, "--max-channel-expansion", min=0, max=30,
+        help="Maximum creator Shorts tabs to inspect after discovering their channels.",
+    ),
+    channel_shorts_per_channel: int = typer.Option(
+        15, "--channel-shorts-per-channel", min=1, max=50,
+        help="Bounded number of recent Shorts to inspect per discovered channel.",
     ),
     instagram_max_search_queries: int = typer.Option(
         8, "--instagram-max-search-queries", min=1, max=40,
         help="Maximum Instagram web searches in this run; each is time-bounded.",
     ),
     query_cooldown_days: int = typer.Option(
-        7, "--query-cooldown-days", min=0, max=90,
-        help="Do not reuse the same query/locale combination within this many days.",
+        1, "--query-cooldown-days", min=0, max=90,
+        help="Minimum age before a query/locale combination is reused; 0 forces a refresh.",
     ),
     metadata_enrichment_limit: int = typer.Option(
         40, "--metadata-enrichment-limit", min=0, max=200,
@@ -154,7 +213,7 @@ def run_discovery(
         help="Optional Instaloader username with an existing local session file.",
     ),
     instagram_session_file: Path | None = typer.Option(
-        None,
+        Path(".shortslm/instagram.session"),
         "--instagram-session-file",
         help="Local Instaloader session file; never put it in Git.",
     ),
@@ -197,20 +256,14 @@ def run_discovery(
         6.0, "--instagram-request-timeout", min=3.0, max=12.0,
         help="Instaloader per-request timeout in seconds; the discovery run also has a global deadline.",
     ),
-    instagram_use_play_count: bool = typer.Option(
-        False,
-        "--instagram-use-play-count",
-        help="Explicitly allow Instagram play_count when view_count is absent.",
-    ),
     pause_seconds: float = typer.Option(1.0, "--pause-seconds", min=1.0, max=10.0),
 ) -> None:
-    """Discover new Shorts/Reels with a strict runtime budget and visible progress.
+    """Discover Shorts/Reels from multiple bounded public discovery surfaces.
 
-    YouTube uses only the first Shorts-filtered search page per query; the lazy
-    ytscrape iterator is never consumed, so it cannot silently fetch continuation
-    pages. Requests have short timeouts and no retry. Optional detail enrichment
-    has its own wall-clock budget. Instagram loops share the same overall deadline.
-    This command discovers metadata only; it does not download media.
+    YouTube combines bounded paginated Shorts search, hashtag Shorts shelves and
+    Shorts tabs for discovered channels. Instagram uses indexed Reel URLs and a
+    user-owned Instaloader session when configured. This command discovers
+    metadata only; it does not download media.
     """
     run_id = uuid.uuid4().hex
     run_started_at = datetime.now(UTC)
@@ -228,9 +281,11 @@ def run_discovery(
     raw_by_platform: Counter[str] = Counter()
     query_records: list[tuple[str, SearchQuery, int, int]] = []
     youtube_provider: YouTubeSearchProvider | None = None
+    youtube_surface_provider: YouTubeShortsSurfaceProvider | None = None
     instagram_provider: InstagramSearchProvider | None = None
 
     youtube_pool = build_youtube_query_pool(query)
+    youtube_hashtag_pool = build_youtube_hashtag_pool(query)
     instagram_pool = build_instagram_query_pool(query, default_region=instagram_region)
     stats: Counter[str] = Counter()
     status_counts: Counter[str] = Counter()
@@ -243,24 +298,37 @@ def run_discovery(
 
     with DiscoveryStore(database) as store:
         youtube_queries: list[SearchQuery] = []
+        youtube_hashtag_queries: list[SearchQuery] = []
         instagram_queries: list[SearchQuery] = []
         if platform in {"all", "youtube"}:
+            youtube_history = store.query_history("youtube")
+            youtube_performance = store.query_performance("youtube")
             youtube_queries = select_due_queries(
                 youtube_pool,
-                store.query_history("youtube"),
+                youtube_history,
                 limit=max_search_queries,
                 cooldown_days=query_cooldown_days,
                 rng=rng,
+                performance=youtube_performance,
+                now=run_started_at,
+            )
+            youtube_hashtag_queries = select_due_queries(
+                youtube_hashtag_pool,
+                youtube_history,
+                limit=max_hashtag_shelves,
+                cooldown_days=query_cooldown_days,
+                rng=rng,
+                performance=youtube_performance,
                 now=run_started_at,
             )
         if platform in {"all", "instagram"}:
-            instagram_limit = instagram_max_search_queries
             instagram_queries = select_due_queries(
                 instagram_pool,
                 store.query_history("instagram"),
-                limit=instagram_limit,
+                limit=instagram_max_search_queries,
                 cooldown_days=query_cooldown_days,
                 rng=rng,
+                performance=store.query_performance("instagram"),
                 now=run_started_at,
             )
 
@@ -275,8 +343,9 @@ def run_discovery(
                     detail_enrichment_limit=metadata_enrichment_limit,
                 )
                 console.print(
-                    f"[cyan]YouTube discovery: {len(youtube_queries)} queries selected; "
-                    f"{results_per_query} first-page results/query; "
+                    f"[cyan]YouTube discovery: {len(youtube_queries)} text queries + "
+                    f"{len(youtube_hashtag_queries)} hashtag shelves selected; "
+                    f"up to {results_per_query} results/source; "
                     f"{max_runtime_seconds}s total run budget.[/cyan]"
                 )
                 for query_index, search_query in enumerate(youtube_queries, start=1):
@@ -308,15 +377,13 @@ def run_discovery(
                     candidates.extend(query_candidates)
                     for item in query_candidates:
                         if item.short_format_status == "confirmed":
-                            metric = item.qualifying_metric(
-                                accept_instagram_play_count=instagram_use_play_count
-                            )
+                            metric = item.qualifying_metric()
                             if metric is not None and metric >= min_views and not store.has_candidate(
                                 item.platform, item.source_id
                             ):
                                 provisional_new_eligible_ids.add(item.source_id)
                     console.print(
-                        f"[dim]  -> {raw_count} first-page hits, {len(query_candidates)} unique IDs "
+                        f"[dim]  -> {raw_count} bounded search hits, {len(query_candidates)} unique IDs "
                         f"in {time.monotonic() - query_started:.1f}s; "
                         f"{len(provisional_new_eligible_ids)} provisional new qualifying IDs[/dim]"
                     )
@@ -326,6 +393,76 @@ def run_discovery(
                     if youtube_provider.circuit_open:
                         stop_reason = "youtube_circuit_open"
                         break
+
+            if (
+                platform in {"all", "youtube"}
+                and youtube_provider is not None
+                and not youtube_provider.circuit_open
+                and time.monotonic() < run_deadline
+            ):
+                youtube_surface_provider = YouTubeShortsSurfaceProvider(
+                    request_timeout=youtube_request_timeout
+                )
+                for shelf_index, shelf_query in enumerate(youtube_hashtag_queries, start=1):
+                    if time.monotonic() + youtube_request_timeout > run_deadline:
+                        stop_reason = "runtime_budget_reached"
+                        break
+                    before = youtube_surface_provider.search_results_seen
+                    shelf_candidates = youtube_surface_provider.search_hashtag(
+                        shelf_query.query, limit=results_per_query
+                    )
+                    raw_count = youtube_surface_provider.search_results_seen - before
+                    raw_by_platform["youtube"] += raw_count
+                    query_count["youtube"] += 1
+                    query_records.append(("youtube", shelf_query, raw_count, len(shelf_candidates)))
+                    candidates.extend(shelf_candidates)
+                    console.print(
+                        f"[dim]YouTube hashtag shelf {shelf_index}/"
+                        f"{len(youtube_hashtag_queries)} · #{shelf_query.query} "
+                        f"-> {len(shelf_candidates)} Shorts[/dim]"
+                    )
+
+                discovered_channels: dict[str, DiscoveredCandidate] = {}
+                for item in candidates:
+                    if item.platform != "youtube":
+                        continue
+                    channel_id = item.metadata.get("channel_id")
+                    if isinstance(channel_id, str) and channel_id.startswith("UC"):
+                        previous = discovered_channels.get(channel_id)
+                        if previous is None or (item.view_count or 0) > (previous.view_count or 0):
+                            discovered_channels[channel_id] = item
+                expansion_targets = sorted(
+                    discovered_channels.items(),
+                    key=lambda pair: pair[1].view_count or 0,
+                    reverse=True,
+                )[:max_channel_expansion]
+                for channel_index, (channel_id, source_candidate) in enumerate(
+                    expansion_targets, start=1
+                ):
+                    if time.monotonic() + youtube_request_timeout > run_deadline:
+                        stop_reason = "runtime_budget_reached"
+                        break
+                    before = youtube_surface_provider.search_results_seen
+                    channel_items = youtube_surface_provider.search_channel_shorts(
+                        channel_id, limit=channel_shorts_per_channel
+                    )
+                    raw_count = youtube_surface_provider.search_results_seen - before
+                    raw_by_platform["youtube"] += raw_count
+                    query_count["youtube"] += 1
+                    channel_query = SearchQuery(
+                        platform="youtube",
+                        query=channel_id,
+                        language=str(source_candidate.metadata.get("search_language") or "en"),
+                        region=str(source_candidate.metadata.get("search_region") or "IN"),
+                        strategy="channel_shorts_tab",
+                    )
+                    query_records.append(("youtube", channel_query, raw_count, len(channel_items)))
+                    candidates.extend(channel_items)
+                    console.print(
+                        f"[dim]YouTube channel Shorts {channel_index}/"
+                        f"{len(expansion_targets)} · {channel_id} "
+                        f"-> {len(channel_items)} Shorts[/dim]"
+                    )
 
             # In combined mode, one platform's provisional target must not
             # silently prevent the other selected platform from running.
@@ -344,6 +481,11 @@ def run_discovery(
                     request_timeout=instagram_request_timeout,
                     max_lookups=instagram_max_lookups,
                 )
+                if not instagram_session_user:
+                    console.print(
+                        "[yellow]Instagram metadata mode: anonymous. A local user-owned session "
+                        "may improve access but cannot guarantee metadata availability.[/yellow]"
+                    )
                 for query_index, search_query in enumerate(instagram_queries, start=1):
                     if instagram_provider.circuit_open:
                         stop_reason = "instagram_circuit_open"
@@ -434,12 +576,8 @@ def run_discovery(
                 unique_candidates[identity] = candidate
                 continue
             stats["duplicate_search_results"] += 1
-            previous_metric = previous.qualifying_metric(
-                accept_instagram_play_count=instagram_use_play_count
-            )
-            candidate_metric = candidate.qualifying_metric(
-                accept_instagram_play_count=instagram_use_play_count
-            )
+            previous_metric = previous.qualifying_metric()
+            candidate_metric = candidate.qualifying_metric()
             selected = candidate if (
                 candidate_metric is not None
                 and (previous_metric is None or candidate_metric > previous_metric)
@@ -537,7 +675,6 @@ def run_discovery(
                 candidate,
                 min_views=min_views,
                 run_id=run_id,
-                accept_instagram_play_count=instagram_use_play_count,
             )
             stored = store.get_candidate(candidate.platform, candidate.source_id)
             if stored is None:
@@ -577,6 +714,10 @@ def run_discovery(
             if youtube_provider.circuit_reason:
                 errors.append(f"youtube circuit opened: {youtube_provider.circuit_reason}")
             youtube_provider.close()
+        if youtube_surface_provider:
+            for message in youtube_surface_provider.errors:
+                errors.append(f"youtube_surface: {message[:300]}")
+            provider_errors["youtube"] += len(youtube_surface_provider.errors)
         if instagram_provider:
             for message in instagram_provider.errors:
                 errors.append(f"instagram: {message[:300]}")
@@ -663,6 +804,13 @@ def run_discovery(
         "stop_reason": stop_reason,
         "youtube_search_pages_fetched": youtube_provider.search_pages_fetched if youtube_provider else 0,
         "youtube_queries_completed": youtube_provider.search_queries_completed if youtube_provider else 0,
+        "youtube_discovery_surfaces": {
+            "text_search_queries": len(youtube_queries),
+            "hashtag_shelves_selected": len(youtube_hashtag_queries),
+            "hashtag_shelves_completed": youtube_surface_provider.hashtag_shelves_completed if youtube_surface_provider else 0,
+            "channel_tabs_completed": youtube_surface_provider.channel_tabs_completed if youtube_surface_provider else 0,
+            "raw_surface_results": youtube_surface_provider.search_results_seen if youtube_surface_provider else 0,
+        },
         "youtube_request_timeout_seconds": youtube_request_timeout,
         "youtube_request_retries": 0,
         "min_views": min_views,
@@ -706,6 +854,11 @@ def run_discovery(
             "lookup_limit": instagram_max_lookups,
             "request_timeout_seconds": instagram_request_timeout,
             "ddgs_timeout_seconds": instagram_timeout,
+            "auth_mode": instagram_provider.auth_mode if instagram_provider else (
+                "session_configured_not_started" if instagram_session_user else "anonymous"
+            ),
+            "session_authenticated": instagram_provider.session_authenticated if instagram_provider else False,
+            "session_username_configured": bool(instagram_session_user),
         },
         "storage_errors": stats["storage_errors"],
         "provider_errors": total_provider_errors,
@@ -719,9 +872,12 @@ def run_discovery(
         "database_status_counts_by_platform": database_by_platform,
         "database_path": str(database.expanduser()),
         "sampling_note": (
-            "YouTube uses ytscrape's Shorts-only filter and rotating query/locale strata. "
-            "Instagram results are indexed by public web search. Both remain best-effort, "
-            "non-uniform samples; only new unique IDs passing the observed view threshold count."
+            "YouTube combines bounded ytscrape Shorts-filtered search with yt-dlp hashtag "
+            "Shorts shelves and discovered-channel Shorts tabs. Instagram URLs are indexed "
+            "by public web search and metadata is resolved with Instaloader, anonymously unless "
+            "a user-owned local session is configured. Both remain best-effort, non-uniform "
+            "samples; only new unique IDs with confirmed format and observed view_count >= "
+            "the threshold count."
         ),
         "media_downloaded": 0,
     }

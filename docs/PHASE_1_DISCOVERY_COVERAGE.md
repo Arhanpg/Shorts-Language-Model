@@ -321,3 +321,25 @@ Live provider tests are intentionally not part of the deterministic unit suite. 
 - gallery-dl optional fallback: https://github.com/mikf/gallery-dl
 
 The external repository's MIT licence permits use subject to its notice terms. ShortsLM uses it as a dependency and does not copy its source. Its use of internal endpoints remains an upstream and platform-policy risk independent of the dependency's software licence.
+
+
+## 13. Multi-source recall and strict eligibility upgrade
+
+The earlier first-page-only ytscrape adapter was too restrictive for candidate recall. The provider now consumes the library's public `SearchResults` iterator with an explicit `max_results` cap. It does not access the private `_buffer`, and pagination remains bounded by the cap.
+
+YouTube discovery now has three independent surfaces:
+1. ytscrape's Shorts-only text search, with bounded continuation pages;
+2. yt-dlp flat metadata extraction from YouTube hashtag Shorts shelves;
+3. yt-dlp flat metadata extraction from Shorts tabs of a bounded set of channels already discovered by the first two surfaces.
+
+The third stage is seeded from discovered Shorts channels; it is not a general channel crawler. All three stages are metadata-only and preserve the discovery source. Candidate identities are merged by YouTube video ID.
+
+Query selection now uses historical query yield after cooldown. New queries remain in the exploration pool, while previously productive queries receive higher priority among eligible revisits. This is a heuristic to improve recall, not a guarantee of platform-wide coverage or a prediction of 1M+ results.
+
+Instagram metadata resolution has an independent fallback: after a non-access-related Instaloader parsing/metadata failure, yt-dlp's Instagram extractor is tried with `download=False`. Explicit login-required, challenge, rate-limit, timeout or connection-block conditions do not trigger fallback attempts. This fallback is best-effort and may still return no numeric view count.
+
+A new `shorts-lm discover instagram-login --username YOUR_USERNAME` command uses Instaloader's normal interactive login and saves a local session under `.shortslm/instagram.session`. Discovery validates the session identity before using it. Session files are private local credentials and must never be committed or shared.
+
+**Strict eligibility:** a candidate is eligible only when its format is `confirmed` and its observed `view_count` is at least the configured threshold. A `candidate`/uncertain format can no longer qualify merely because its view count is high. On database open, legacy rows marked eligible without confirmed format are reclassified as `format_unknown`; metadata is preserved.
+
+The 1M rule is applied independently per platform. Instagram `play_count` remains distinct and is not accepted by default. The optional explicit play-count flag remains available but does not relabel plays as views.

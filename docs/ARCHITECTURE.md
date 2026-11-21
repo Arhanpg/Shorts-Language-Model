@@ -51,15 +51,15 @@ Query planner (topic/language/region/date)
 
 ### Discovery adapters
 
-- YouTube: ytscrape's dedicated Shorts search filter, parse typed search metadata.
-- Instagram: DDGS query public Reel URLs and Instaloader resolves shortcodes.
-- Instaloader's hashtag discovery is optional and requires a user session.
+- YouTube: ytscrape Shorts search with bounded public pagination, plus yt-dlp flat hashtag shelves and discovered-channel Shorts tabs.
+- Instagram: DDGS discovers public Reel URLs; Instaloader resolves metadata, with yt-dlp metadata-only fallback for non-access-related parser failures.
+- An optional user-owned Instaloader session is validated before use and remains local under the gitignored `.shortslm/` directory.
 - Combined discovery schedules both selected platform stages under the shared runtime deadline and reports independent execution states.
 - No official platform API is used by the discovery CLI.
 
 ### Candidate normalizer
 
-Maps tool-specific metadata into DiscoveredCandidate. Missing fields remain null/unknown. View count and play count are separate. Short-format status uses explicit URL and duration/dimensions/date evidence.
+Maps tool-specific metadata into DiscoveredCandidate. Missing fields remain null/unknown. View count and play count are separate. Only `short_format_status=confirmed` plus a numeric `view_count` meeting the threshold is eligible; uncertain format is retained but not promoted.
 
 ### Inventory
 

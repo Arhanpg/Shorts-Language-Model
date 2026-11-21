@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from shorts_intelligence.discovery.query_planner import (
     SearchQuery,
     build_instagram_query_pool,
+    build_youtube_hashtag_pool,
     build_youtube_query_pool,
     select_due_queries,
 )
@@ -88,3 +89,33 @@ def test_query_selection_does_not_reuse_queries_inside_cooldown():
     )
 
     assert selected == []
+
+
+def test_youtube_hashtag_pool_creates_distinct_shorts_shelf_queries():
+    queries = build_youtube_hashtag_pool(["Cricket", "Cooking"])
+    assert len(queries) == 2
+    assert {item.strategy for item in queries} == {"hashtag_shorts_shelf"}
+    assert {item.query for item in queries} == {"cricket", "cooking"}
+
+
+def test_query_selection_ranks_historically_productive_queries():
+    now = datetime(2026, 11, 21, tzinfo=UTC)
+    productive = SearchQuery("youtube", "productive", "en", "IN", "topic")
+    weak = SearchQuery("youtube", "weak", "en", "IN", "topic")
+    history = {
+        productive.key: (now - timedelta(days=10)).isoformat(),
+        weak.key: (now - timedelta(days=10)).isoformat(),
+    }
+    selected = select_due_queries(
+        [weak, productive],
+        history,
+        limit=2,
+        cooldown_days=7,
+        rng=random.Random(1),
+        performance={
+            productive.key: {"run_count": 2, "raw_results": 40, "candidate_count": 18},
+            weak.key: {"run_count": 3, "raw_results": 1, "candidate_count": 0},
+        },
+        now=now,
+    )
+    assert selected[0] == productive

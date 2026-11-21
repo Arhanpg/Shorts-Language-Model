@@ -7,6 +7,7 @@ from types import ModuleType, SimpleNamespace
 from shorts_intelligence.discovery.providers import (
     InstagramSearchProvider,
     YouTubeSearchProvider,
+    YouTubeShortsSurfaceProvider,
 )
 
 
@@ -66,15 +67,15 @@ def _fake_ytscrape(monkeypatch):
             ]
 
             class FakeLazySearchResults:
-                def __init__(self, items):
-                    self._buffer = items
+                def __init__(self, items, max_results):
+                    self.items = items[:max_results]
                     self.iterated = False
 
                 def __iter__(self):
                     self.iterated = True
-                    raise AssertionError("YouTube discovery must not trigger lazy pagination")
+                    return iter(self.items)
 
-            return FakeLazySearchResults(first_page)
+            return FakeLazySearchResults(first_page, max_results)
 
         def video(self, source_id):
             self.video_calls.append(source_id)
@@ -278,6 +279,22 @@ def test_instagram_provider_uses_bounded_timeouts_and_metadata(monkeypatch):
 
 
 def test_instagram_provider_circuit_breaks_after_repeated_metadata_failures(monkeypatch):
+    class FakeYoutubeDL:
+        def __init__(self, options):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return None
+
+        def extract_info(self, url, download=False):
+            return None
+
+    yt_dlp_module = ModuleType("yt_dlp")
+    yt_dlp_module.YoutubeDL = FakeYoutubeDL
+    monkeypatch.setitem(sys.modules, "yt_dlp", yt_dlp_module)
     urls = [
         "https://www.instagram.com/reel/ABCxyz_123/",
         "https://www.instagram.com/reel/DEFxyz_456/",
@@ -410,5 +427,110 @@ def test_instagram_empty_successful_searches_do_not_open_circuit(monkeypatch):
     assert provider.search_results_seen == 0
     assert provider.ddgs_failures == 0
     assert provider.consecutive_search_failures == 0
+    assert provider.circuit_open is False
+    provider.close()
+
+
+def test_youtube_provider_uses_public_bounded_search_results_iterator(monkeypatch):
+    FakeYouTube = _fake_ytscrape(monkeypatch)
+    provider = YouTubeSearchProvider()
+    results = list(provider.search("cricket shorts", limit=1))
+    assert len(results) == 1
+    assert FakeYouTube.instances[0].search_calls[0][2] == 1
+    provider.close()
+
+
+def test_youtube_hashtag_surface_uses_flat_metadata_only(monkeypatch):
+    calls = []
+
+    class FakeYoutubeDL:
+        def __init__(self, options):
+            calls.append(options)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return None
+
+        def extract_info(self, url, download=False):
+            assert download is False
+            assert "/hashtag/cricket/shorts" in url
+            return {
+                "entries": [
+                    {
+                        "id": "AbCdEfGh123",
+                        "title": "Cricket moment",
+                        "view_count": 1_600_000,
+                        "duration": 42,
+                        "channel_id": "UC" + "a" * 22,
+                        "width": 720,
+                        "height": 1280,
+                    }
+                ]
+            }
+
+    module = ModuleType("yt_dlp")
+    module.YoutubeDL = FakeYoutubeDL
+    monkeypatch.setitem(sys.modules, "yt_dlp", module)
+    provider = YouTubeShortsSurfaceProvider()
+    results = provider.search_hashtag("#cricket", limit=10)
+
+    assert len(results) == 1
+    assert results[0].view_count == 1_600_000
+    assert results[0].short_format_status == "confirmed"
+    assert results[0].metadata["discovery_surface"] == "hashtag_shorts_shelf"
+    assert calls[0]["extract_flat"] == "in_playlist"
+    assert calls[0]["skip_download"] is True
+    assert provider.hashtag_shelves_completed == 1
+
+
+def test_instagram_ytdlp_metadata_fallback_after_instaloader_parse_failure(monkeypatch):
+    urls = ["https://www.instagram.com/reel/ABCxyz_123/"]
+    _fake_ddgs(monkeypatch, urls)
+    _fake_instaloader(
+        monkeypatch,
+        lambda shortcode: (_ for _ in ()).throw(RuntimeError("Fetching Post metadata failed")),
+    )
+
+    class FakeYoutubeDL:
+        def __init__(self, options):
+            self.options = options
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return None
+
+        def extract_info(self, url, download=False):
+            assert download is False
+            return {
+                "id": "ABCxyz_123",
+                "title": "Cricket Reel",
+                "view_count": 1_800_000,
+                "duration": 20,
+                "uploader": "creator",
+                "extractor_key": "Instagram",
+            }
+
+    module = ModuleType("yt_dlp")
+    module.YoutubeDL = FakeYoutubeDL
+    monkeypatch.setitem(sys.modules, "yt_dlp", module)
+    monkeypatch.setattr("shorts_intelligence.discovery.providers.time.sleep", lambda _: None)
+
+    provider = InstagramSearchProvider(
+        request_pause_seconds=1,
+        max_lookups=2,
+        fallback_backend="",
+    )
+    results = list(provider.search("cricket reels", limit=5))
+
+    assert len(results) == 1
+    assert results[0].platform == "instagram"
+    assert results[0].view_count == 1_800_000
+    assert results[0].metric_source == "yt_dlp_instagram_view_count"
+    assert results[0].metadata["metadata_fallback"] is True
+    assert provider.metadata_successes == 1
     assert provider.circuit_open is False
     provider.close()

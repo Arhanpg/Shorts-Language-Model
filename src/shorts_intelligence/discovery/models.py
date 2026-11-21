@@ -38,12 +38,9 @@ class DiscoveredCandidate(BaseModel):
     discovered_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, object] = Field(default_factory=dict)
 
-    def qualifying_metric(self, *, accept_instagram_play_count: bool = False) -> int | None:
-        if self.view_count is not None:
-            return self.view_count
-        if self.platform == "instagram" and accept_instagram_play_count:
-            return self.play_count
-        return None
+    def qualifying_metric(self) -> int | None:
+        """Return the observed view count; play_count is never interchangeable with views."""
+        return self.view_count
 
 
 class AcquisitionAuthorization(BaseModel):

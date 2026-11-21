@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import random
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -89,6 +90,41 @@ _YOUTUBE_LOCALE_TERMS: dict[tuple[str, str], tuple[str, ...]] = {
         "tarian", "perjalanan", "teknologi", "pendidikan",
     ),
 }
+
+
+
+def build_youtube_hashtag_pool(
+    custom_queries: list[str] | None = None,
+) -> list[SearchQuery]:
+    """Build independent Shorts-shelf sources from topic tags.
+
+    Hashtag shelves complement text search; they are not treated as a complete
+    or unbiased catalogue. Custom queries are converted into conservative tags.
+    """
+    topics: list[tuple[str, str, str]] = []
+    if custom_queries:
+        for phrase in custom_queries:
+            normalized = re.sub(r"[^\w]", "", phrase.casefold())
+            if normalized and normalized not in {"shorts", "viral", "trending"}:
+                topics.append(("en", "IN", normalized[:48]))
+    else:
+        for (language, region), terms in _YOUTUBE_LOCALE_TERMS.items():
+            for term in terms:
+                normalized = re.sub(r"[^\w]", "", term.casefold())
+                if normalized:
+                    topics.append((language, region, normalized[:48]))
+
+    queries = [
+        SearchQuery(
+            platform="youtube",
+            query=tag,
+            language=language,
+            region=region,
+            strategy="hashtag_shorts_shelf",
+        )
+        for language, region, tag in topics
+    ]
+    return _unique_queries(queries)
 
 
 def build_youtube_query_pool(custom_queries: list[str] | None = None) -> list[SearchQuery]:
@@ -219,9 +255,15 @@ def select_due_queries(
     limit: int,
     cooldown_days: int,
     rng: random.Random | random.SystemRandom,
+    performance: dict[str, dict[str, int]] | None = None,
     now: datetime | None = None,
 ) -> list[SearchQuery]:
-    """Select never-used or cooldown-expired queries without silently reusing recent ones."""
+    """Select fresh queries first, then revisit historically productive queries.
+
+    Search indexes are dynamic. A query that returned useful candidates before
+    should be revisited after its cooldown, while low-yield queries remain
+    exploratory rather than monopolizing the run.
+    """
     now = now or datetime.now(UTC)
     cutoff = now - timedelta(days=max(0, cooldown_days))
     never_used: list[SearchQuery] = []
@@ -241,13 +283,21 @@ def select_due_queries(
             continue
         if parsed <= cutoff:
             due.append(query)
-        # Queries still inside the cooldown are intentionally not selected.
-        # Returning fewer searches is preferable to silently repeating the same
-        # sources; set cooldown_days=0 to deliberately force-refresh the pool.
-        else:
-            continue
 
     rng.shuffle(never_used)
     rng.shuffle(due)
+    observations = performance or {}
+
+    def yield_score(query: SearchQuery) -> tuple[float, int, int]:
+        stats = observations.get(query.key, {})
+        raw = max(0, int(stats.get("raw_results", 0)))
+        candidates = max(0, int(stats.get("candidate_count", 0)))
+        runs = max(1, int(stats.get("run_count", 1)))
+        # Reward actual normalized candidates and useful indexed hits, with a
+        # mild penalty for repeatedly running a query.
+        score = (candidates * 4.0 + min(raw, 50) * 0.1) / (runs ** 0.25)
+        return score, candidates, raw
+
+    due.sort(key=yield_score, reverse=True)
     selected = never_used + due
     return selected[: max(0, limit)]

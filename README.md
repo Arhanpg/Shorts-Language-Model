@@ -8,23 +8,42 @@ The objective is to search for YouTube Shorts and Instagram Reels, filter curren
 
 | Purpose | Open-source tool | Use |
 |---|---|---|
-| YouTube Shorts search + metadata | ytscrape (MIT) | Shorts-only InnerTube web search, typed views/duration, pagination; not the official Data API |
+| YouTube Shorts search + metadata | ytscrape (MIT) | Shorts-only InnerTube search with bounded public pagination and typed views/duration |
+| YouTube Shorts discovery surfaces | yt-dlp | Flat metadata-only hashtag Shorts shelves and discovered-channel Shorts tabs |
 | YouTube media download | yt-dlp + FFmpeg | Authorized MP4 acquisition, remuxing and download retry |
 | Instagram public-link discovery | DDGS | Search indexed public Reel URLs without an Instagram developer token |
 | Instagram Reel metadata + primary download | Instaloader | Resolve shortcode; view/play count, caption/hashtags, duration and Post download |
-| Instagram alternate extractor | yt-dlp Instagram extractor | Second download attempt on a discovered Reel URL |
+| Instagram metadata fallback | yt-dlp Instagram extractor | Independent metadata-only fallback after non-access-related Instaloader parser failures |
 | Instagram fallback downloader | gallery-dl | Optional third attempt if Instaloader and yt-dlp fail |
 | Local deduplication and job state | SQLite | Persist source IDs, metrics, download status and SHA-256 fingerprints |
 
 The detailed rationale and limitations are in [docs/NON_API_DISCOVERY_TOOLCHAIN.md](docs/NON_API_DISCOVERY_TOOLCHAIN.md).
 
+## Instagram session setup
+
+Anonymous Instagram metadata access is frequently incomplete. If you choose to use your own account, create a local session through Instaloader's interactive login flow:
+
+```powershell
+shorts-lm discover instagram-login --username YOUR_INSTAGRAM_USERNAME
+```
+
+This prompts locally for credentials/verification and stores the session at `.shortslm/instagram.session`. Never share that file or commit it. Then run discovery with:
+
+```powershell
+shorts-lm discover run --platform instagram --instagram-session-user YOUR_INSTAGRAM_USERNAME --instagram-session-file .shortslm/instagram.session --target-new 100 --min-views 1000000
+```
+
+A session may improve metadata access, but does not guarantee every Reel is accessible or that Instagram exposes a numeric view count. Stop if Instagram requests a challenge or blocks the account; do not bypass it.
+
 ## Important metric handling
 
 - YouTube view_count is stored as the view metric where ytscrape returns it; capped detail enrichment uses ytscrape player metadata when search results omit the metric.
 - Instagram video_view_count is stored separately from video_play_count.
-- The default filter uses view_count only. The optional --instagram-use-play-count switch permits play_count when the view_count field is absent, but preserves the metric label.
+- Eligibility on both platforms uses numeric view_count only. Instagram video_play_count is retained as separate descriptive metadata and can never substitute for views.
 - Missing metrics are unknown, not zero, and never pass the default 1M threshold.
-- YouTube candidates come from ytscrape's dedicated Shorts search filter. This is stronger format evidence than generic video search, but not a guarantee that every result will remain available for later download.
+- YouTube candidates come from ytscrape's dedicated Shorts search filter, plus bounded yt-dlp hashtag Shorts shelves and Shorts tabs for channels found through those surfaces.
+- Query selection learns from prior query yield after cooldown; never-used queries remain an exploration pool.
+- Only candidates with confirmed Shorts/Reels format and an observed view_count of at least 1,000,000 become eligible. A merely short-duration or format-uncertain video does not qualify.
 - Instagram search results are confirmed Reels when they came from a /reel/ search result and the resolved media is video. Profile/hashtag discoveries are candidates unless more source evidence is available.
 
 ## Current commands
