@@ -1,7 +1,7 @@
 # Phase 1 Discovery Reliability and Windows Troubleshooting
 
 **Updated:** 21 November 2026  
-**Base commit:** b57ea0faa37b67f1f2d52754fbe8868736243bbf  
+**Document type:** historical troubleshooting note; current implementation is documented in [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md).  
 **Scope:** YouTube Shorts and Instagram Reel discovery, metadata filtering and local SQLite inventory. This is separate from the existing single-video telemetry analyzer.
 
 ## 1. What the earlier run showed
@@ -10,29 +10,29 @@ The reported run returned 215 candidate records, including 161 repeated source I
 
 The old YouTube adapter used yt-dlp's default playlist processing behaviour. That resolves search result entries as individual video URLs. An unavailable, deleted, private or restricted item can therefore produce an extractor error even though the search page returned a candidate. A long list of such messages overwhelmed the console.
 
-## 2. YouTube search fix
+## 2. Current YouTube search fix
 
-The provider now sets the yt-dlp option extract_flat = "in_playlist".
+The earlier yt-dlp flat search path has been superseded. The current provider uses ytscrape v2.2+ with YouTube's dedicated `SearchFilter.SHORTS` option. It returns a typed video result and can paginate up to the configured result cap.
 
-yt-dlp documents this mode as leaving entries inside a playlist/multi-video result unresolved. It keeps the search-page entries available for parsing without opening every individual video page. Search-page metadata such as title, duration and view count is used where present. The YouTube search extractor itself parses view count from its metadata rows when that field is available.
+The new provider:
+- selects Shorts results directly rather than inferring format from generic video results;
+- reads typed view counts, duration, title, channel and approximate publication metadata when supplied;
+- reuses one HTTP client per language/region pair in the run;
+- applies a bounded request timeout, short retry policy and request interval;
+- selectively fetches detailed metadata for at most `--metadata-enrichment-limit` new incomplete records;
+- stops on rate-limit or bot-detection exceptions instead of trying to evade them.
 
-The provider:
-- runs the search query once per phrase;
-- reads the returned flat entries;
-- normalizes ID, canonical URL, title, channel, duration, approximate date and view count;
-- drops duplicate IDs within that search query;
-- captures yt-dlp warnings/errors using a quiet logger instead of printing each item failure to the terminal.
+The client uses internal InnerTube web endpoints, not the official YouTube Data API. These endpoints are not a stable public contract and may change or become unavailable. The detailed design and limitations are in [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md).
 
-This does not make every search result available for download. A later download may still fail, and the separate rights gate remains required.
 
 ## 3. YouTube EJS and JavaScript runtime
 
 There are two separate yt-dlp requirements:
 
 1. **Flat search:** reads the search page and metadata; it does not intentionally open every video URL.
-2. **Full video extraction/download:** current YouTube extraction may need the yt-dlp EJS challenge scripts and a supported JavaScript runtime.
+2. **Full video extraction/download through yt-dlp:** current YouTube media acquisition may need the yt-dlp EJS challenge scripts and a supported JavaScript runtime. ytscrape Shorts search does not use yt-dlp.
 
-The discovery optional extra now installs yt-dlp's default extras, which include the EJS companion package. The user must still install a supported JavaScript runtime.
+The discovery optional extra installs yt-dlp's default extras for the separate downloader (including the EJS companion package). It also installs ytscrape for Shorts-only search. The user must still install a supported JavaScript runtime.
 
 Recommended:
 - Deno 2.3 or newer.
@@ -53,13 +53,14 @@ Official setup:
 
 The doctor command now detects the yt-dlp package, yt-dlp-ejs, Deno and Node.js. Missing EJS/runtime is shown as a YouTube full-extraction/download prerequisite warning; it is not treated as an FFmpeg or discovery-package failure.
 
-## 4. Instagram discovery improvement
+## 4. Current Instagram discovery improvement
 
-DDGS search now defaults to India English (in-en) instead of DDGS' default US English region. It inspects multiple result pages per query and supports selecting the DDGS backend and region from the CLI.
+DDGS searches public indexed Reel links using an explicit primary backend set, a single fallback engine, and an eight-second request timeout. The default Instagram query pool rotates topic and language strata; it is not a complete Instagram catalogue.
 
-The DDGS text API explicitly supports region, backend, page and maximum-result parameters. The returned links are still search-engine-indexed links, not a complete Instagram catalogue.
+Instaloader is configured with a 12-second per-request timeout and one connection attempt, instead of its upstream defaults of 300 seconds and three attempts. A maximum of 15 individual metadata lookups is allowed by default. Repeated metadata failures, timeouts, rate-limit responses or login/challenge conditions open a circuit for the rest of the run.
 
-Instaloader still resolves Reel shortcodes and reads available metadata. Metadata errors remain captured per Reel; a failed Reel does not abort an entire query. Login-restricted, deleted and unavailable posts are skipped instead of using bypass methods.
+The provider uses short, bounded retries and records its failure reason in the JSON report. It does not rotate proxies or bypass access restrictions. See [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md) for exact options and upstream references.
+
 
 ## 5. Eligibility and run diagnostics
 
