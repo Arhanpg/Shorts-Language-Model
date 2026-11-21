@@ -205,7 +205,7 @@ def run_discovery(
     instagram_provider: InstagramSearchProvider | None = None
 
     youtube_pool = build_youtube_query_pool(query)
-    instagram_pool = build_instagram_query_pool(query)
+    instagram_pool = build_instagram_query_pool(query, default_region=instagram_region)
     stats: Counter[str] = Counter()
     status_counts: Counter[str] = Counter()
     status_by_platform: dict[str, Counter[str]] = {
