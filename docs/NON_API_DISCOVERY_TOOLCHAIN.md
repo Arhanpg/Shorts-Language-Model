@@ -54,7 +54,7 @@ The provider defaults are deliberately bounded:
 - indexed result pages per query: 1;
 - Instaloader request timeout: 12 seconds;
 - Instaloader connection attempts: 1;
-- individual metadata lookups per run: 15;
+- individual metadata lookups per run: 40;
 - consecutive metadata or DDGS failures open a circuit for the remainder of that run.
 
 The inspected Instaloader v4.16 constructor defaults were a 300-second request timeout and three connection attempts. Those defaults caused the long wait shown in the user's terminal logs, so ShortsLM overrides them.
