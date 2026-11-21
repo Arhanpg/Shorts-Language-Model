@@ -88,6 +88,9 @@ Metric semantics are explicit:
 6. In addition to observed JSON records, collect Reel shortcode links actually rendered in the visible Reels tab. A link-only record is persisted with an unknown metric; it is never promoted to the 1M threshold without an explicit numeric platform metric.
 7. Expand only from explicit collaborator/co-author metadata. Caption mentions are lower-priority leads, not proof of collaboration.
 8. If Instagram presents a login challenge, checkpoint, restriction, or rate limit, stop that creator/backend and ask for normal manual resolution. Do not bypass it.
+9. Also visit explicitly configured public hashtag pages (e.g. `/explore/tags/cricket/`) through the same visible browser context. Collect rendered Reel permalinks and response metadata with the hashtag provenance attached.
+10. For a bounded sample of links with unknown metrics, navigate to their ordinary public Reel detail pages. Parse only explicit numeric metrics from observed responses or public JSON-LD WatchAction/ViewAction counters. Do not infer exact values from abbreviated UI text.
+11. Reuse one persistent browser context for the entire run, opening and closing individual pages as needed. Record candidate counts, metric coverage, detail-page enrichment yield, and per-hashtag/creator failure reasons.
 
 ### Seed corpus and repeat runs
 
@@ -95,7 +98,7 @@ The checked-in `data/instagram_creator_seeds.txt` provides 100 initial handles s
 
 The CLI loads this file by default for Instagram and merges any repeated `--instagram-creator` options. `--force` requeues only the selected seed handles (including previously completed, empty, failed, exhausted or blocked rows) while preserving all candidate and observation history. Empty profile harvests are recorded separately from successful harvests and receive a shorter retry cooldown.
 
-The browser adapter is a local collector, not an endpoint client: it does not construct GraphQL requests, replay captured requests, rotate identities, or circumvent access controls.
+The browser adapter is a local collector, not an endpoint client: it does not construct GraphQL requests, replay captured requests, rotate identities, or circumvent access controls. It reuses one persistent Chrome context per run and supports a configurable hashtag seed list and bounded public Reel-detail enrichment.
 
 ## 4. Persistence and migrations
 

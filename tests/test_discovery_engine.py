@@ -69,8 +69,9 @@ def test_instagram_force_rechecks_completed_creator_and_reports_capture(monkeypa
             self.errors = []
             self.blocked = False
             self.creator_diagnostics = []
+            self.hashtag_diagnostics = []
 
-        async def harvest_creator(self, username, *, max_scrolls=8):
+        async def harvest_creator(self, username, *, max_scrolls=8, max_reel_details=3):
             type(self).calls += 1
             self.creator_diagnostics.append({
                 "handle": username,
@@ -118,3 +119,64 @@ def test_instagram_force_rechecks_completed_creator_and_reports_capture(monkeypa
         assert third["creator_harvest_batches"] == 1
         assert third["candidates_observed"] == 1
         assert FakeInstagram.calls == 2
+
+
+def test_instagram_hashtag_harvest_persists_reels_and_reports_metrics(monkeypatch, tmp_path):
+    import shorts_intelligence.discovery.engine as engine
+
+    class FakeInstagram:
+        def __init__(self, **kwargs):
+            self.requests_observed = 2
+            self.responses_parsed = 1
+            self.responses_unparsed = 1
+            self.errors = []
+            self.blocked = False
+            self.creator_diagnostics = []
+            self.hashtag_diagnostics = []
+
+        async def harvest_hashtag(
+            self, hashtag, *, max_scrolls=8, max_reel_details=8
+        ):
+            self.hashtag_diagnostics.append({
+                "surface": "hashtag_page",
+                "hashtag": hashtag,
+                "candidate_count": 1,
+                "metric_count": 1,
+                "detail_pages_attempted": 1,
+                "detail_pages_with_metrics": 1,
+            })
+            return [DiscoveredCandidate(
+                platform="instagram",
+                source_id="HashtagReel123",
+                canonical_url="https://www.instagram.com/reel/HashtagReel123/",
+                creator="hashtag:cricket",
+                play_count=2_500_000,
+                metric_source="fixture",
+                short_format_status="confirmed",
+                hashtags=["cricket"],
+                metadata={"discovery_surface": "hashtag_page", "metric_kind": "plays"},
+            )]
+
+    monkeypatch.setattr(engine, "InstagramPlaywrightProvider", FakeInstagram)
+    with DiscoveryStore(tmp_path / "instagram-hashtag.sqlite3") as store:
+        summary = asyncio.run(run_creator_graph(
+            store,
+            platform="instagram",
+            target_new=10,
+            min_metric=1_000_000,
+            max_runtime_seconds=30,
+            instagram_profile_dir=tmp_path / "profile",
+            instagram_creators=[],
+            instagram_hashtags=["#Cricket"],
+            max_instagram_hashtags=5,
+            max_creators=0,
+        ))
+        assert summary["instagram_hashtag_requests"] == 1
+        assert summary["hashtags_with_candidates"] == 1
+        assert summary["eligible_new"] == 1
+        assert summary["creator_harvest_batches"] == 0
+        assert summary["hashtag_results"][0]["hashtag"] == "cricket"
+        saved = store.get_candidate("instagram", "HashtagReel123")
+        assert saved is not None
+        assert saved.play_count == 2_500_000
+        assert saved.metadata["discovery_surface"] == "hashtag_page"

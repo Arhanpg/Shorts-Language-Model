@@ -178,6 +178,7 @@ Only acquire and train on media for which the exact intended use is authorized. 
 - [Phase 2 Design](docs/PHASE_2_DESIGN.md)
 - [Phase 2 Testing](docs/PHASE_2_TESTING.md)
 - [References](docs/REFERENCES.md)
+- [Instagram Discovery Operations](docs/INSTAGRAM_DISCOVERY_OPERATIONS.md)
 
 ## License
 
@@ -203,9 +204,17 @@ Run the YouTube graph harvester:
 
     shorts-lm discover graph-run --platform youtube --target-new 100 --min-metric 1000000 --max-runtime-seconds 240
 
-Run Instagram Reels collection from the included 100-handle starter list:
+Run Instagram creator and hashtag discovery from the checked-in starter files:
 
     shorts-lm discover graph-run --platform instagram --target-new 50 --min-metric 1000000
+
+The default hashtag file is `data/instagram_hashtags.txt`. It includes seeds such as `getreadywithme`, `cricket`, `viratkohli`, `anirudh`, `comedy`, `dance`, `food` and `travel`. Hashtag pages are visited in the same manually authenticated Chrome profile as creator Reels tabs. Add repeated `--instagram-hashtag` options or edit the file. Use `--instagram-max-hashtags` to cap how many tags are visited in a run.
+
+Example targeted hashtag-only smoke test (zero creator profiles):
+
+    shorts-lm discover graph-run --platform instagram --instagram-seeds-file .shortslm/no-seeds.txt --instagram-hashtag getreadywithme --instagram-hashtag viratkohli --instagram-max-hashtags 2 --max-creators 0 --target-new 20 --max-runtime-seconds 240 --instagram-max-scrolls 6 --instagram-hashtag-max-reel-details 5
+
+The collector reuses one persistent Chrome context for the run instead of starting a new browser for every creator. It gathers rendered Reel permalinks and observed JSON metadata, then visits a bounded sample of Reel detail pages when the metric is missing. Exact numeric WatchAction/ViewAction counts in public JSON-LD are accepted; abbreviated display labels are not converted into guessed integers. A Reel link with no numeric metric remains an unknown-metric candidate, not a million-play Reel.
 
 The seed list is `data/instagram_creator_seeds.txt`. It includes vloggers, comedy/entertainment creators, technology creators and meme/publisher pages. It is a starting test corpus, not a guarantee that every account is active or that every Reel exceeds one million plays. Add one handle per line or pass extra `--instagram-creator @handle` values.
 
@@ -214,6 +223,17 @@ Force a fresh check of the supplied/default seed handles even if they were previ
     shorts-lm discover graph-run --platform instagram --force --max-creators 100 --max-runtime-seconds 900 --instagram-max-scrolls 12
 
 Use `--force` when manually retrying a creator such as `taneja.gaurav` or `souravjoshivlogs`. It does not clear candidates or delete the database. It only requeues the selected seed handles.
+
+Useful Instagram controls:
+- `--instagram-hashtag getreadywithme`: add one or more live hashtag pages.
+- `--instagram-hashtags-file data/instagram_hashtags.txt`: choose a different tag list.
+- `--instagram-max-hashtags 8`: cap hashtag pages per run.
+- `--instagram-max-reel-details 3`: inspect up to three metric-unknown Reel details per creator.
+- `--instagram-hashtag-max-reel-details 8`: inspect up to eight metric-unknown Reel details per hashtag.
+- `--max-creators 0`: run hashtag-only discovery.
+- `--instagram-max-scrolls 8`: cap scrolling on each surface.
+
+The report distinguishes candidate links, candidates with a numeric metric, candidates whose metric meets the threshold, and newly eligible inventory. A high candidate count alone is not evidence that videos were selected or that their metrics were verified. See [Instagram Discovery Operations](docs/INSTAGRAM_DISCOVERY_OPERATIONS.md).
 
 Run both providers:
 

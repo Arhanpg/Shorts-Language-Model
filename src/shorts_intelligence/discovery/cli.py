@@ -35,6 +35,7 @@ from shorts_intelligence.discovery.query_planner import (
     build_youtube_query_pool,
     select_due_queries,
 )
+from shorts_intelligence.discovery.hashtag_loader import load_instagram_hashtags
 from shorts_intelligence.discovery.seed_loader import load_instagram_creator_seeds
 from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.media.probe import sha256_file
@@ -1107,16 +1108,32 @@ def graph_run(
     max_runtime_seconds: int = typer.Option(600, "--max-runtime-seconds", min=30, max=900),
     max_seed_queries: int = typer.Option(8, "--max-seed-queries", min=0, max=20),
     max_hashtag_queries: int = typer.Option(4, "--max-hashtag-queries", min=0, max=20),
-    max_creators: int = typer.Option(80, "--max-creators", min=1, max=500),
+    max_creators: int = typer.Option(80, "--max-creators", min=0, max=500),
     max_expansions: int = typer.Option(80, "--max-expansions", min=0, max=1000),
     max_depth: int = typer.Option(3, "--max-depth", min=0, max=10),
     instagram_creator: list[str] = typer.Option([], "--instagram-creator"),
     instagram_seeds_file: Path = typer.Option(
         Path("data/instagram_creator_seeds.txt"), "--instagram-seeds-file"
     ),
+    instagram_hashtag: list[str] = typer.Option(
+        [], "--instagram-hashtag", help="Repeatable hashtag seed, with or without #."
+    ),
+    instagram_hashtags_file: Path = typer.Option(
+        Path("data/instagram_hashtags.txt"), "--instagram-hashtags-file"
+    ),
+    instagram_max_hashtags: int = typer.Option(8, "--instagram-max-hashtags", min=0, max=100),
     instagram_max_scrolls: int = typer.Option(8, "--instagram-max-scrolls", min=0, max=20),
+    instagram_max_reel_details: int = typer.Option(
+        3, "--instagram-max-reel-details", min=0, max=30,
+        help="Maximum unknown-metric Reel detail pages to inspect per creator."
+    ),
+    instagram_hashtag_max_reel_details: int = typer.Option(
+        8, "--instagram-hashtag-max-reel-details", min=0, max=30,
+        help="Maximum unknown-metric Reel detail pages to inspect per hashtag."
+    ),
     force: bool = typer.Option(
-        False, "--force", help="Requeue supplied Instagram seed handles even if previously completed, empty, failed, or blocked."
+        False, "--force",
+        help="Requeue supplied Instagram seed handles even if previously completed, empty, failed, exhausted, or blocked."
     ),
     instagram_profile_dir: Path = typer.Option(
         Path(".shortslm/browser/instagram"), "--instagram-profile-dir"
@@ -1124,21 +1141,25 @@ def graph_run(
     database: Path = typer.Option(Path(".shortslm/discovery.sqlite3"), "--database"),
     report: Path = typer.Option(Path("outputs/discovery/graph-latest.json"), "--report"),
 ) -> None:
-    """Run persistent creator-graph discovery; does not download media."""
+    """Run bounded creator + hashtag discovery; does not download media."""
     from shorts_intelligence.discovery.engine import run_creator_graph
 
     try:
+        instagram_enabled = platform in {"instagram", "all"}
         creator_seeds = (
             load_instagram_creator_seeds(
                 instagram_seeds_file, explicit_handles=instagram_creator
-            )
-            if platform in {"instagram", "all"}
-            else []
+            ) if instagram_enabled else []
         )
-        if platform in {"instagram", "all"} and not creator_seeds:
+        hashtag_seeds = (
+            load_instagram_hashtags(
+                instagram_hashtags_file, explicit_hashtags=instagram_hashtag
+            ) if instagram_enabled else []
+        )
+        if instagram_enabled and not creator_seeds and not hashtag_seeds:
             raise ValueError(
-                "No Instagram creator seeds found. Supply --instagram-creator or "
-                f"populate {instagram_seeds_file}."
+                "No Instagram creator or hashtag seeds found. Supply --instagram-creator, "
+                "--instagram-hashtag, or populate the configured seed files."
             )
         with DiscoveryStore(database) as store:
             summary = asyncio.run(run_creator_graph(
@@ -1152,26 +1173,30 @@ def graph_run(
                 max_creators=max_creators,
                 max_expansions=max_expansions,
                 max_depth=max_depth,
-                instagram_profile_dir=(
-                    instagram_profile_dir if platform in {"instagram", "all"} else None
-                ),
+                instagram_profile_dir=instagram_profile_dir if instagram_enabled else None,
                 instagram_creators=creator_seeds,
+                instagram_hashtags=hashtag_seeds,
                 force=force,
                 instagram_max_scrolls=instagram_max_scrolls,
+                instagram_max_reel_details=instagram_max_reel_details,
+                instagram_hashtag_max_reel_details=instagram_hashtag_max_reel_details,
+                max_instagram_hashtags=instagram_max_hashtags,
             ))
         _write_report(report, summary)
     except Exception as exc:
         console.print(f"[bold red]Graph discovery failed:[/bold red] {type(exc).__name__}: {exc}")
         raise typer.Exit(code=1) from exc
 
-    table = Table(title="Creator-graph discovery")
+    table = Table(title="Creator + hashtag discovery")
     table.add_column("Metric")
     table.add_column("Value", justify="right")
     for key in (
-        "eligible_new", "candidates_observed", "creators_with_candidates",
-        "creators_empty", "creators_completed", "creators_pending",
-        "creators_exhausted", "creators_blocked", "creators_failed",
-        "creator_edges", "elapsed_seconds",
+        "eligible_new", "candidates_observed", "new_inventory_candidates",
+        "metric_observed_candidates", "metric_unknown_candidates",
+        "metric_above_threshold_candidates", "instagram_hashtag_requests",
+        "hashtags_with_candidates", "creators_with_candidates", "creators_empty",
+        "creators_completed", "creators_pending", "creators_exhausted",
+        "creators_blocked", "creators_failed", "creator_edges", "elapsed_seconds",
     ):
         table.add_row(key.replace("_", " ").title(), str(summary.get(key, 0)))
     console.print(table)
@@ -1181,16 +1206,35 @@ def graph_run(
         console.print(
             "Instagram capture: "
             f"{instagram_requests.get('json_responses_observed', 0)} JSON responses, "
-            f"{instagram_requests.get('responses_parsed', 0)} responses with Reel records, "
+            f"{instagram_requests.get('responses_parsed', 0)} with Reel records, "
             f"{instagram_requests.get('responses_unparsed', 0)} without recognized Reel records."
         )
-        for item in summary.get("creator_results", []):
-            provider = item.get("provider", {})
+        hashtag_diags = instagram_requests.get("hashtag_diagnostics", [])
+        creator_diags = instagram_requests.get("creator_diagnostics", [])
+        all_diags = [*hashtag_diags, *creator_diags]
+        console.print(
+            "Instagram surfaces: "
+            f"{len(hashtag_diags)} hashtag pages, {len(creator_diags)} creator pages; "
+            f"{sum(int(d.get('candidate_count', 0)) for d in all_diags)} Reel links; "
+            f"{sum(int(d.get('metric_count', 0)) for d in all_diags)} with numeric metrics; "
+            f"{sum(int(d.get('detail_pages_with_metrics', 0)) for d in all_diags)} detail pages enriched."
+        )
+        for item in summary.get("hashtag_results", []):
             if item.get("candidates_observed", 0) == 0:
+                provider = item.get("provider", {})
                 console.print(
-                    f"[yellow]@{item.get('handle')}: {provider.get('reason') or item.get('error') or 'No Reel candidates captured'}[/yellow]"
+                    f"[yellow]#{item.get('hashtag')}: "
+                    f"{provider.get('reason') or item.get('error') or 'No Reel candidates captured'}[/yellow]"
+                )
+        for item in summary.get("creator_results", []):
+            if item.get("candidates_observed", 0) == 0:
+                provider = item.get("provider", {})
+                console.print(
+                    f"[yellow]@{item.get('handle')}: "
+                    f"{provider.get('reason') or item.get('error') or 'No Reel candidates captured'}[/yellow]"
                 )
     console.print(f"Creator seed file: {instagram_seeds_file.expanduser().resolve()}")
+    console.print(f"Hashtag seed file: {instagram_hashtags_file.expanduser().resolve()}")
     console.print(f"Report: {report.expanduser().resolve()}")
     console.print("[yellow]Instagram plays and YouTube views remain separate platform metrics.[/yellow]")
 

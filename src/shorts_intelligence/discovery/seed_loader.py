@@ -31,10 +31,11 @@ def load_instagram_creator_seeds(
     path: Path, *, explicit_handles: list[str] | None = None
 ) -> list[str]:
     """Load one handle per line, merge CLI handles, preserve order and deduplicate."""
-    values: list[str] = []
+    # Explicit CLI handles go first so a small --max-creators smoke test
+    # always tests the handles the user named, not the first entries in the file.
+    values: list[str] = list(explicit_handles or [])
     if path.expanduser().is_file():
         values.extend(path.expanduser().read_text(encoding="utf-8-sig").splitlines())
-    values.extend(explicit_handles or [])
     unique: dict[str, None] = {}
     for value in values:
         handle = normalize_instagram_handle(value)
