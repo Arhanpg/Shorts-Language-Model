@@ -36,18 +36,20 @@ class YouTubeSearchProvider:
     def __init__(
         self,
         *,
-        request_timeout: float = 12.0,
-        request_interval: float = 1.25,
-        max_retries: int = 1,
+        request_timeout: float = 6.0,
+        request_interval: float = 0.5,
+        max_retries: int = 0,
         detail_enrichment_limit: int = 40,
     ) -> None:
-        self.request_timeout = max(3.0, request_timeout)
-        self.request_interval = max(0.5, request_interval)
+        self.request_timeout = max(2.0, min(request_timeout, 10.0))
+        self.request_interval = max(0.25, request_interval)
         self.max_retries = max(0, max_retries)
         self.detail_enrichment_limit = max(0, detail_enrichment_limit)
         self.errors: list[str] = []
         self.warnings: list[str] = []
         self.search_results_seen = 0
+        self.search_pages_fetched = 0
+        self.search_queries_completed = 0
         self.enrichment_attempts = 0
         self.enrichment_successes = 0
         self.circuit_open = False
@@ -123,7 +125,9 @@ class YouTubeSearchProvider:
         """Use YouTube's Shorts-only filter and preserve typed metrics.
 
         The ytscrape SearchFilter.SHORTS option applies the website's dedicated
-        Shorts search filter. Results are paginated up to the requested cap.
+        Shorts search filter. Only the initial page is consumed: SearchResults
+        is lazy and iterating it can perform unbounded continuation requests.
+        The pinned ytscrape 2.2 API exposes parsed first-page items in _buffer.
         """
         if self.circuit_open:
             return
@@ -137,14 +141,25 @@ class YouTubeSearchProvider:
 
         try:
             client = self._client_for(language, region)
-            results = client.search(
+            page = client.search(
                 query,
                 filter=SearchFilter.SHORTS,
-                max_results=max(1, min(limit, 50)),
+                max_results=max(1, min(limit, 30)),
             )
+            # Do not iterate SearchResults: its public iterator transparently
+            # fetches continuation pages. Read exactly the initial parsed page.
+            first_page = getattr(page, "_buffer", None)
+            if not isinstance(first_page, list):
+                raise ProviderUnavailable(
+                    "Unsupported ytscrape SearchResults layout; expected the 2.2.x "
+                    "first-page buffer. Reinstall the pinned discovery extra."
+                )
+            self.search_pages_fetched += 1
+            self.search_queries_completed += 1
+            items = first_page[: max(1, min(limit, 30))]
+            self.search_results_seen += len(items)
             seen: set[str] = set()
-            for video in results:
-                self.search_results_seen += 1
+            for video in items:
                 candidate = candidate_from_ytscrape_video(
                     video,
                     query=query,
