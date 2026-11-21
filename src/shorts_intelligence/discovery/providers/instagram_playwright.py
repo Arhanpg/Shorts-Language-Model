@@ -196,15 +196,18 @@ class InstagramPlaywrightProvider:
 
     async def _ensure_context(self) -> Any:
         if self._context is not None:
-            # Chrome can be closed by the user while a run is active. Never
-            # return a stale BrowserContext and let new_page fail opaquely.
+            # Chrome can be closed by the user while a run is active. Check
+            # the owning browser connection instead of trusting a cached
+            # BrowserContext handle after its target has gone away.
             try:
-                if self._context.browser is not None:
+                browser = self._context.browser
+                connected = browser is None or browser.is_connected()
+                if connected:
+                    _ = self._context.pages
                     return self._context
             except Exception:
                 pass
-            self._context = None
-            self._playwright = None
+            await self.close()
         try:
             from playwright.async_api import async_playwright
         except ImportError as exc:
