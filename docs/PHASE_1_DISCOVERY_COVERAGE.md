@@ -234,6 +234,51 @@ The result should be judged by **new unique eligible IDs**, not by raw page hits
 
 A 100-new-item target is not guaranteed. No search library can guarantee 100 new public videos above 1M views on each run, particularly when an existing database has already captured many high-view items and search providers return ranked results.
 
+## 8. Runtime architecture and bounded execution
+
+The user's 21 November 2026 report showed a YouTube command running silently for more than 30 minutes. Source inspection identified two multiplicative execution paths:
+
+1. ytscrape's `SearchResults` is a lazy iterator. Its public iterator transparently fetches continuation pages while more results are requested. The old adapter consumed it in a loop, so one search query could make additional network requests without the CLI showing page-level progress.
+2. The CLI then performed up to 40 detailed `YouTube.video()` player lookups sequentially. Each lookup used the provider's request timeout and minimum request interval. Forty slow lookups could consume many minutes after search had already finished.
+
+The revised execution contract is deliberately bounded:
+
+| Control | Default | Behaviour |
+|---|---:|---|
+| Overall run budget | 180 seconds | Stop scheduling new work when the monotonic deadline expires |
+| YouTube request timeout | 6 seconds | Applies to each ytscrape HTTP request |
+| YouTube retries | 0 | Discovery does not retry slow or failed search/player requests |
+| YouTube request interval | 0.5 seconds | Minimum interval between requests |
+| Results per query | 20 | Read at most this many parsed results from the initial page |
+| YouTube pages per query | 1 | Never consume the lazy iterator; no continuation fetches |
+| Enrichment lookup cap | 40 | Upper bound, not a requirement |
+| Enrichment time budget | 20 seconds | Optional detail lookups stop independently when budget expires |
+
+The first-page implementation is isolated in `YouTubeSearchProvider.search()`. In the inspected ytscrape 2.2.0 source, `SearchResults` stores the parsed initial-page items in `_buffer`; calling `iter(results)` is what triggers lazy continuation retrieval. The adapter reads the initial `_buffer` directly and does not iterate the object. The provider tests use a fake lazy result whose iterator raises if accessed, proving that this path does not paginate.
+
+The CLI emits progress before and after each query, including locale, elapsed query time and the number of qualifying unseen IDs seen so far. It also stops searching additional queries once the requested number of qualifying new IDs has been observed. If that target is reached, it skips later platform phases and optional enrichment.
+
+The same monotonic deadline is passed into Instagram URL search and shortcode lookup scheduling. A currently executing synchronous HTTP request can still finish up to its configured request timeout after the deadline; the deadline prevents starting further requests. The report stores `elapsed_seconds`, `runtime_budget_seconds`, `stop_reason`, `youtube_search_pages_fetched`, `youtube_queries_completed`, request settings and enrichment-budget state.
+
+The time limit guarantees bounded scheduling, not a guaranteed candidate yield. The command retains all candidates collected before the deadline and completes deduplication/storage/reporting rather than abandoning partial work.
+
+### Recommended fast Windows run
+
+```powershell
+shorts-lm discover run `
+  --platform youtube `
+  --target-new 100 `
+  --min-views 1000000 `
+  --max-search-queries 30 `
+  --max-runtime-seconds 180 `
+  --results-per-query 20 `
+  --youtube-request-timeout 6 `
+  --metadata-enrichment-limit 40 `
+  --enrichment-budget-seconds 20
+```
+
+For a search-only baseline that avoids player-detail requests entirely, use `--metadata-enrichment-limit 0 --enrichment-budget-seconds 0`. Compare metric coverage before increasing the enrichment budget.
+
 ## 9. Failure and access handling
 
 - Do not rotate proxies, steal browser cookies, bypass login/CAPTCHA, or circumvent access controls.
