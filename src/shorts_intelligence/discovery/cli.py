@@ -493,14 +493,14 @@ def run_discovery(
                 f"[cyan]YouTube metadata enrichment: at most {remaining} lookups, "
                 f"{max(0, enrichment_deadline - time.monotonic()):.0f}s budget.[/cyan]"
             )
-            for candidate in ordered:
+            for candidate_index, candidate in enumerate(ordered):
                 if remaining <= 0:
-                    enriched.append(candidate)
-                    continue
+                    enriched.extend(ordered[candidate_index:])
+                    break
                 if time.monotonic() + youtube_request_timeout > enrichment_deadline:
                     enrichment_budget_exhausted = True
-                    enriched.append(candidate)
-                    continue
+                    enriched.extend(ordered[candidate_index:])
+                    break
                 if (
                     candidate.platform == "youtube"
                     and (candidate.view_count is None or candidate.duration_seconds is None)
@@ -509,6 +509,10 @@ def run_discovery(
                     language = str(candidate.metadata.get("search_language") or "en")
                     region = str(candidate.metadata.get("search_region") or "IN")
                     before = youtube_provider.enrichment_attempts
+                    console.print(
+                        f"[dim]YouTube detail lookup "
+                        f"{before + 1}/{metadata_enrichment_limit} · {candidate.source_id}[/dim]"
+                    )
                     candidate = youtube_provider.enrich(
                         candidate, language=language, region=region
                     )
