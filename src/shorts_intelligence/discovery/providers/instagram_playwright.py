@@ -508,14 +508,25 @@ class InstagramPlaywrightProvider:
         handle = username.strip().lstrip("@").casefold()
         if not handle or "/" in handle or " " in handle:
             raise ValueError(f"Invalid Instagram username: {username!r}")
-        records, coauthors, diagnostic = await self._collect_surface(
-            url=f"https://www.instagram.com/{quote(handle, safe='.')}/reels/",
-            creator_handle=handle,
-            surface="creator_reels_tab",
-            hashtag=None,
-            max_scrolls=max_scrolls,
-            max_reel_details=max_reel_details,
-        )
+        try:
+            records, coauthors, diagnostic = await self._collect_surface(
+                url=f"https://www.instagram.com/{quote(handle, safe='.')}/reels/",
+                creator_handle=handle,
+                surface="creator_reels_tab",
+                hashtag=None,
+                max_scrolls=max_scrolls,
+                max_reel_details=max_reel_details,
+            )
+        except Exception as exc:
+            self.creator_diagnostics.append({
+                "surface": "creator_reels_tab",
+                "handle": handle,
+                "requested_url": f"https://www.instagram.com/{quote(handle, safe='.')}/reels/",
+                "candidate_count": 0,
+                "metric_count": 0,
+                "reason": f"{type(exc).__name__}: {str(exc)[:180]}",
+            })
+            raise
         self.creator_diagnostics.append(diagnostic)
         if self.blocked:
             raise RuntimeError(diagnostic.get("reason") or "Instagram access restriction")
@@ -533,14 +544,25 @@ class InstagramPlaywrightProvider:
         tag = hashtag.strip().lstrip("#").casefold()
         if not tag or not re.fullmatch(r"[\w.]{1,64}", tag, flags=re.UNICODE):
             raise ValueError(f"Invalid Instagram hashtag: {hashtag!r}")
-        records, _, diagnostic = await self._collect_surface(
-            url=f"https://www.instagram.com/explore/tags/{quote(tag, safe='.')}/",
-            creator_handle=f"hashtag:{tag}",
-            surface="hashtag_page",
-            hashtag=tag,
-            max_scrolls=max_scrolls,
-            max_reel_details=max_reel_details,
-        )
+        try:
+            records, _, diagnostic = await self._collect_surface(
+                url=f"https://www.instagram.com/explore/tags/{quote(tag, safe='.')}/",
+                creator_handle=f"hashtag:{tag}",
+                surface="hashtag_page",
+                hashtag=tag,
+                max_scrolls=max_scrolls,
+                max_reel_details=max_reel_details,
+            )
+        except Exception as exc:
+            self.hashtag_diagnostics.append({
+                "surface": "hashtag_page",
+                "hashtag": tag,
+                "requested_url": f"https://www.instagram.com/explore/tags/{quote(tag, safe='.')}/",
+                "candidate_count": 0,
+                "metric_count": 0,
+                "reason": f"{type(exc).__name__}: {str(exc)[:180]}",
+            })
+            raise
         self.hashtag_diagnostics.append(diagnostic)
         if self.blocked:
             raise RuntimeError(diagnostic.get("reason") or "Instagram access restriction")
