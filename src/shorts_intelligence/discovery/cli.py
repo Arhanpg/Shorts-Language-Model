@@ -1135,6 +1135,10 @@ def graph_run(
         False, "--force",
         help="Requeue supplied Instagram seed handles even if previously completed, empty, failed, exhausted, or blocked."
     ),
+    continue_graph_after_target: bool = typer.Option(
+        False, "--continue-graph-after-target",
+        help="Continue bounded creator/related-video expansion after the new-eligible target is reached."
+    ),
     instagram_profile_dir: Path = typer.Option(
         Path(".shortslm/browser/instagram"), "--instagram-profile-dir"
     ),
@@ -1181,6 +1185,7 @@ def graph_run(
                 instagram_max_reel_details=instagram_max_reel_details,
                 instagram_hashtag_max_reel_details=instagram_hashtag_max_reel_details,
                 max_instagram_hashtags=instagram_max_hashtags,
+                continue_graph_after_target=continue_graph_after_target,
             ))
         _write_report(report, summary)
     except Exception as exc:
@@ -1193,13 +1198,31 @@ def graph_run(
     for key in (
         "eligible_new", "candidates_observed", "new_inventory_candidates",
         "metric_observed_candidates", "metric_unknown_candidates",
-        "metric_above_threshold_candidates", "instagram_hashtag_requests",
+        "metric_above_threshold_candidates", "youtube_creator_candidates",
+        "youtube_related_candidates", "instagram_hashtag_requests",
         "hashtags_with_candidates", "creators_with_candidates", "creators_empty",
         "creators_completed", "creators_pending", "creators_exhausted",
         "creators_blocked", "creators_failed", "creator_edges", "elapsed_seconds",
     ):
         table.add_row(key.replace("_", " ").title(), str(summary.get(key, 0)))
     console.print(table)
+
+    discovery_stages = summary.get("discovery_stage_counts", {})
+    if discovery_stages:
+        console.print(
+            "Discovery stages: "
+            f"YouTube seed details {discovery_stages.get('youtube_seed_detail_candidates', 0)}, "
+            f"creator Shorts {discovery_stages.get('youtube_creator_candidates', 0)}, "
+            f"related Shorts {discovery_stages.get('youtube_related_candidates', 0)}, "
+            f"Instagram hashtag Reels {discovery_stages.get('instagram_hashtag_candidates', 0)}, "
+            f"Instagram creator Reels {discovery_stages.get('instagram_creator_candidates', 0)}."
+        )
+        if summary.get("new_eligible", 0) >= summary.get("target_new", 0) and not summary.get("continue_graph_after_target"):
+            console.print(
+                "[yellow]The new-eligible target was reached during seed discovery; "
+                "creator/related-video expansion was skipped. Use --continue-graph-after-target "
+                "to continue bounded graph exploration in the same run.[/yellow]"
+            )
 
     instagram_requests = summary.get("provider_requests", {}).get("instagram", {})
     if instagram_requests:
