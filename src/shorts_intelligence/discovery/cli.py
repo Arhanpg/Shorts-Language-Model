@@ -316,6 +316,17 @@ def run_discovery(
                 youtube_provider.close()
             if instagram_provider:
                 instagram_provider.close()
+            store.finish_run(
+                run_id,
+                {
+                    "scanned": 0,
+                    "new_eligible": 0,
+                    "duplicates": 0,
+                    "errors": 1,
+                    "status": "dependency_missing",
+                    "error": str(exc)[:300],
+                },
+            )
             raise typer.Exit(code=2) from exc
         except Exception as exc:
             stats["unexpected_errors"] += 1
@@ -501,6 +512,7 @@ def run_discovery(
     ig_metadata_lookups = instagram_provider.metadata_lookups if instagram_provider else 0
     ig_metadata_successes = instagram_provider.metadata_successes if instagram_provider else 0
     ig_metadata_failures = instagram_provider.metadata_failures if instagram_provider else 0
+    ig_lookup_backlog = instagram_provider.lookup_backlog if instagram_provider else 0
     ig_ddgs_failures = instagram_provider.ddgs_failures if instagram_provider else 0
 
     payload: dict[str, object] = {
@@ -541,6 +553,7 @@ def run_discovery(
             "lookups": ig_metadata_lookups,
             "succeeded": ig_metadata_successes,
             "failed": ig_metadata_failures,
+            "not_attempted_due_to_lookup_cap": ig_lookup_backlog,
             "ddgs_failures": ig_ddgs_failures,
             "circuit_open": instagram_provider.circuit_open if instagram_provider else False,
             "circuit_reason": instagram_provider.circuit_reason if instagram_provider else None,
@@ -590,6 +603,7 @@ def run_discovery(
         ("YT metadata enrichment succeeded", yt_enrichment_successes),
         ("Instagram metadata lookups", ig_metadata_lookups),
         ("Instagram metadata failures", ig_metadata_failures),
+        ("Instagram links not resolved (lookup cap)", ig_lookup_backlog),
         ("Provider / metadata errors", total_provider_errors),
     ]
     for label, value in metrics:
