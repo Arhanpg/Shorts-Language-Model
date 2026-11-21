@@ -68,6 +68,11 @@ _DEFAULT_INSTAGRAM_QUERIES = [
 ]
 
 
+def _should_run_instagram_stage(platform: str, *, now: float, deadline: float) -> bool:
+    """Run Instagram when selected and there is still shared runtime budget."""
+    return platform in {"all", "instagram"} and now < deadline
+
+
 def _write_report(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
@@ -322,10 +327,10 @@ def run_discovery(
                         stop_reason = "youtube_circuit_open"
                         break
 
-            if (
-                platform in {"all", "instagram"}
-                and stop_reason != "target_reached_during_search"
-                and time.monotonic() < run_deadline
+            # In combined mode, one platform's provisional target must not
+            # silently prevent the other selected platform from running.
+            if _should_run_instagram_stage(
+                platform, now=time.monotonic(), deadline=run_deadline
             ):
                 instagram_provider = InstagramSearchProvider(
                     session_username=instagram_session_user,
@@ -622,6 +627,36 @@ def run_discovery(
         "started_at": run_started_at.isoformat(),
         "finished_at": datetime.now(UTC).isoformat(),
         "platform": platform,
+        "platform_execution": {
+            "youtube": {
+                "selected": platform in {"all", "youtube"},
+                "queries_selected": len(youtube_queries),
+                "queries_executed": query_count["youtube"],
+                "raw_results": youtube_raw,
+                "status": (
+                    "not_selected" if platform == "instagram"
+                    else "circuit_open" if youtube_provider and youtube_provider.circuit_open
+                    else "completed" if query_count["youtube"]
+                    else "no_queries_due" if not youtube_queries
+                    else "not_started"
+                ),
+                "circuit_reason": youtube_provider.circuit_reason if youtube_provider else None,
+            },
+            "instagram": {
+                "selected": platform in {"all", "instagram"},
+                "queries_selected": len(instagram_queries),
+                "queries_executed": query_count["instagram"],
+                "raw_results": instagram_raw,
+                "status": (
+                    "not_selected" if platform == "youtube"
+                    else "circuit_open" if instagram_provider and instagram_provider.circuit_open
+                    else "completed" if query_count["instagram"]
+                    else "no_queries_due" if not instagram_queries
+                    else "not_started"
+                ),
+                "circuit_reason": instagram_provider.circuit_reason if instagram_provider else None,
+            },
+        },
         "target_new": target_new,
         "runtime_budget_seconds": max_runtime_seconds,
         "elapsed_seconds": elapsed_seconds,
@@ -744,6 +779,10 @@ def run_discovery(
     console.print(f"Runtime: {elapsed_seconds:.1f}s / {max_runtime_seconds}s · Stop reason: {stop_reason}")
     if enrichment_budget_exhausted:
         console.print("[yellow]Optional metadata enrichment stopped at its time budget; all discovered search results are still processed.[/yellow]")
+    if platform == "youtube":
+        console.print("[dim]Instagram was not selected in this run (--platform youtube).[/dim]")
+    elif platform == "instagram":
+        console.print("[dim]YouTube was not selected in this run (--platform instagram).[/dim]")
     if instagram_provider and instagram_provider.circuit_open:
         console.print(
             f"[yellow]Instagram circuit breaker opened: {instagram_provider.circuit_reason}[/yellow]"

@@ -56,7 +56,7 @@ Optional YouTube detail enrichment has a separate 20-second wall-clock budget. `
 
 The query planner rotates a broad topic/language/region pool (including Hindi, Marathi, Kannada, Tamil, Telugu, Bengali, English, Spanish, Portuguese and Indonesian). SQLite records exact query/locale combinations. Instagram searches share the same overall deadline and use bounded DDGS/Instaloader request timeouts.
 
-The JSON report records elapsed time, stop reason, YouTube first pages fetched, completed queries, network timeout/retry configuration and enrichment-budget exhaustion. See [Phase 1 Discovery Coverage and Provider Reliability](docs/PHASE_1_DISCOVERY_COVERAGE.md).
+The JSON report records elapsed time, stop reason, YouTube first pages fetched, completed queries, network timeout/retry configuration and enrichment-budget exhaustion. It also records each platform's selection and execution state so intentional exclusion is not confused with zero indexed hits or provider failure. In `--platform all` mode, both selected platform stages are scheduled before final candidate evaluation while the shared deadline allows. See [Phase 1 Discovery Coverage and Provider Reliability](docs/PHASE_1_DISCOVERY_COVERAGE.md).
 
 ### Discover 100 new unique eligible candidates
 
