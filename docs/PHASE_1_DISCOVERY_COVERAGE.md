@@ -176,7 +176,7 @@ The 1,000,000-view threshold remains the default. The configured metric must be 
 | `--instagram-max-search-queries` | 8 | Instagram DDGS query budget |
 | `--query-cooldown-days` | 7 | Minimum age before a query is considered due again |
 | `--metadata-enrichment-limit` | 40 | Maximum YouTube detail lookups for new incomplete candidates |
-| `--instagram-max-lookups` | 15 | Maximum individual Instaloader post lookups |
+| `--instagram-max-lookups` | 40 | Maximum individual Instaloader post lookups |
 | `--instagram-timeout` | 8 sec | DDGS request timeout |
 | `--instagram-request-timeout` | 12 sec | Instaloader request timeout |
 | `--instagram-pages` | 1 | Number of indexed result pages per phrase |
@@ -203,7 +203,7 @@ shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000 -
 Then test Instagram with its bounded search/lookup budgets:
 
 ```powershell
-shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000 --instagram-max-search-queries 8 --instagram-max-lookups 15 --instagram-timeout 8 --instagram-request-timeout 12
+shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000 --instagram-max-search-queries 8 --instagram-max-lookups 40 --instagram-timeout 8 --instagram-request-timeout 12
 ```
 
 Then run both providers:
