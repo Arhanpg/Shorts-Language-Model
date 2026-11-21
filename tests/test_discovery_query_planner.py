@@ -1,5 +1,5 @@
-from datetime import UTC, datetime, timedelta
 import random
+from datetime import UTC, datetime, timedelta
 
 from shorts_intelligence.discovery.query_planner import (
     SearchQuery,
