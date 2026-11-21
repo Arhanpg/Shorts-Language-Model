@@ -66,6 +66,8 @@ CREATE TABLE IF NOT EXISTS discovery_queries (
     run_count INTEGER NOT NULL DEFAULT 1,
     last_raw_results INTEGER NOT NULL DEFAULT 0,
     last_candidate_count INTEGER NOT NULL DEFAULT 0,
+    total_raw_results INTEGER NOT NULL DEFAULT 0,
+    total_candidate_count INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (platform, query_key)
 );
 CREATE INDEX IF NOT EXISTS idx_discovery_queries_last_run
@@ -86,6 +88,23 @@ class DiscoveryStore:
             self.connection.execute("ALTER TABLE candidates ADD COLUMN media_sha256 TEXT")
         if "downloaded_at" not in columns:
             self.connection.execute("ALTER TABLE candidates ADD COLUMN downloaded_at TEXT")
+        query_columns = {
+            row["name"] for row in self.connection.execute("PRAGMA table_info(discovery_queries)")
+        }
+        if "total_raw_results" not in query_columns:
+            self.connection.execute(
+                "ALTER TABLE discovery_queries ADD COLUMN total_raw_results INTEGER NOT NULL DEFAULT 0"
+            )
+            self.connection.execute(
+                "UPDATE discovery_queries SET total_raw_results=last_raw_results*run_count"
+            )
+        if "total_candidate_count" not in query_columns:
+            self.connection.execute(
+                "ALTER TABLE discovery_queries ADD COLUMN total_candidate_count INTEGER NOT NULL DEFAULT 0"
+            )
+            self.connection.execute(
+                "UPDATE discovery_queries SET total_candidate_count=last_candidate_count*run_count"
+            )
         self.connection.commit()
 
     def close(self) -> None:
@@ -131,8 +150,9 @@ class DiscoveryStore:
         self.connection.execute(
             """INSERT INTO discovery_queries(
                 platform, query_key, query, language, region, strategy,
-                last_run_at, run_count, last_raw_results, last_candidate_count
-            ) VALUES(?,?,?,?,?,?,?,1,?,?)
+                last_run_at, run_count, last_raw_results, last_candidate_count,
+                total_raw_results, total_candidate_count
+            ) VALUES(?,?,?,?,?,?,?,1,?,?,?,?)
             ON CONFLICT(platform, query_key) DO UPDATE SET
                 query=excluded.query,
                 language=excluded.language,
@@ -141,10 +161,12 @@ class DiscoveryStore:
                 last_run_at=excluded.last_run_at,
                 run_count=discovery_queries.run_count+1,
                 last_raw_results=excluded.last_raw_results,
-                last_candidate_count=excluded.last_candidate_count""",
+                last_candidate_count=excluded.last_candidate_count,
+                total_raw_results=discovery_queries.total_raw_results+excluded.last_raw_results,
+                total_candidate_count=discovery_queries.total_candidate_count+excluded.last_candidate_count""",
             (
                 platform, query_key, query, language, region, strategy,
-                timestamp, raw_results, candidate_count,
+                timestamp, raw_results, candidate_count, raw_results, candidate_count,
             ),
         )
         self.connection.commit()

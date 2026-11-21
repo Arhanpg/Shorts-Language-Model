@@ -159,6 +159,10 @@ def test_query_history_is_persisted_and_updated_by_query_key(tmp_path: Path):
         refreshed = store.query_history("youtube")
         assert refreshed["query-abc"] != first_run
         assert store.query_summary() == {"youtube": 1}
+        performance = store.query_performance("youtube")
+        assert performance["query-abc"]["run_count"] == 2
+        assert performance["query-abc"]["raw_results"] == 50
+        assert performance["query-abc"]["candidate_count"] == 38
 
 
 def test_candidate_format_is_not_eligible_until_confirmed(tmp_path: Path):

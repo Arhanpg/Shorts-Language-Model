@@ -299,5 +299,23 @@ def select_due_queries(
         return score, candidates, raw
 
     due.sort(key=yield_score, reverse=True)
-    selected = never_used + due
-    return selected[: max(0, limit)]
+    limit = max(0, limit)
+    if limit == 0:
+        return []
+    if not never_used:
+        return due[:limit]
+    if not due:
+        return never_used[:limit]
+
+    # Keep a 70/30 exploration/exploitation balance where both pools exist.
+    # This prevents a large never-used pool from starving every productive query.
+    exploration_slots = max(1, int(limit * 0.7))
+    exploitation_slots = limit - exploration_slots
+    selected = never_used[:exploration_slots] + due[:exploitation_slots]
+    remaining = limit - len(selected)
+    if remaining:
+        selected.extend(never_used[exploration_slots:exploration_slots + remaining])
+        remaining = limit - len(selected)
+    if remaining:
+        selected.extend(due[exploitation_slots:exploitation_slots + remaining])
+    return selected[:limit]

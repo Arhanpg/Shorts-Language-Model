@@ -15,6 +15,7 @@ from __future__ import annotations
 import contextlib
 import time
 from collections.abc import Iterator
+from itertools import islice
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote
@@ -301,7 +302,14 @@ class YouTubeShortsSurfaceProvider:
                 )
             return []
         entries = result.get("entries") if isinstance(result, dict) else None
-        if not isinstance(entries, (list, tuple)):
+        if isinstance(entries, dict):
+            entries = [entries]
+        elif entries is not None:
+            try:
+                entries = list(islice(iter(entries), max(1, min(limit, 50))))
+            except TypeError:
+                entries = []
+        else:
             entries = [result] if isinstance(result, dict) else []
         candidates: list[DiscoveredCandidate] = []
         seen: set[str] = set()

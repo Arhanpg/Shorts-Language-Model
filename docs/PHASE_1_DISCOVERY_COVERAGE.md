@@ -342,4 +342,4 @@ A new `shorts-lm discover instagram-login --username YOUR_USERNAME` command uses
 
 **Strict eligibility:** a candidate is eligible only when its format is `confirmed` and its observed `view_count` is at least the configured threshold. A `candidate`/uncertain format can no longer qualify merely because its view count is high. On database open, legacy rows marked eligible without confirmed format are reclassified as `format_unknown`; metadata is preserved.
 
-The 1M rule is applied independently per platform. Instagram `play_count` remains distinct and is not accepted by default. The optional explicit play-count flag remains available but does not relabel plays as views.
+The 1M rule is applied independently per platform. Instagram `play_count` remains distinct and is not accepted by default. Instagram play_count is retained separately and can never substitute for view_count eligibility.
