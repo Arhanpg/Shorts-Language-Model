@@ -173,11 +173,15 @@ The 1,000,000-view threshold remains the default. The configured metric must be 
 | `--target-new` | 100 | Stop after this many new unique eligible source IDs, if available |
 | `--min-views` | 1,000,000 | Minimum observed view count |
 | `--max-candidates` | 1,500 | Maximum unique source IDs to evaluate after search |
-| `--results-per-query` | 50 | Requested results for each YouTube query; provider caps this at 50 |
+| `--results-per-query` | 20 | Maximum parsed initial-page items consumed per query; no continuation requests |
 | `--max-search-queries` | 24 | YouTube query budget for the run |
 | `--instagram-max-search-queries` | 8 | Instagram DDGS query budget |
 | `--query-cooldown-days` | 7 | Minimum age before a query is considered due again |
+| `--max-runtime-seconds` | 180 | Overall monotonic runtime budget for search, enrichment and metadata resolution |
+| `--youtube-request-timeout` | 6 sec | Per-request timeout; retries are disabled |
+| `--youtube-request-interval` | 0.5 sec | Minimum interval between YouTube requests |
 | `--metadata-enrichment-limit` | 40 | Maximum YouTube detail lookups for new incomplete candidates |
+| `--enrichment-budget-seconds` | 20 | Wall-clock budget for optional YouTube detail lookups |
 | `--instagram-max-lookups` | 40 | Maximum individual Instaloader post lookups |
 | `--instagram-timeout` | 8 sec | DDGS request timeout |
 | `--instagram-request-timeout` | 12 sec | Instaloader request timeout |
@@ -199,7 +203,7 @@ shorts-lm doctor
 Test the YouTube provider first:
 
 ```powershell
-shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000 --max-search-queries 30 --metadata-enrichment-limit 40
+shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000 --max-search-queries 30 --max-runtime-seconds 180 --results-per-query 20 --youtube-request-timeout 6 --metadata-enrichment-limit 40 --enrichment-budget-seconds 20 --metadata-enrichment-limit 40
 ```
 
 Then test Instagram with its bounded search/lookup budgets:
@@ -234,7 +238,7 @@ The result should be judged by **new unique eligible IDs**, not by raw page hits
 
 A 100-new-item target is not guaranteed. No search library can guarantee 100 new public videos above 1M views on each run, particularly when an existing database has already captured many high-view items and search providers return ranked results.
 
-## 8. Runtime architecture and bounded execution
+## 9. Runtime architecture and bounded execution
 
 The user's 21 November 2026 report showed a YouTube command running silently for more than 30 minutes. Source inspection identified two multiplicative execution paths:
 
@@ -279,7 +283,7 @@ shorts-lm discover run `
 
 For a search-only baseline that avoids player-detail requests entirely, use `--metadata-enrichment-limit 0 --enrichment-budget-seconds 0`. Compare metric coverage before increasing the enrichment budget.
 
-## 9. Failure and access handling
+## 10. Failure and access handling
 
 - Do not rotate proxies, steal browser cookies, bypass login/CAPTCHA, or circumvent access controls.
 - Stop or skip when a provider reports a block, login requirement, rate limit or persistent timeout.
@@ -288,7 +292,7 @@ For a search-only baseline that avoids player-detail requests entirely, use `--m
 - Do not interpret provider failure as proof that the platform has no qualifying videos.
 - ytscrape is an unofficial InnerTube client. Its endpoint and page parser can change; test it when upgrading and expect occasional source breakage.
 
-## 10. Validation coverage
+## 11. Validation coverage
 
 The automated suite covers:
 - locale/topic query pool coverage and cooldown selection;
@@ -303,7 +307,7 @@ The automated suite covers:
 
 Live provider tests are intentionally not part of the deterministic unit suite. A real Windows run is still required because current platform responses, ISP/network conditions and public search index coverage cannot be simulated in GitHub Actions.
 
-## 11. Research references and upstream source
+## 12. Research references and upstream source
 
 - ytscrape repository (MIT; v2.2.0): https://github.com/vsmutok/ytscrape
 - ytscrape Shorts filter implementation: https://github.com/vsmutok/ytscrape/blob/v2.2.0/src/ytscrape/filters.py
