@@ -36,18 +36,20 @@ class YouTubeSearchProvider:
     def __init__(
         self,
         *,
-        request_timeout: float = 12.0,
-        request_interval: float = 1.25,
-        max_retries: int = 1,
+        request_timeout: float = 6.0,
+        request_interval: float = 0.5,
+        max_retries: int = 0,
         detail_enrichment_limit: int = 40,
     ) -> None:
-        self.request_timeout = max(3.0, request_timeout)
-        self.request_interval = max(0.5, request_interval)
+        self.request_timeout = max(2.0, min(request_timeout, 10.0))
+        self.request_interval = max(0.25, request_interval)
         self.max_retries = max(0, max_retries)
         self.detail_enrichment_limit = max(0, detail_enrichment_limit)
         self.errors: list[str] = []
         self.warnings: list[str] = []
         self.search_results_seen = 0
+        self.search_pages_fetched = 0
+        self.search_queries_completed = 0
         self.enrichment_attempts = 0
         self.enrichment_successes = 0
         self.circuit_open = False
@@ -123,7 +125,9 @@ class YouTubeSearchProvider:
         """Use YouTube's Shorts-only filter and preserve typed metrics.
 
         The ytscrape SearchFilter.SHORTS option applies the website's dedicated
-        Shorts search filter. Results are paginated up to the requested cap.
+        Shorts search filter. Only the initial page is consumed: SearchResults
+        is lazy and iterating it can perform unbounded continuation requests.
+        The pinned ytscrape 2.2 API exposes parsed first-page items in _buffer.
         """
         if self.circuit_open:
             return
@@ -137,14 +141,25 @@ class YouTubeSearchProvider:
 
         try:
             client = self._client_for(language, region)
-            results = client.search(
+            page = client.search(
                 query,
                 filter=SearchFilter.SHORTS,
-                max_results=max(1, min(limit, 50)),
+                max_results=max(1, min(limit, 30)),
             )
+            # Do not iterate SearchResults: its public iterator transparently
+            # fetches continuation pages. Read exactly the initial parsed page.
+            first_page = getattr(page, "_buffer", None)
+            if not isinstance(first_page, list):
+                raise ProviderUnavailable(
+                    "Unsupported ytscrape SearchResults layout; expected the 2.2.x "
+                    "first-page buffer. Reinstall the pinned discovery extra."
+                )
+            self.search_pages_fetched += 1
+            self.search_queries_completed += 1
+            items = first_page[: max(1, min(limit, 30))]
+            self.search_results_seen += len(items)
             seen: set[str] = set()
-            for video in results:
-                self.search_results_seen += 1
+            for video in items:
                 candidate = candidate_from_ytscrape_video(
                     video,
                     query=query,
@@ -367,13 +382,21 @@ class InstagramSearchProvider:
                 or []
             )
 
-    def _search_urls(self, query: str, *, limit: int) -> list[str]:
+    def _search_urls(
+        self,
+        query: str,
+        *,
+        limit: int,
+        deadline: float | None = None,
+    ) -> list[str]:
         found: list[str] = []
         seen: set[str] = set()
         search_query = query if query.startswith("site:instagram.com/") else (
             f"site:instagram.com/reel/ {query}"
         )
         for page in range(1, self.pages + 1):
+            if deadline is not None and time.monotonic() + self.search_timeout > deadline:
+                break
             try:
                 results = self._search_page(
                     search_query, limit=limit, page=page, backend=self.backend
@@ -387,7 +410,11 @@ class InstagramSearchProvider:
                     f"{type(exc).__name__}: {str(exc)[:200]}"
                 )
                 results = []
-                if self.fallback_backend and self.fallback_backend != self.backend:
+                if (
+                    self.fallback_backend
+                    and self.fallback_backend != self.backend
+                    and (deadline is None or time.monotonic() + self.search_timeout < deadline)
+                ):
                     try:
                         results = self._search_page(
                             search_query,
@@ -474,11 +501,21 @@ class InstagramSearchProvider:
             self.metadata_successes += 1
         return candidate
 
-    def search(self, query: str, *, limit: int = 30) -> Iterator[DiscoveredCandidate]:
-        """Search indexed Reel URLs and resolve at most the remaining lookup budget."""
-        if self.circuit_open or self.metadata_lookups >= self.max_lookups:
+    def search(
+        self,
+        query: str,
+        *,
+        limit: int = 30,
+        deadline: float | None = None,
+    ) -> Iterator[DiscoveredCandidate]:
+        """Search indexed Reel URLs within an optional monotonic run deadline."""
+        if (
+            self.circuit_open
+            or self.metadata_lookups >= self.max_lookups
+            or (deadline is not None and time.monotonic() >= deadline)
+        ):
             return
-        urls = self._search_urls(query, limit=limit)
+        urls = self._search_urls(query, limit=limit, deadline=deadline)
         if not urls:
             return
         try:
@@ -493,7 +530,14 @@ class InstagramSearchProvider:
         remaining = self.max_lookups - self.metadata_lookups
         self.lookup_backlog += max(0, len(urls) - remaining)
         for url in urls[:remaining]:
-            if self.circuit_open:
+            if (
+                self.circuit_open
+                or (
+                    deadline is not None
+                    and time.monotonic() + self.request_timeout > deadline
+                )
+            ):
+                self.lookup_backlog += 1
                 break
             shortcode = instagram_shortcode_from_url(url)
             if not shortcode:
@@ -501,16 +545,28 @@ class InstagramSearchProvider:
             candidate = self._resolve_shortcode(shortcode, loader)
             if candidate is not None:
                 yield candidate
-            if self.request_pause_seconds:
+            if self.request_pause_seconds and (
+                deadline is None or time.monotonic() + self.request_pause_seconds < deadline
+            ):
                 time.sleep(self.request_pause_seconds)
 
-    def search_hashtag(self, hashtag: str, *, limit: int = 50) -> Iterator[DiscoveredCandidate]:
+    def search_hashtag(
+        self,
+        hashtag: str,
+        *,
+        limit: int = 50,
+        deadline: float | None = None,
+    ) -> Iterator[DiscoveredCandidate]:
         """Optional authenticated hashtag search; obeys the same lookup cap."""
         if not self.session_username:
             raise ValueError(
                 "Instagram hashtag search requires --instagram-session-user and a valid local session."
             )
-        if self.circuit_open or self.metadata_lookups >= self.max_lookups:
+        if (
+            self.circuit_open
+            or self.metadata_lookups >= self.max_lookups
+            or (deadline is not None and time.monotonic() >= deadline)
+        ):
             return
         try:
             import instaloader
@@ -528,7 +584,14 @@ class InstagramSearchProvider:
         self.lookup_backlog += max(0, min(limit, self.max_lookups) - remaining)
         seen: set[str] = set()
         for post in iterator:
-            if self.circuit_open or len(seen) >= remaining:
+            if (
+                self.circuit_open
+                or len(seen) >= remaining
+                or (
+                    deadline is not None
+                    and time.monotonic() + self.request_timeout > deadline
+                )
+            ):
                 break
             try:
                 shortcode = str(getattr(post, "shortcode", "") or "")
@@ -547,7 +610,9 @@ class InstagramSearchProvider:
                 # Hashtag provenance is a candidate, not proof of Reel URL format.
                 candidate = candidate.model_copy(update={"short_format_status": "candidate"})
                 yield candidate
-            if self.request_pause_seconds:
+            if self.request_pause_seconds and (
+                deadline is None or time.monotonic() + self.request_pause_seconds < deadline
+            ):
                 time.sleep(self.request_pause_seconds)
 
     def close(self) -> None:

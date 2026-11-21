@@ -21,12 +21,12 @@ dependencies = [
 [project.optional-dependencies]
 audio = ["librosa>=0.10,<1", "faster-whisper>=1.0,<2"]
 ocr = ["paddleocr>=2.7,<4"]
-discovery = ["ytscrape>=2.2,<3", "yt-dlp[default]>=2024.10", "instaloader>=4.16,<5", "ddgs>=9.16.1,<10"]
+discovery = ["ytscrape==2.2.0", "yt-dlp[default]>=2024.10", "instaloader>=4.16,<5", "ddgs>=9.16.1,<10"]
 instagram-fallback = ["gallery-dl>=1.32"]
 vidtrace = [
   "vidtrace[whisper,ocr] @ git+https://github.com/Arhanpg/VidTrace.git@910c6d2add21079c0d26316b1b7a2862a8db50e9",
 ]
-all = ["librosa>=0.10,<1", "faster-whisper>=1.0,<2", "paddleocr>=2.7,<4", "ytscrape>=2.2,<3", "yt-dlp[default]>=2024.10", "instaloader>=4.16,<5", "ddgs>=9.16.1,<10"]
+all = ["librosa>=0.10,<1", "faster-whisper>=1.0,<2", "paddleocr>=2.7,<4", "ytscrape==2.2.0", "yt-dlp[default]>=2024.10", "instaloader>=4.16,<5", "ddgs>=9.16.1,<10"]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
 
 [project.scripts]

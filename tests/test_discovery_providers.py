@@ -36,7 +36,7 @@ def _fake_ytscrape(monkeypatch):
 
         def search(self, query, *, filter, max_results):
             self.search_calls.append((query, filter, max_results))
-            return [
+            first_page = [
                 SimpleNamespace(
                     video_id="AbCdEfGh123",
                     title="Cricket finish #cricket",
@@ -64,6 +64,17 @@ def _fake_ytscrape(monkeypatch):
                     thumbnail=None,
                 ),
             ]
+
+            class FakeLazySearchResults:
+                def __init__(self, items):
+                    self._buffer = items
+                    self.iterated = False
+
+                def __iter__(self):
+                    self.iterated = True
+                    raise AssertionError("YouTube discovery must not trigger lazy pagination")
+
+            return FakeLazySearchResults(first_page)
 
         def video(self, source_id):
             self.video_calls.append(source_id)
@@ -114,6 +125,8 @@ def test_youtube_provider_uses_shorts_filter_and_deduplicates(monkeypatch):
     assert results[0].metadata["search_filter"] == "shorts"
     assert results[0].metadata["search_language"] == "hi"
     assert provider.search_results_seen == 2
+    assert provider.search_pages_fetched == 1
+    assert provider.search_queries_completed == 1
 
     client = FakeYouTube.instances[0]
     assert client.kwargs["language"] == "hi"
@@ -328,6 +341,7 @@ def test_youtube_provider_opens_circuit_on_timeout(monkeypatch):
         instances = []
 
         def __init__(self, **kwargs):
+            self.kwargs = kwargs
             self.calls = 0
             self.__class__.instances.append(self)
 
@@ -353,3 +367,17 @@ def test_youtube_provider_opens_circuit_on_timeout(monkeypatch):
     assert list(provider.search("comedy shorts", limit=10)) == []
     assert FailingYouTube.instances[0].calls == 1
     assert provider.circuit_reason is not None
+    assert FailingYouTube.instances[0].kwargs["timeout"] == 6.0
+    assert FailingYouTube.instances[0].kwargs["retry"].kwargs["max_retries"] == 0
+
+
+def test_instagram_provider_does_not_start_search_after_run_deadline(monkeypatch):
+    FakeDDGS = _fake_ddgs(monkeypatch, [])
+    FakeLoader = _fake_instaloader(monkeypatch, _fake_post)
+    provider = InstagramSearchProvider(max_lookups=10)
+
+    assert list(provider.search("cricket reels", limit=10, deadline=0.0)) == []
+    assert FakeDDGS.instances == []
+    assert FakeLoader.instances == []
+    assert provider.metadata_lookups == 0
+    provider.close()

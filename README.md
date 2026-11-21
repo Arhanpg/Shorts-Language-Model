@@ -46,15 +46,17 @@ Check dependencies:
 
 Discovery requires ytscrape, yt-dlp, Instaloader and DDGS. The doctor output checks ytscrape separately. Deno 2.3+ or Node.js 22+ is still recommended for yt-dlp YouTube media downloads.
 
-### Phase 1 discovery reliability and coverage
+### Phase 1 discovery reliability, coverage and runtime
 
-YouTube search now uses the Shorts-specific filter from the MIT-licensed [ytscrape](https://github.com/vsmutok/ytscrape) library, rather than generic yt-dlp search results. It returns typed view-count/duration metadata and paginated results; a capped number of new candidates with missing fields can be enriched through a detail lookup.
+YouTube search uses the Shorts-specific filter from the MIT-licensed [ytscrape](https://github.com/vsmutok/ytscrape) library. The discovery adapter consumes **only the first parsed search page**. It deliberately does not iterate ytscrape's lazy `SearchResults` iterator, because that iterator transparently fetches continuation pages. Media downloads remain a separate yt-dlp + FFmpeg stage.
 
-The query planner rotates a broad topic/language/region pool (including Hindi, Marathi, Kannada, Tamil, Telugu, Bengali, English, Spanish, Portuguese and Indonesian). SQLite records every exact query/locale combination, so later runs prefer queries not used in the previous seven days. The new-candidate target is evaluated against unseen platform/source IDs first; known records no longer dominate the candidate evaluation budget.
+The default discovery run now has a **180-second overall runtime budget**, visible per-query progress and short network requests. YouTube discovery uses a 6-second per-request timeout, zero retries and a 0.5-second minimum request interval. Search is capped at 20 first-page results per query by default. The run stops cleanly when its deadline is reached or the requested number of new qualifying IDs is found.
 
-Instagram public Reel URLs are discovered through DDGS with bounded timeouts, explicit search backends and one fallback engine. Instaloader now uses a 12-second request timeout and one connection attempt rather than its 300-second/three-attempt defaults. After repeated failures or a block/rate-limit response, the provider stops further Instagram lookups for that run instead of hanging or flooding the logs.
+Optional YouTube detail enrichment has a separate 20-second wall-clock budget. `--metadata-enrichment-limit 40` is a maximum lookup count, not a requirement to perform 40 sequential requests. Any results already collected are still normalized, deduplicated and stored when the enrichment budget expires.
 
-The latest JSON report separates query rotation, raw hits, new/known IDs, view-metric coverage, YouTube enrichment attempts, Instagram lookup successes/failures and circuit-breaker reasons. See [Phase 1 Discovery Coverage and Provider Reliability](docs/PHASE_1_DISCOVERY_COVERAGE.md).
+The query planner rotates a broad topic/language/region pool (including Hindi, Marathi, Kannada, Tamil, Telugu, Bengali, English, Spanish, Portuguese and Indonesian). SQLite records exact query/locale combinations. Instagram searches share the same overall deadline and use bounded DDGS/Instaloader request timeouts.
+
+The JSON report records elapsed time, stop reason, YouTube first pages fetched, completed queries, network timeout/retry configuration and enrichment-budget exhaustion. See [Phase 1 Discovery Coverage and Provider Reliability](docs/PHASE_1_DISCOVERY_COVERAGE.md).
 
 ### Discover 100 new unique eligible candidates
 
@@ -66,14 +68,18 @@ Useful controls:
 - `--max-search-queries 24`: YouTube query budget per run.
 - `--instagram-max-search-queries 8`: DDGS query budget per run.
 - `--query-cooldown-days 7`: avoid repeating the same query/locale within seven days.
-- `--metadata-enrichment-limit 40`: cap detailed YouTube lookups for missing search metadata.
+- `--metadata-enrichment-limit 40`: maximum detailed YouTube lookups for missing metadata; also subject to `--enrichment-budget-seconds` (20 by default).
+- `--max-runtime-seconds 180`: stop the full run cleanly after three minutes by default.
+- `--results-per-query 20`: consume only this many results from the first page; no hidden continuation-page requests.
+- `--youtube-request-timeout 6`: six-second per-request timeout, with retries disabled.
+- `--enrichment-budget-seconds 20`: separate time budget for optional detail lookups.
 - `--instagram-max-lookups 40`: cap individual Instaloader metadata fetches.
 - `--seed 42`: optional reproducible query ordering. Omit it for a fresh random ordering.
 
 YouTube only:
 
 ```powershell
-shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000 --max-search-queries 30
+shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000 --max-search-queries 30 --max-runtime-seconds 180 --results-per-query 20 --metadata-enrichment-limit 40 --enrichment-budget-seconds 20
 ```
 
 Instagram only:
