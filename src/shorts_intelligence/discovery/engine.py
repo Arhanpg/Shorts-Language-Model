@@ -90,14 +90,6 @@ async def run_creator_graph(
                             format_status=candidate.short_format_status,
                             evidence=candidate.metadata,
                         )
-                        frontier.record_candidate_observation(
-                            candidate.platform, candidate.source_id, run_id=run_id,
-                            metric_kind=candidate.qualifying_metric_kind(),
-                            metric_value=candidate.qualifying_metric(),
-                            metric_source=candidate.metric_source,
-                            format_status=candidate.short_format_status,
-                            evidence=candidate.metadata,
-                        )
                         if became:
                             new_eligible += 1
                             stats["eligible_new"] += 1
@@ -143,6 +135,14 @@ async def run_creator_graph(
                         stats["candidates_observed"] += 1
                         _, became = store.upsert_candidate(
                             candidate, min_views=min_metric, run_id=run_id)
+                        frontier.record_candidate_observation(
+                            candidate.platform, candidate.source_id, run_id=run_id,
+                            metric_kind=candidate.qualifying_metric_kind(),
+                            metric_value=candidate.qualifying_metric(),
+                            metric_source=candidate.metric_source,
+                            format_status=candidate.short_format_status,
+                            evidence=candidate.metadata,
+                        )
                         if became:
                             new_eligible += 1
                             creator_yield += 1
