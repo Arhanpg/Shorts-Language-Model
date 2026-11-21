@@ -379,13 +379,39 @@ def test_youtube_provider_opens_circuit_on_timeout(monkeypatch):
 
     provider = YouTubeSearchProvider()
     assert list(provider.search("cricket shorts", limit=10)) == []
+    assert provider.circuit_open is False
+    assert list(provider.search("comedy shorts", limit=10)) == []
+    assert provider.circuit_open is False
+    assert list(provider.search("science shorts", limit=10)) == []
     assert provider.circuit_open is True
     assert len(FailingYouTube.instances) == 1
-    assert list(provider.search("comedy shorts", limit=10)) == []
-    assert FailingYouTube.instances[0].calls == 1
+    assert FailingYouTube.instances[0].calls == 3
     assert provider.circuit_reason is not None
     assert FailingYouTube.instances[0].kwargs["timeout"] == 6.0
-    assert FailingYouTube.instances[0].kwargs["retry"].kwargs["max_retries"] == 0
+    assert FailingYouTube.instances[0].kwargs["retry"].kwargs["max_retries"] == 1
+
+
+def test_youtube_error_classifier_distinguishes_transient_and_access_errors():
+    assert YouTubeSearchProvider._is_stop_error(TimeoutError("read timed out")) is False
+    assert YouTubeSearchProvider._is_stop_error(ConnectionError("connection reset")) is False
+    assert YouTubeSearchProvider._is_stop_error(RuntimeError("HTTP 429 Too Many Requests")) is True
+    assert YouTubeSearchProvider._is_stop_error(RuntimeError("CAPTCHA required")) is True
+
+
+def test_instagram_session_preflight_fails_before_search_for_missing_file(tmp_path, monkeypatch):
+    urls = ["https://www.instagram.com/reel/ABCxyz_123/"]
+    FakeDDGS = _fake_ddgs(monkeypatch, urls)
+    _fake_instaloader(monkeypatch, _fake_post)
+    provider = InstagramSearchProvider(
+        session_username="creator",
+        session_file=str(tmp_path / "missing.session"),
+    )
+
+    assert provider.preflight() is False
+    assert provider.circuit_open is True
+    assert "does not exist" in (provider.circuit_reason or "")
+    assert FakeDDGS.instances == []
+    provider.close()
 
 
 def test_instagram_provider_does_not_start_search_after_run_deadline(monkeypatch):
@@ -523,6 +549,7 @@ def test_instagram_ytdlp_metadata_fallback_after_instaloader_parse_failure(monke
         request_pause_seconds=1,
         max_lookups=2,
         fallback_backend="",
+        enable_ytdlp_fallback=True,
     )
     results = list(provider.search("cricket reels", limit=5))
 

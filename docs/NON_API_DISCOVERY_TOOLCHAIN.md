@@ -139,7 +139,7 @@ The current implementation uses bounded public pagination for ytscrape Shorts-fi
 
 Query history tracks text and shelf strategies independently. After the cooldown, historically productive queries are prioritized while never-used queries remain available for exploration. This is a yield heuristic, not a platform-wide popularity estimate.
 
-Instagram metadata resolution now tries yt-dlp's Instagram extractor with `download=False` after non-access-related Instaloader parser failures. Explicit login walls, challenges, blocks and rate limits do not trigger repeated fallback attempts. The fallback may still fail or omit view_count.
+Instagram metadata resolution can optionally use yt-dlp's Instagram extractor with `download=False` after non-access-related Instaloader parser failures. Enable it explicitly with `--instagram-ytdlp-fallback`; it is disabled by default. Explicit login walls, challenges, blocks and rate limits do not trigger fallback attempts. The fallback may still fail or omit view_count.
 
 Create a user-owned local Instaloader session, if desired, with:
 

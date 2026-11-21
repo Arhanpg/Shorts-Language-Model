@@ -1,7 +1,7 @@
 # Phase 1 Discovery Reliability and Windows Troubleshooting
 
 **Updated:** 21 November 2026  
-**Document type:** historical troubleshooting note; current implementation is documented in [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md).  
+**Document type:** troubleshooting and audit history; current behavior is documented in [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md).  
 **Scope:** YouTube Shorts and Instagram Reel discovery, metadata filtering and local SQLite inventory. This is separate from the existing single-video telemetry analyzer.
 
 ## 1. What the earlier run showed
@@ -140,3 +140,14 @@ The new tests cover:
 - database status summaries per platform.
 
 GitHub Actions must pass Ruff and the complete pytest suite on Python 3.11 and 3.12 before the branch is considered validated. Live YouTube/Instagram response availability still needs to be verified from the user's Windows laptop because it depends on current platform access and search results.
+
+
+## 10. Audit update — 21 November 2026
+
+The latest Windows logs exposed a failure-classification bug: the YouTube provider treated any timeout/transport error as an immediate circuit-breaker condition. A single read timeout therefore prevented later query attempts. The current provider distinguishes explicit access/rate-limit blocks from transient network errors, uses one bounded retry, and opens its circuit only after repeated transient failures.
+
+Combined runs now reserve 62% of the total runtime for YouTube and allow Instagram to execute until 95% of the total budget. The last 5% is reserved for finalization and optional bounded enrichment. Single-platform runs retain the full configured runtime. This is a scheduling policy, not a guarantee of search yield.
+
+If an Instagram session username is supplied, the configured local session file and account identity are checked before public-index searches begin. A missing file is a local configuration failure, not a DDGS search failure. Instagram checkpoint challenges must be completed using Instagram's official browser/security flow; ShortsLM does not bypass them. Anonymous public-index discovery remains available without a session, but metadata extraction can be incomplete or blocked.
+
+The yt-dlp Instagram metadata fallback is opt-in and metadata-only. It is not used to bypass login, checkpoint, rate-limit or access restrictions. The strict eligibility contract remains confirmed short-form evidence plus an observed numeric `view_count` at or above the configured threshold. Instagram play counts are not substituted for views.

@@ -336,7 +336,7 @@ The third stage is seeded from discovered Shorts channels; it is not a general c
 
 Query selection now uses historical query yield after cooldown. New queries remain in the exploration pool, while previously productive queries receive higher priority among eligible revisits. This is a heuristic to improve recall, not a guarantee of platform-wide coverage or a prediction of 1M+ results.
 
-Instagram metadata resolution has an independent fallback: after a non-access-related Instaloader parsing/metadata failure, yt-dlp's Instagram extractor is tried with `download=False`. Explicit login-required, challenge, rate-limit, timeout or connection-block conditions do not trigger fallback attempts. This fallback is best-effort and may still return no numeric view count.
+Instagram metadata resolution has an optional fallback: pass `--instagram-ytdlp-fallback` to enable yt-dlp's Instagram extractor with `download=False` after non-access-related Instaloader parsing/metadata failures. It is disabled by default. Explicit login-required, challenge, rate-limit, timeout or connection-block conditions never trigger fallback attempts. This fallback is best-effort and may still return no numeric view count.
 
 A new `shorts-lm discover instagram-login --username YOUR_USERNAME` command uses Instaloader's normal interactive login and saves a local session under `.shortslm/instagram.session`. Discovery validates the session identity before using it. Session files are private local credentials and must never be committed or shared.
 

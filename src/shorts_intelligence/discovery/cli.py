@@ -71,6 +71,14 @@ _DEFAULT_INSTAGRAM_QUERIES = [
 ]
 
 
+def _stage_deadlines(platform: str, *, started_at: float, budget_seconds: int) -> tuple[float, float]:
+    """Return fair YouTube/Instagram deadlines for a bounded discovery run."""
+    overall = started_at + budget_seconds
+    youtube = overall if platform == "youtube" else started_at + budget_seconds * 0.62
+    instagram = overall if platform == "instagram" else started_at + budget_seconds * 0.95
+    return youtube, instagram
+
+
 def _should_run_instagram_stage(platform: str, *, now: float, deadline: float) -> bool:
     """Run Instagram when selected and there is still shared runtime budget."""
     return platform in {"all", "instagram"} and now < deadline
@@ -132,7 +140,14 @@ def instagram_login(
             raise RuntimeError("Instagram did not confirm the requested account session.")
         loader.save_session_to_file(filename=str(session_path))
     except Exception as exc:
-        console.print(f"[red]Instagram login/session creation failed: {type(exc).__name__}: {str(exc)[:220]}[/red]")
+        message = str(exc)
+        if "checkpoint" in message.casefold():
+            console.print(
+                "[yellow]Instagram requires an account checkpoint. Complete verification "
+                "in Instagram's official app or browser, wait until the account is usable, "
+                "then retry this login command. ShortsLM will not bypass the checkpoint.[/yellow]"
+            )
+        console.print(f"[red]Instagram login/session creation failed: {type(exc).__name__}: {message[:220]}[/red]")
         raise typer.Exit(code=1) from exc
     finally:
         with contextlib.suppress(Exception):
@@ -237,6 +252,11 @@ def run_discovery(
         "--instagram-fallback-backend",
         help="One fallback DDGS engine used only after the primary backend list fails.",
     ),
+    instagram_ytdlp_fallback: bool = typer.Option(
+        False,
+        "--instagram-ytdlp-fallback",
+        help="Opt in to yt-dlp metadata-only fallback after non-access-related Instaloader parser errors.",
+    ),
     instagram_pages: int = typer.Option(
         1,
         "--instagram-pages",
@@ -269,6 +289,11 @@ def run_discovery(
     run_started_at = datetime.now(UTC)
     run_started_monotonic = time.monotonic()
     run_deadline = run_started_monotonic + max_runtime_seconds
+    # Fair stage windows in combined mode prevent a slow provider from
+    # consuming the entire runtime before the other platform can run.
+    youtube_deadline, instagram_deadline = _stage_deadlines(
+        platform, started_at=run_started_monotonic, budget_seconds=max_runtime_seconds
+    )
     stop_reason = "completed"
     enrichment_budget_exhausted = False
     rng: random.Random | random.SystemRandom = (
@@ -339,7 +364,7 @@ def run_discovery(
                 youtube_provider = YouTubeSearchProvider(
                     request_timeout=youtube_request_timeout,
                     request_interval=youtube_request_interval,
-                    max_retries=0,
+                    max_retries=1,
                     detail_enrichment_limit=metadata_enrichment_limit,
                 )
                 console.print(
@@ -352,7 +377,7 @@ def run_discovery(
                     if youtube_provider.circuit_open:
                         stop_reason = "youtube_circuit_open"
                         break
-                    if time.monotonic() + (youtube_request_timeout * 2) + youtube_request_interval > run_deadline:
+                    if time.monotonic() + (youtube_request_timeout * 2) + youtube_request_interval > youtube_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     console.print(
@@ -398,13 +423,13 @@ def run_discovery(
                 platform in {"all", "youtube"}
                 and youtube_provider is not None
                 and not youtube_provider.circuit_open
-                and time.monotonic() < run_deadline
+                and time.monotonic() < youtube_deadline
             ):
                 youtube_surface_provider = YouTubeShortsSurfaceProvider(
                     request_timeout=youtube_request_timeout
                 )
                 for shelf_index, shelf_query in enumerate(youtube_hashtag_queries, start=1):
-                    if time.monotonic() + youtube_request_timeout > run_deadline:
+                    if time.monotonic() + youtube_request_timeout > youtube_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     before = youtube_surface_provider.search_results_seen
@@ -439,7 +464,7 @@ def run_discovery(
                 for channel_index, (channel_id, source_candidate) in enumerate(
                     expansion_targets, start=1
                 ):
-                    if time.monotonic() + youtube_request_timeout > run_deadline:
+                    if time.monotonic() + youtube_request_timeout > youtube_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     before = youtube_surface_provider.search_results_seen
@@ -467,7 +492,7 @@ def run_discovery(
             # In combined mode, one platform's provisional target must not
             # silently prevent the other selected platform from running.
             if _should_run_instagram_stage(
-                platform, now=time.monotonic(), deadline=run_deadline
+                platform, now=time.monotonic(), deadline=instagram_deadline
             ):
                 instagram_provider = InstagramSearchProvider(
                     session_username=instagram_session_user,
@@ -480,7 +505,14 @@ def run_discovery(
                     search_timeout=instagram_timeout,
                     request_timeout=instagram_request_timeout,
                     max_lookups=instagram_max_lookups,
+                    enable_ytdlp_fallback=instagram_ytdlp_fallback,
                 )
+                if instagram_session_user and not instagram_provider.preflight():
+                    errors.extend(instagram_provider.errors)
+                    console.print(
+                        f"[yellow]Instagram authentication preflight failed: "
+                        f"{instagram_provider.circuit_reason}[/yellow]"
+                    )
                 if not instagram_session_user:
                     console.print(
                         "[yellow]Instagram metadata mode: anonymous. A local user-owned session "
@@ -490,7 +522,7 @@ def run_discovery(
                     if instagram_provider.circuit_open:
                         stop_reason = "instagram_circuit_open"
                         break
-                    if time.monotonic() >= run_deadline:
+                    if time.monotonic() >= instagram_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     console.print(
@@ -503,7 +535,7 @@ def run_discovery(
                         instagram_provider.search(
                             search_query.query,
                             limit=min(results_per_query, 30),
-                            deadline=run_deadline,
+                            deadline=instagram_deadline,
                         )
                     )
                     raw_count = instagram_provider.search_results_seen - before
@@ -515,15 +547,15 @@ def run_discovery(
                         break
 
                 for tag in instagram_hashtag:
-                    if instagram_provider.circuit_open or time.monotonic() >= run_deadline:
-                        stop_reason = "runtime_budget_reached" if time.monotonic() >= run_deadline else "instagram_circuit_open"
+                    if instagram_provider.circuit_open or time.monotonic() >= instagram_deadline:
+                        stop_reason = "runtime_budget_reached" if time.monotonic() >= instagram_deadline else "instagram_circuit_open"
                         break
                     before = instagram_provider.search_results_seen
                     query_candidates = list(
                         instagram_provider.search_hashtag(
                             tag,
                             limit=min(results_per_query, instagram_max_lookups),
-                            deadline=run_deadline,
+                            deadline=instagram_deadline,
                         )
                     )
                     raw_count = instagram_provider.search_results_seen - before
@@ -804,6 +836,7 @@ def run_discovery(
         "stop_reason": stop_reason,
         "youtube_search_pages_fetched": youtube_provider.search_pages_fetched if youtube_provider else 0,
         "youtube_queries_completed": youtube_provider.search_queries_completed if youtube_provider else 0,
+        "youtube_duplicate_results_within_queries": youtube_provider.duplicate_results if youtube_provider else 0,
         "youtube_discovery_surfaces": {
             "text_search_queries": len(youtube_queries),
             "hashtag_shelves_selected": len(youtube_hashtag_queries),
@@ -812,7 +845,8 @@ def run_discovery(
             "raw_surface_results": youtube_surface_provider.search_results_seen if youtube_surface_provider else 0,
         },
         "youtube_request_timeout_seconds": youtube_request_timeout,
-        "youtube_request_retries": 0,
+        "youtube_request_retries": 1,
+        "youtube_stage_deadline_seconds_from_start": round(youtube_deadline - run_started_monotonic, 2),
         "min_views": min_views,
         "raw_search_results": {
             "youtube": youtube_raw,
@@ -854,6 +888,8 @@ def run_discovery(
             "lookup_limit": instagram_max_lookups,
             "request_timeout_seconds": instagram_request_timeout,
             "ddgs_timeout_seconds": instagram_timeout,
+            "stage_deadline_seconds_from_start": round(instagram_deadline - run_started_monotonic, 2),
+            "stage_budget_policy": "reserved_stage_window",
             "auth_mode": instagram_provider.auth_mode if instagram_provider else (
                 "session_configured_not_started" if instagram_session_user else "anonymous"
             ),

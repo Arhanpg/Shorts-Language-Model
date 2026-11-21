@@ -17,6 +17,7 @@ import time
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from itertools import islice
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
@@ -42,7 +43,7 @@ class YouTubeSearchProvider:
         *,
         request_timeout: float = 6.0,
         request_interval: float = 0.5,
-        max_retries: int = 0,
+        max_retries: int = 1,
         detail_enrichment_limit: int = 40,
     ) -> None:
         self.request_timeout = max(2.0, min(request_timeout, 10.0))
@@ -52,6 +53,7 @@ class YouTubeSearchProvider:
         self.errors: list[str] = []
         self.warnings: list[str] = []
         self.search_results_seen = 0
+        self.duplicate_results = 0
         self.search_pages_fetched = 0
         self.search_queries_completed = 0
         self.enrichment_attempts = 0
@@ -92,6 +94,7 @@ class YouTubeSearchProvider:
 
     @staticmethod
     def _is_stop_error(exc: Exception) -> bool:
+        """Only explicit access/rate-limit signals stop a provider immediately."""
         text = f"{type(exc).__name__}: {exc}".casefold()
         return any(
             token in text
@@ -104,9 +107,10 @@ class YouTubeSearchProvider:
                 "confirm you're not a bot",
                 "consentrequired",
                 "request blocked",
-                "timed out",
-                "connectionerror",
-                "requesterror",
+                "http 401",
+                "http 403",
+                "unauthorized",
+                "forbidden",
             )
         )
 
@@ -163,7 +167,10 @@ class YouTubeSearchProvider:
                     language=language,
                     region=region,
                 )
-                if candidate is None or candidate.source_id in seen:
+                if candidate is None:
+                    continue
+                if candidate.source_id in seen:
+                    self.duplicate_results += 1
                     continue
                 seen.add(candidate.source_id)
                 yield candidate
@@ -386,8 +393,10 @@ class InstagramSearchProvider:
         max_connection_attempts: int = 1,
         max_lookups: int = 40,
         failure_threshold: int = 3,
+        enable_ytdlp_fallback: bool = False,
     ) -> None:
         self.session_username = session_username
+        self.enable_ytdlp_fallback = enable_ytdlp_fallback
         self.session_file = session_file
         self.session_authenticated = False
         self.auth_mode = "session" if session_username else "anonymous"
@@ -422,6 +431,31 @@ class InstagramSearchProvider:
     def _open_circuit(self, reason: str) -> None:
         self.circuit_open = True
         self.circuit_reason = reason[:250]
+
+    def preflight(self) -> bool:
+        """Validate configured session file and account before search requests."""
+        if self.session_username:
+            if not self.session_file:
+                self._open_circuit("Instagram username configured without a session-file path.")
+                self._record_error(self.circuit_reason or "Missing session-file path.")
+                return False
+            session_path = Path(self.session_file).expanduser()
+            if not session_path.is_file():
+                self._open_circuit(
+                    f"Instagram session file does not exist: {session_path}. "
+                    "Complete the official Instagram login/checkpoint flow and create a local session."
+                )
+                self._record_error(self.circuit_reason or "Instagram session file is missing.")
+                return False
+        try:
+            self._loader()
+        except Exception as exc:
+            self._open_circuit(
+                f"Instagram session preflight failed: {type(exc).__name__}: {str(exc)[:180]}"
+            )
+            self._record_error(self.circuit_reason or str(exc))
+            return False
+        return True
 
     def _loader(self) -> Any:
         if self._loader_instance is not None:
@@ -652,7 +686,7 @@ class InstagramSearchProvider:
             )
             # Try a second independent extractor only for parser/metadata errors,
             # never after a clear login wall, block or rate-limit response.
-            if not self._should_open_circuit(exc):
+            if self.enable_ytdlp_fallback and not self._should_open_circuit(exc):
                 fallback = self._resolve_with_ytdlp(
                     f"https://www.instagram.com/reel/{shortcode}/", shortcode
                 )
