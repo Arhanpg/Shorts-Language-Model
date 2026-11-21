@@ -42,6 +42,14 @@ CREATE TABLE IF NOT EXISTS creator_edges (
  source_video_id TEXT NOT NULL DEFAULT '', observed_at TEXT NOT NULL, metadata_json TEXT NOT NULL DEFAULT '{}',
  PRIMARY KEY(platform, source_creator_id, target_creator_id, edge_type, source_video_id)
 );
+CREATE TABLE IF NOT EXISTS candidate_observations (
+ observation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ platform TEXT NOT NULL, source_id TEXT NOT NULL, run_id TEXT NOT NULL,
+ observed_at TEXT NOT NULL, metric_kind TEXT NOT NULL, metric_value INTEGER,
+ metric_source TEXT, format_status TEXT NOT NULL, evidence_json TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_candidate_observations_source
+ ON candidate_observations(platform, source_id, observed_at);
 """
 
 class CreatorFrontier:
@@ -130,10 +138,11 @@ class CreatorFrontier:
             next_crawl = None
         self.connection.execute(
             """UPDATE creator_frontier SET status=?, last_crawled_at=?, next_crawl_after=?,
-            lease_until=NULL, eligible_yield_count=eligible_yield_count+?, last_error=?
+            lease_until=NULL, eligible_yield_count=eligible_yield_count+?,
+            priority_score=priority_score+MIN(?, 100)*0.1, last_error=?
             WHERE platform=? AND creator_id=?""",
             (status, now.isoformat(), next_crawl, max(0, eligible_yield),
-             error[:500] if error else None, platform, creator_id))
+             max(0, eligible_yield), error[:500] if error else None, platform, creator_id))
         self.connection.commit()
 
     def claim_seeds(self, platform: str, *, limit: int = 20) -> list[sqlite3.Row]:
@@ -175,6 +184,29 @@ class CreatorFrontier:
              datetime.now(UTC).isoformat(), json.dumps(metadata or {}, ensure_ascii=False)))
         self.connection.commit()
 
+    def record_candidate_observation(
+        self,
+        platform: str,
+        source_id: str,
+        *,
+        run_id: str,
+        metric_kind: str,
+        metric_value: int | None,
+        metric_source: str | None,
+        format_status: str,
+        evidence: dict[str, object] | None = None,
+    ) -> None:
+        self.connection.execute(
+            """INSERT INTO candidate_observations(
+                platform, source_id, run_id, observed_at, metric_kind, metric_value,
+                metric_source, format_status, evidence_json
+            ) VALUES(?,?,?,?,?,?,?,?,?)""",
+            (platform, source_id, run_id, datetime.now(UTC).isoformat(),
+             metric_kind, metric_value, metric_source, format_status,
+             json.dumps(evidence or {}, ensure_ascii=False, default=str)),
+        )
+        self.connection.commit()
+
     def summary(self) -> dict[str, int]:
         queries = {
             "creators_pending": "SELECT COUNT(*) FROM creator_frontier WHERE status='pending'",
@@ -183,6 +215,7 @@ class CreatorFrontier:
             "creators_failed": "SELECT COUNT(*) FROM creator_frontier WHERE status='failed'",
             "expansion_seeds_pending": "SELECT COUNT(*) FROM expansion_seeds WHERE status='pending'",
             "creator_edges": "SELECT COUNT(*) FROM creator_edges",
+            "candidate_observations": "SELECT COUNT(*) FROM candidate_observations",
         }
         return {key: int(self.connection.execute(sql).fetchone()[0])
                 for key, sql in queries.items()}

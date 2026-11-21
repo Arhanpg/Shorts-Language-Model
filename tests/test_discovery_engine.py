@@ -47,5 +47,6 @@ def test_graph_engine_persists_seed_creator_and_related_video(monkeypatch, tmp_p
         ))
         assert summary["eligible_new"] == 3
         assert summary["creator_edges"] == 1
+        assert summary["candidate_observations"] == 3
         assert store.get_candidate("youtube", "RelatedVideo12") is not None
         assert summary["creators_pending"] >= 0
