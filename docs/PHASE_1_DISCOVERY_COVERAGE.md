@@ -46,6 +46,8 @@ The project's source exposes a dedicated `SearchFilter.SHORTS` filter (the curre
 
 Its result iterator supports pagination. The client has configurable request timeout, minimum interval and retry/backoff. ShortsLM reuses one client per language/region pair within each run rather than rebuilding a connection/context for every query.
 
+The inspected v2.2.0 `YouTube.search()` signature exposes a result-type filter and a maximum result cap, but no sort-by-view-count argument. ShortsLM therefore uses the platform's Shorts-filtered search ranking and applies the numeric 1M threshold locally. It does not claim that YouTube returns the highest-view Shorts first. Search terms such as "viral" add query diversity, not a guarantee of result ordering.
+
 **Endpoint distinction:** ytscrape does not use the official YouTube Data API v3 and does not require a Google API key. Its README states that it uses YouTube's internal/private InnerTube web endpoints and that they may change. This is not a platform-approved data API, a licence to download media, or permission to train on content. The project is pinned to the inspected major version range and must be rechecked before upgrades.
 
 ### Why the Instagram provider is deliberately conservative
