@@ -135,12 +135,12 @@ def build_youtube_query_pool(custom_queries: list[str] | None = None) -> list[Se
     return _unique_queries(queries)
 
 
-def build_instagram_query_pool(custom_queries: list[str] | None = None) -> list[SearchQuery]:
+def build_instagram_query_pool(\n    custom_queries: list[str] | None = None,\n    *,\n    default_region: str = "in-en",\n) -> list[SearchQuery]:
     """Build region and language-aware public web searches for indexed Reels."""
     if custom_queries:
         return _unique_queries(
             [
-                SearchQuery("instagram", q.strip(), "en", "in-en", "user")
+                SearchQuery(\n                    "instagram", q.strip(), default_region.split("-", maxsplit=1)[-1],\n                    default_region, "user"\n                )
                 for q in custom_queries
                 if q.strip()
             ]
