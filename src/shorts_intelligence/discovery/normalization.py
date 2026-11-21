@@ -225,11 +225,9 @@ def candidate_from_ytscrape_video(
     views = int(views_raw) if isinstance(views_raw, int) and views_raw >= 0 else None
     duration_text = getattr(video, "duration", None)
     published_at = getattr(video, "published_at", None)
-    upload_date = (
-        published_at.strftime("%Y%m%d")
-        if isinstance(published_at, datetime)
-        else None
-    )
+    # Search result publication time is relative/approximate; keep it out of
+    # the precise upload_date field. Detail enrichment can supply the exact date.
+    upload_date = None
     title = str(getattr(video, "title", "") or "") or None
     description = str(getattr(video, "description", "") or "") or None
     hashtags = extract_hashtags(title, description)
@@ -260,6 +258,7 @@ def candidate_from_ytscrape_video(
             "channel_id": getattr(video, "channel_id", None),
             "duration_text": duration_text,
             "views_text": getattr(video, "views_text", None),
+            "views_observed_at": datetime.now(UTC).isoformat(),
             "published_text": getattr(video, "published_text", None),
             "upload_date_accuracy": "approximate_from_search_relative_time",
             "published_at_estimate": (
