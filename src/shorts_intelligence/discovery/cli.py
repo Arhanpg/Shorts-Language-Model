@@ -355,13 +355,26 @@ def run_discovery(
                 candidate_metric is not None
                 and (previous_metric is None or candidate_metric > previous_metric)
             ) else previous
+            query_variants = {
+                str(value)
+                for metadata_item in (previous.metadata, candidate.metadata)
+                for value in (
+                    [metadata_item.get("search_query")]
+                    if isinstance(metadata_item.get("search_query"), str)
+                    else metadata_item.get("discovery_query_variants", [])
+                )
+                if isinstance(value, str) and value
+            }
+            locale_variants = {
+                f"{metadata_item.get('search_language', '')}-{metadata_item.get('search_region', '')}"
+                for metadata_item in (previous.metadata, candidate.metadata)
+                if metadata_item.get("search_language") and metadata_item.get("search_region")
+            }
             metadata = {
                 **previous.metadata,
                 **candidate.metadata,
-                "discovery_query_variants": sorted(
-                    set(previous.metadata.get("discovery_query_variants", []))
-                    | set(candidate.metadata.get("discovery_query_variants", []))
-                ),
+                "discovery_query_variants": sorted(query_variants),
+                "discovery_locale_variants": sorted(locale_variants),
             }
             unique_candidates[identity] = selected.model_copy(update={"metadata": metadata})
 
