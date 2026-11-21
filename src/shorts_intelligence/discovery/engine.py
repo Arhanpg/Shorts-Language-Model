@@ -21,8 +21,12 @@ async def run_creator_graph(
     max_depth: int = 3, youtube_concurrency: int = 5,
     instagram_profile_dir: Path | None = None,
     instagram_creators: list[str] | None = None,
+    instagram_hashtags: list[str] | None = None,
     force: bool = False,
     instagram_max_scrolls: int = 8,
+    instagram_max_reel_details: int = 3,
+    instagram_hashtag_max_reel_details: int = 8,
+    max_instagram_hashtags: int = 20,
 ) -> dict[str, Any]:
     """Run bounded graph discovery. This function never downloads media."""
     if platform not in {"youtube", "instagram", "all"}:
@@ -34,7 +38,9 @@ async def run_creator_graph(
     started = loop.time()
     bounded_runtime = max(30, min(max_runtime_seconds, 900))
     deadline = started + bounded_runtime
-    combined_with_instagram = platform == "all" and bool(instagram_creators)
+    combined_with_instagram = platform == "all" and bool(
+        instagram_creators or instagram_hashtags
+    )
     youtube_deadline = (
         started + bounded_runtime * 0.62 if combined_with_instagram else deadline
     )
@@ -49,6 +55,7 @@ async def run_creator_graph(
     errors: list[str] = []
     providers: dict[str, Any] = {}
     creator_results: list[dict[str, Any]] = []
+    hashtag_results: list[dict[str, Any]] = []
     new_eligible = 0
 
     async def within_budget(awaitable: Any, stage_deadline: float = deadline) -> Any:
@@ -156,6 +163,79 @@ async def run_creator_graph(
                     errors.append(f"hashtag search #{hashtag}: {type(exc).__name__}: {str(exc)[:180]}")
 
         if "instagram" in providers:
+            instagram_provider = providers["instagram"]
+            selected_hashtags = list(dict.fromkeys(
+                tag.strip().lstrip("#").casefold()
+                for tag in (instagram_hashtags or [])
+                if tag.strip()
+            ))[:max(0, min(max_instagram_hashtags, 100))]
+            for hashtag in selected_hashtags:
+                if loop.time() >= deadline or getattr(instagram_provider, "blocked", False):
+                    break
+                try:
+                    candidates = await within_budget(
+                        instagram_provider.harvest_hashtag(
+                            hashtag,
+                            max_scrolls=instagram_max_scrolls,
+                            max_reel_details=instagram_hashtag_max_reel_details,
+                        )
+                    )
+                    stats["instagram_hashtag_requests"] += 1
+                    stats["instagram_hashtag_candidates"] += len(candidates)
+                    hashtag_eligible = 0
+                    for candidate in candidates:
+                        stats["candidates_observed"] += 1
+                        if candidate.qualifying_metric() is None:
+                            stats["metric_unknown_candidates"] += 1
+                        else:
+                            stats["metric_observed_candidates"] += 1
+                            if candidate.qualifying_metric() >= min_metric:
+                                stats["metric_above_threshold_candidates"] += 1
+                        is_new, became = store.upsert_candidate(
+                            candidate, min_views=min_metric, run_id=run_id
+                        )
+                        if is_new:
+                            stats["new_inventory_candidates"] += 1
+                        frontier.record_candidate_observation(
+                            candidate.platform, candidate.source_id, run_id=run_id,
+                            metric_kind=candidate.qualifying_metric_kind(),
+                            metric_value=candidate.qualifying_metric(),
+                            metric_source=candidate.metric_source,
+                            format_status=candidate.short_format_status,
+                            evidence=candidate.metadata,
+                        )
+                        if became:
+                            new_eligible += 1
+                            hashtag_eligible += 1
+                            stats["eligible_new"] += 1
+                    diagnostic = (
+                        instagram_provider.hashtag_diagnostics[-1]
+                        if instagram_provider.hashtag_diagnostics else {}
+                    )
+                    hashtag_results.append({
+                        "hashtag": hashtag,
+                        "candidates_observed": len(candidates),
+                        "eligible_new": hashtag_eligible,
+                        "status": "completed" if candidates else "empty",
+                        "provider": diagnostic,
+                    })
+                except Exception as exc:
+                    message = f"{type(exc).__name__}: {str(exc)[:180]}"
+                    stats["instagram_hashtag_failures"] += 1
+                    errors.append(f"instagram hashtag #{hashtag}: {message}")
+                    hashtag_results.append({
+                        "hashtag": hashtag,
+                        "candidates_observed": 0,
+                        "eligible_new": 0,
+                        "status": "blocked" if getattr(instagram_provider, "blocked", False) else "failed",
+                        "error": message,
+                        "provider": (
+                            instagram_provider.hashtag_diagnostics[-1]
+                            if getattr(instagram_provider, "hashtag_diagnostics", [])
+                            else {}
+                        ),
+                    })
+
             for username in instagram_creators or []:
                 frontier.enqueue_creator(
                     "instagram", username.casefold().lstrip("@"), handle=username.lstrip("@"),
@@ -188,6 +268,7 @@ async def run_creator_graph(
                             provider.harvest_creator(
                                 creator.handle or creator.creator_id,
                                 max_scrolls=instagram_max_scrolls,
+                                max_reel_details=instagram_max_reel_details,
                             ),
                             stage_deadline,
                         )
@@ -201,8 +282,16 @@ async def run_creator_graph(
                     creator_yield = 0
                     for candidate in candidates:
                         stats["candidates_observed"] += 1
-                        _, became = store.upsert_candidate(
+                        if candidate.qualifying_metric() is None:
+                            stats["metric_unknown_candidates"] += 1
+                        else:
+                            stats["metric_observed_candidates"] += 1
+                            if candidate.qualifying_metric() >= min_metric:
+                                stats["metric_above_threshold_candidates"] += 1
+                        is_new, became = store.upsert_candidate(
                             candidate, min_views=min_metric, run_id=run_id)
+                        if is_new:
+                            stats["new_inventory_candidates"] += 1
                         frontier.record_candidate_observation(
                             candidate.platform, candidate.source_id, run_id=run_id,
                             metric_kind=candidate.qualifying_metric_kind(),
@@ -334,6 +423,7 @@ async def run_creator_graph(
                  "responses_parsed": provider.responses_parsed,
                  "responses_unparsed": provider.responses_unparsed,
                  "creator_diagnostics": provider.creator_diagnostics,
+                 "hashtag_diagnostics": provider.hashtag_diagnostics,
                  "provider_errors": provider.errors}
                 if name == "instagram" else {"library_calls": provider.requests}
             )
@@ -354,6 +444,10 @@ async def run_creator_graph(
             },
             "provider_requests": request_counts,
             "creator_results": creator_results,
+            "hashtag_results": hashtag_results,
+            "hashtags_with_candidates": sum(
+                item["candidates_observed"] > 0 for item in hashtag_results
+            ),
             "creators_with_candidates": sum(
                 item["candidates_observed"] > 0 for item in creator_results
             ),
@@ -366,7 +460,10 @@ async def run_creator_graph(
         store.finish_run(run_id, {
             "scanned": stats["candidates_observed"] + stats["related_candidates"],
             "new_eligible": new_eligible, "duplicates": 0,
-            "errors": stats["creator_failures"] + stats["seed_search_failures"] + stats["expansion_failures"],
+            "errors": (
+                stats["creator_failures"] + stats["seed_search_failures"]
+                + stats["expansion_failures"] + stats["instagram_hashtag_failures"]
+            ),
             **summary})
         return summary
     finally:
