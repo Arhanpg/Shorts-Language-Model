@@ -221,7 +221,7 @@ def select_due_queries(
     rng: random.Random | random.SystemRandom,
     now: datetime | None = None,
 ) -> list[SearchQuery]:
-    """Prefer never-used or out-of-cooldown queries; rotate stale queries last."""
+    """Select never-used or cooldown-expired queries without silently reusing recent ones."""
     now = now or datetime.now(UTC)
     cutoff = now - timedelta(days=max(0, cooldown_days))
     never_used: list[SearchQuery] = []
