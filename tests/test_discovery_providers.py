@@ -36,7 +36,7 @@ def _fake_ytscrape(monkeypatch):
 
         def search(self, query, *, filter, max_results):
             self.search_calls.append((query, filter, max_results))
-            return [
+            first_page = [
                 SimpleNamespace(
                     video_id="AbCdEfGh123",
                     title="Cricket finish #cricket",
@@ -64,6 +64,17 @@ def _fake_ytscrape(monkeypatch):
                     thumbnail=None,
                 ),
             ]
+
+            class FakeLazySearchResults:
+                def __init__(self, items):
+                    self._buffer = items
+                    self.iterated = False
+
+                def __iter__(self):
+                    self.iterated = True
+                    raise AssertionError("YouTube discovery must not trigger lazy pagination")
+
+            return FakeLazySearchResults(first_page)
 
         def video(self, source_id):
             self.video_calls.append(source_id)
@@ -114,6 +125,8 @@ def test_youtube_provider_uses_shorts_filter_and_deduplicates(monkeypatch):
     assert results[0].metadata["search_filter"] == "shorts"
     assert results[0].metadata["search_language"] == "hi"
     assert provider.search_results_seen == 2
+    assert provider.search_pages_fetched == 1
+    assert provider.search_queries_completed == 1
 
     client = FakeYouTube.instances[0]
     assert client.kwargs["language"] == "hi"
