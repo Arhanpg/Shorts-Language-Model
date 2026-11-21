@@ -146,3 +146,24 @@ Inspect `outputs/discovery/graph-latest.json` and verify numeric YouTube views, 
 ## Security and rights
 
 Public visibility does not itself grant rights to download, retain, analyze or train on a Reel. Discovery is separate from acquisition. The existing item-specific rights manifest remains mandatory for downloading and training. Never commit browser profiles, cookies, sessions, SQLite databases, downloaded videos or private reports.
+
+
+## Windows browser lifecycle troubleshooting (November 2026)
+
+The browser collector now treats Chrome shutdown as a recoverable lifecycle event:
+- It checks the underlying browser connection before reusing a cached persistent context; a disconnected Chrome session is closed and relaunched once with the same profile.
+- Provider shutdown is idempotent; context or Proactor pipe cleanup errors cannot replace the original collection result.
+- A page-creation failure caused by an already-closed target triggers one fresh context attempt with the same profile.
+- If Chrome's persistent profile is locked, an actionable message asks you to close every window using that profile and check for leftover `chrome.exe` processes. Never delete the profile or session files.
+- YouTube reports include `discovery_stage_counts` to separate seed-search results, detail-enriched candidates, creator-tab candidates and related-Shorts candidates.
+
+
+### Seed target vs. graph expansion
+
+The seed bootstrap can itself meet `--target-new`. By default, this preserves the fast-stop behavior and skips the subsequent creator/related-video frontier loop. The report and terminal output now make this explicit. To keep exploring the creator graph after enough new eligible videos have been found, pass:
+
+```powershell
+shorts-lm discover graph-run --platform youtube --target-new 20 --max-creators 10 --max-expansions 10 --continue-graph-after-target
+```
+
+The run remains bounded by `--max-runtime-seconds`, `--max-creators`, and `--max-expansions`; target overshoot is expected when this option is enabled.

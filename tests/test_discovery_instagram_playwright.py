@@ -110,3 +110,111 @@ def test_instagram_jsonld_ignores_non_numeric_and_like_only_metrics():
         {"interactionType": {"@type": "WatchAction"}, "userInteractionCount": "1.2M"},
     ]}
     assert _jsonld_video_metric(payload) is None
+
+
+def test_provider_close_is_idempotent_after_external_browser_shutdown():
+    import asyncio
+    from pathlib import Path
+
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        InstagramPlaywrightProvider,
+    )
+
+    class ClosedContext:
+        async def close(self):
+            raise RuntimeError("Target page, context or browser has been closed")
+
+    class StoppedPlaywright:
+        def __init__(self):
+            self.calls = 0
+
+        async def stop(self):
+            self.calls += 1
+            raise RuntimeError("I/O operation on closed pipe")
+
+    provider = InstagramPlaywrightProvider(profile_dir=Path("profile"))
+    playwright = StoppedPlaywright()
+    provider._context = ClosedContext()
+    provider._playwright = playwright
+
+    asyncio.run(provider.close())
+    asyncio.run(provider.close())
+
+    assert provider._context is None
+    assert provider._playwright is None
+    assert playwright.calls == 1
+
+
+def test_ensure_context_relaunches_after_chrome_was_closed(monkeypatch, tmp_path):
+    import asyncio
+    import sys
+    from types import ModuleType
+
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        InstagramPlaywrightProvider,
+    )
+
+    class Browser:
+        def __init__(self, connected):
+            self.connected = connected
+
+        def is_connected(self):
+            return self.connected
+
+    class Context:
+        def __init__(self, connected=True):
+            self.browser = Browser(connected)
+            self.pages = []
+            self.closed = False
+
+        async def close(self):
+            self.closed = True
+
+    class Playwright:
+        def __init__(self, context):
+            self.context = context
+            self.launches = 0
+            self.stops = 0
+            self.chromium = self
+
+        async def launch_persistent_context(self, **kwargs):
+            self.launches += 1
+            return self.context
+
+        async def stop(self):
+            self.stops += 1
+
+    class Manager:
+        def __init__(self, playwright):
+            self.playwright = playwright
+
+        async def start(self):
+            return self.playwright
+
+    old_context = Context(connected=False)
+    old_playwright = Playwright(old_context)
+    new_context = Context(connected=True)
+    new_playwright = Playwright(new_context)
+    managers = [Manager(new_playwright)]
+    api = ModuleType("playwright.async_api")
+    api.async_playwright = lambda: managers.pop(0)
+    package = ModuleType("playwright")
+    package.async_api = api
+    monkeypatch.setitem(sys.modules, "playwright", package)
+    monkeypatch.setitem(sys.modules, "playwright.async_api", api)
+
+    provider = InstagramPlaywrightProvider(profile_dir=tmp_path / "profile")
+    provider._context = old_context
+    provider._playwright = old_playwright
+
+    async def exercise():
+        context = await provider._ensure_context()
+        assert context is new_context
+        await provider.close()
+
+    asyncio.run(exercise())
+    assert old_context.closed is True
+    assert old_playwright.stops == 1
+    assert new_playwright.launches == 1
+    assert new_context.closed is True
+    assert new_playwright.stops == 1
