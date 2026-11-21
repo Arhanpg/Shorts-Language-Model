@@ -148,7 +148,7 @@ def test_provider_close_is_idempotent_after_external_browser_shutdown():
 def test_ensure_context_relaunches_after_chrome_was_closed(monkeypatch, tmp_path):
     import asyncio
     import sys
-    from types import ModuleType, SimpleNamespace
+    from types import ModuleType
 
     from shorts_intelligence.discovery.providers.instagram_playwright import (
         InstagramPlaywrightProvider,
