@@ -42,7 +42,7 @@ class YouTubeSearchProvider:
         *,
         request_timeout: float = 6.0,
         request_interval: float = 0.5,
-        max_retries: int = 0,
+        max_retries: int = 1,
         detail_enrichment_limit: int = 40,
     ) -> None:
         self.request_timeout = max(2.0, min(request_timeout, 10.0))
