@@ -21,6 +21,7 @@ from rich.table import Table
 
 from shorts_intelligence.discovery.browser_session import find_chrome_executable
 from shorts_intelligence.discovery.downloader import download_candidate
+from shorts_intelligence.discovery.hashtag_loader import load_instagram_hashtags
 from shorts_intelligence.discovery.legacy_providers import (
     InstagramSearchProvider,
     ProviderUnavailable,
@@ -35,7 +36,6 @@ from shorts_intelligence.discovery.query_planner import (
     build_youtube_query_pool,
     select_due_queries,
 )
-from shorts_intelligence.discovery.hashtag_loader import load_instagram_hashtags
 from shorts_intelligence.discovery.seed_loader import load_instagram_creator_seeds
 from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.media.probe import sha256_file

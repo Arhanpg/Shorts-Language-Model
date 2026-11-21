@@ -213,6 +213,10 @@ class InstagramPlaywrightProvider:
                 channel="chrome",
                 viewport={"width": 1365, "height": 900},
             )
+            # Persistent contexts may create an initial blank tab; surfaces
+            # below own their pages explicitly and close them after each visit.
+            for initial_page in list(self._context.pages):
+                await initial_page.close()
         except Exception:
             await self._playwright.stop()
             self._playwright = None
