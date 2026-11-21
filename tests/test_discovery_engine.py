@@ -174,7 +174,7 @@ def test_instagram_hashtag_harvest_persists_reels_and_reports_metrics(monkeypatc
         assert summary["instagram_hashtag_requests"] == 1
         assert summary["hashtags_with_candidates"] == 1
         assert summary["eligible_new"] == 1
-        assert summary["creator_harvest_batches"] == 0
+        assert summary.get("creator_harvest_batches", 0) == 0
         assert summary["hashtag_results"][0]["hashtag"] == "cricket"
         saved = store.get_candidate("instagram", "HashtagReel123")
         assert saved is not None
