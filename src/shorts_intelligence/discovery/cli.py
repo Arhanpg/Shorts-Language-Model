@@ -282,7 +282,7 @@ def run_discovery(
                         stop_reason = "runtime_budget_reached"
                         break
                     console.print(
-                        f"[dim]YouTube {query_index}/{len(youtube_queries} · "
+                        f"[dim]YouTube {query_index}/{len(youtube_queries)} · "
                         f"{search_query.language}/{search_query.region} · "
                         f"{search_query.query}[/dim]"
                     )
