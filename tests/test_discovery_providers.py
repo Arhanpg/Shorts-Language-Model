@@ -383,7 +383,6 @@ def test_instagram_provider_does_not_start_search_after_run_deadline(monkeypatch
     provider.close()
 
 
-
 def test_instagram_provider_respects_three_second_request_timeout():
     provider = InstagramSearchProvider(
         request_timeout=3,
