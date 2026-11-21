@@ -10,22 +10,26 @@
 - Add a private item-specific rights manifest; do not commit it.
 - Confirm search/downloader versions and local Instaloader session handling.
 
-**Exit:** doctor reports yt-dlp, Instaloader, DDGS and FFmpeg availability; local data paths are gitignored.
+**Exit:** doctor reports ytscrape, yt-dlp, Instaloader, DDGS and FFmpeg availability; local data paths are gitignored.
 
 ## Phase 1 — Non-API discovery + SQLite
 
-- YouTube search via yt-dlp ytsearchN using flat playlist mode to avoid per-result full extraction errors.
-- Instagram public Reel URL discovery via DDGS web search using India English region and multiple result pages by default.
-- Instagram metadata resolution via Instaloader.
-- Optional Instaloader hashtag discovery with the user's own session.
-- Normalize source URLs, IDs, metadata, hashtags and metric source.
-- Filter threshold default 1,000,000; unknown metrics do not pass.
-- Confirm short format using URL/dimensions/duration evidence; keep uncertainty explicit.
-- Persist runs/candidates in local SQLite.
-- Enforce platform/source ID uniqueness and seeded shuffled queries.
-- Emit per-platform reason counts for missing metrics, low views, format uncertainty, duplicates and provider errors.\n- Preserve previously stored metadata on incomplete repeat observations.\n- Check yt-dlp EJS and Deno/Node prerequisites for full video extraction/download.\n- Emit partial-yield reports rather than promising a fixed supply.
+- YouTube search via ytscrape v2.2+ with the dedicated Shorts-only filter (not generic yt-dlp search).
+- YouTube media acquisition remains a separate yt-dlp + FFmpeg step after the rights gate.
+- Rotate locale/topic query pools across English, Hindi, Marathi, Kannada, Tamil, Telugu, Bengali, Spanish, Portuguese and Indonesian strata.
+- Persist exact query/locale history and default seven-day cooldown in SQLite; use random order by default and an optional --seed for reproducibility.
+- Instagram public Reel URL discovery via DDGS, with explicit backends, an 8-second timeout and one fallback engine.
+- Resolve Instagram metadata through Instaloader with 12-second per-request timeout, one connection attempt, 40 lookup cap and circuit breaker.
+- Enrich only a capped number of new YouTube candidates whose view count or duration is missing.
+- Evaluate unseen platform/source IDs before previously known IDs; count an item as new only if its platform/source key was absent before the run.
+- Preserve view/play metric provenance and keep Instagram view_count distinct from play_count.
+- Persist query usage, provider errors, enrichment statistics, lookup counts and circuit-breaker reasons in the run report.
+- Keep threshold default at 1,000,000; unknown metrics do not pass and targets remain best-effort.
 
-**Exit tests:** replaying the same source pages creates no duplicate source rows; unavailable individual YouTube pages do not flood the console; flat search preserves view-count metadata where present; incomplete repeat metadata does not downgrade known records; threshold and missing-metric cases are correct; report shows per-platform reasons and partial target causes. Full video extraction/download prerequisites are visible in doctor.
+**Exit tests:** YouTube provider invokes SearchFilter.SHORTS and parses typed views/duration; two runs with persisted query history rotate to never-used queries; existing IDs are not counted as new; query-history survives DB reopen; YouTube enrichment is capped; Instagram timeout and attempt settings are bounded; repeated Instaloader failures open the circuit; DDGS primary timeout can use one configured fallback; missing/below-threshold/eligible records remain distinct.
+
+See [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md) for detailed testing commands and provider limits.
+
 
 ## Phase 2 — Open-source downloader and media QA
 

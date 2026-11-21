@@ -1,163 +1,133 @@
 # Non-API Discovery and Downloader Toolchain
 
-**Decision date:** 21 November 2026  
-**Implementation branch:** feature/non-api-discovery-ytdlp-instaloader  
-**Purpose:** remove the previous official-platform-API-first approach from the acquisition workflow. Discovery uses public web search and open-source extractor repositories. No YouTube Data API key, Instagram Graph API token or Meta app is used by these commands.
+**Updated:** 21 November 2026  
+**Current discovery implementation:** `feature/discovery-coverage-reliability`
 
-## 1. Selected open-source projects
+This document describes the open-source tools used by ShortsLM. No YouTube Data API key, Instagram Graph API token or Meta app is used by the discovery command. YouTube search uses an open-source client for internal website endpoints; this is not the official Data API.
 
-| Project | Repository / docs | Role in ShortsLM | Notes |
-|---|---|---|---|
-| yt-dlp | https://github.com/yt-dlp/yt-dlp | YouTube search, metadata extraction and MP4 download; also a secondary Instagram extractor | Supports ytsearchN:query; site support can break as platforms change |
-| Instaloader | https://github.com/instaloader/instaloader | Instagram Reel shortcode metadata, view/play counts, hashtag/profile post iteration and primary Reel download | Post.video_view_count and Post.video_play_count are separate fields; hashtag discovery requires login |
-| DDGS | https://github.com/deedy5/ddgs | Search public web index for Instagram Reel links | Searches indexed web pages; it is not Instagram's official API and does not guarantee complete results |
-| gallery-dl | https://github.com/mikf/gallery-dl (active development: https://codeberg.org/mikf/gallery-dl) | Optional secondary Instagram media extractor/download fallback | Useful alternate extractor; project development has moved from GitHub to Codeberg |
+## 1. Selected projects
 
-### Why these choices
+| Project | Role | Licence / note |
+|---|---|---|
+| [ytscrape](https://github.com/vsmutok/ytscrape) | Primary YouTube Shorts search and metadata | MIT; inspected v2.2.0; uses internal InnerTube web endpoints |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | YouTube media download; fallback Instagram extractor | Open-source downloader; EJS/JS-runtime requirements apply to current YouTube downloads |
+| [DDGS](https://github.com/deedy5/ddgs) | Search public web index for Instagram Reel URLs | Search aggregator; not a complete Instagram catalogue |
+| [Instaloader](https://github.com/instaloader/instaloader) | Resolve Reel shortcode and read public post metadata; primary Instagram downloader | Per-post metadata fields may be unavailable or blocked |
+| [gallery-dl](https://github.com/mikf/gallery-dl) / [Codeberg](https://codeberg.org/mikf/gallery-dl) | Optional Instagram media downloader fallback | Not used for global Reel discovery |
+| SQLite | Persistent identity, query history and job database | Built into Python; local database is gitignored |
 
-**YouTube:** yt-dlp already contains YouTube's search extractor and supports the ytsearch prefix. The same package handles the returned video URL and writes the local media file; no platform developer key is required.
+## 2. YouTube: dedicated Shorts search
 
-**Instagram:** there is no single open-source tool with guaranteed global Reel search and download. The implemented combination first searches public indexed pages for instagram.com/reel/ links through DDGS, then resolves each shortcode through Instaloader. Instaloader exposes caption, caption hashtags, video duration, view count and play count, and can download a Post object. Hashtag/profile paths can expand discovery when a user session is available.
+The generic yt-dlp `ytsearchN` path is no longer the primary discovery path. In the user's earlier run, generic search returned many old IDs and incomplete format evidence:
+- 592 IDs from 600 search records;
+- 453 IDs already in SQLite;
+- 177 format-uncertain;
+- 57 missing view metrics;
+- only one new eligible ID.
 
-**Fallbacks:** the Instagram download order is Instaloader → yt-dlp's Instagram extractor → gallery-dl. Extractor compatibility is not guaranteed. The report retains failures rather than silently inventing candidates.
+The revised provider uses `ytscrape.YouTube.search(..., filter=SearchFilter.SHORTS)`. The v2.2.0 source defines a dedicated `SearchFilter.SHORTS` option, a paginated `SearchResults` iterator, a typed `Video` model and configurable client timeout/retry/rate-limit settings.
 
-## 2. Actual capabilities and limits
+Search results can expose:
+- video ID, title, channel/channel ID;
+- view count and rendered view text;
+- duration;
+- publication-time text and approximate parsed datetime;
+- thumbnails and description snippet.
 
-### YouTube
+The discovery adapter uses one client per language/region pair per run. It uses a bounded timeout, one retry and a minimum interval between requests. A capped second pass calls the provider's detail method for a limited number of new candidates whose search result is missing a view count or duration. This is a metadata lookup only; it does not download the media.
 
-- Search runs with yt-dlp's ytsearchN:search phrase extractor and extract_flat=in_playlist. Individual video URLs are not resolved just to read search results.
-- Metadata such as title, description, duration, upload date, dimensions, tags and view count is captured when returned.
-- A candidate is confirmed as short when a Shorts URL is returned or metadata supports a square/vertical format and the duration/upload-date rule.
-- For standard channels, the current Shorts format guidance allows eligible square/vertical videos up to three minutes for uploads on/after 15 October 2024. Older uploads use the earlier shorter-duration rule.
-- Search results are indexed and ranked. A 100-video target is a target, not a guaranteed yield.
+**Important endpoint distinction:** ytscrape does not use the official YouTube Data API. It calls YouTube's internal/private InnerTube web endpoints. These can change, return different results or be blocked. The MIT software licence permits use of the client code, but does not grant rights to underlying YouTube videos or guarantee platform permission for a particular data-collection purpose. Do not bypass consent screens, CAPTCHA, login or rate limits.
 
-### Instagram
+For actual MP4 download, the separate Phase 2 downloader still uses yt-dlp/FFmpeg where the item-specific rights gate allows it. Full YouTube media extraction may require yt-dlp EJS scripts and Deno 2.3+ or Node.js 22+; this is a downloader prerequisite, not a ytscrape search prerequisite.
 
-- DDGS searches public indexed Reel links using site:instagram.com/reel/ with a default India English region (in-en) and multiple pages per query.
-- Instaloader resolves a result via Post.from_shortcode.
-- The code stores video_view_count as view_count and video_play_count separately as play_count.
-- The default 1M filter uses view_count only. --instagram-use-play-count explicitly permits using play_count only when view_count is missing; the source metric name remains visible.
-- Missing counts remain unknown and do not pass the 1M threshold.
-- A public page may be unavailable, deleted, restricted or login-gated. Those are recorded as skipped lookup errors.
-- Hashtag search through Instaloader requires a valid local session. The session file stays on the user's computer. Do not place session cookies or passwords in GitHub.
+## 3. Instagram: indexed URL search plus bounded metadata lookup
 
-## 3. SQLite and uniqueness
+There is no selected open-source tool that guarantees a complete, global public Reel catalogue. ShortsLM uses two separate steps:
 
-The local database is .shortslm/discovery.sqlite3 and is never committed. A repeat search that omits a previously observed count or format field keeps the prior non-null metadata and calculates eligibility from the merged record. The latest report separates raw hits, unique IDs, repeated IDs, previously known IDs, missing metrics, below-threshold results, uncertain formats and provider errors by platform. It stores:
-- discovery runs and query-level outcomes;
-- platform + source ID unique candidate rows;
-- permitted title/caption, description, creator handle, view/play snapshots, tags/hashtags and duration;
-- short-format confidence and eligibility status;
-- download job status, private local path and failure reason;
-- SHA-256 after media delivery.
+1. DDGS searches public web indexes for `site:instagram.com/reel/` results using topic and language variants.
+2. Instaloader resolves a result shortcode and reads the metadata fields that Instagram currently exposes.
 
-Uniqueness happens in two layers:
-1. (platform, source_id) prevents the same source item from being reselected on later runs.
-2. SHA-256 prevents identical bytes cross-posted on YouTube and Instagram from being processed twice after both have been downloaded.
+The provider defaults are deliberately bounded:
+- primary DDGS backends: `bing,brave,duckduckgo`;
+- one fallback engine: `google`;
+- DDGS timeout: 8 seconds;
+- indexed result pages per query: 1;
+- Instaloader request timeout: 12 seconds;
+- Instaloader connection attempts: 1;
+- individual metadata lookups per run: 40;
+- consecutive metadata or DDGS failures open a circuit for the remainder of that run.
 
-A perceptual near-duplicate check (for re-encoded files) is a later extension; byte-level SHA-256 alone will not detect visually identical videos encoded differently.
+The inspected Instaloader v4.16 constructor defaults were a 300-second request timeout and three connection attempts. Those defaults caused the long wait shown in the user's terminal logs, so ShortsLM overrides them.
 
-## 4. Workflow
+Instagram metric handling remains explicit:
+- `video_view_count` is stored as `view_count`;
+- `video_play_count` is stored separately as `play_count`;
+- play_count is only eligible when the explicit `--instagram-use-play-count` option is supplied;
+- missing counts remain unknown and never pass the 1M threshold.
 
-### Install on the local laptop
+A public search index entry does not guarantee that Instaloader can read its metadata. A page may be deleted, restricted, login-gated, rate-limited or unavailable to the current network. The provider now stops after repeated failures instead of spending five minutes per attempt or flooding output.
 
-Use Windows PowerShell in the cloned repository:
+## 4. Query rotation and deduplication
 
-    py -3.11 -m venv .venv
-    .venv\Scripts\Activate.ps1
-    python -m pip install --upgrade pip
-    pip install -e ".[dev,discovery,audio]" --upgrade
+The query pool spans categories, languages and regions. Each exact combination of platform, query text, language, region and query strategy gets a stable hash key. The SQLite `discovery_queries` table stores last-used time, number of uses, search hits and usable candidate count.
 
-Install FFmpeg and make sure both ffmpeg and ffprobe are on PATH. For the optional gallery-dl fallback:
+Each run:
+1. selects never-used query keys first;
+2. selects queries outside the default seven-day cooldown next;
+3. only then revisits the least recently used searches;
+4. randomizes ordering by default; `--seed` is optional for a reproducible experiment;
+5. collapses repeated records by `(platform, source_id)`;
+6. processes unseen IDs before previously known IDs.
 
-    pip install -e ".[instagram-fallback]"
+A new item is defined by a platform/source ID absent from the local database before the current run. Merely finding an already-known video through a different query does not count as new. Cross-platform re-encodes are not guaranteed to be detected before downloading; SHA-256 detects identical downloaded bytes later.
 
-Check installation:
+Search engines rank and filter their result sets. Query rotation improves coverage but does not create a uniform random sample of YouTube or Instagram.
 
-    shorts-lm doctor
+## 5. Installation
 
-### Discover 100 new eligible candidates
+From Windows PowerShell in the repository root:
 
-    shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500 --query "cricket viral shorts India" --query "education facts short videos" --query "comedy viral reels India"
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e ".[dev,discovery,audio]" --upgrade
+shorts-lm doctor
+```
 
-For YouTube-only search:
+The `discovery` extra installs ytscrape, yt-dlp with its default extras, Instaloader and DDGS. FFmpeg/ffprobe must be installed separately and available on PATH. For YouTube video downloads, install Deno 2.3+ or Node.js 22+.
 
-    shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000
+## 6. Recommended run commands
 
-For Instagram-only indexed Reel search:
+```powershell
+# YouTube Shorts only
+shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000 --max-search-queries 30
 
-    shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000
+# Instagram indexed link discovery + bounded metadata
+shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000 --instagram-max-search-queries 8 --instagram-max-lookups 40 --instagram-timeout 8 --instagram-request-timeout 12
 
-For Instagram hashtag discovery, first create a normal Instaloader session using its interactive login (password is prompted rather than passed on the command line). Then:
+# Both providers
+shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
+```
 
-    instaloader --login YOUR_USERNAME --no-posts --no-profile-pic YOUR_USERNAME
-    shorts-lm discover run --platform instagram --instagram-session-user YOUR_USERNAME --instagram-hashtag cricket --instagram-hashtag comedy --target-new 100 --min-views 1000000
+Do not delete `.shortslm/discovery.sqlite3` between runs. It holds source IDs that prevent repeat work and query keys that rotate coverage. Query-history tables are created automatically when the revised program opens the existing database.
 
-The user's own session file is never read from a browser by this code. No CAPTCHA, login wall, challenge, rate limit or access control is bypassed. If Instagram requires login or returns an error, stop/skip that result and report it.
+## 7. What the reports measure
 
-### Download a candidate
+The report separates:
+- raw search hits by platform;
+- queries executed and query-history size;
+- repeated IDs in the current run;
+- IDs already in SQLite;
+- new eligible IDs, known IDs newly eligible and already eligible IDs;
+- missing view metric, below-threshold view count and uncertain format;
+- YouTube metadata enrichment attempts/successes;
+- Instagram metadata lookups/successes/failures, DDGS errors and circuit-breaker reason.
 
-A candidate is a discovery record, not automatic permission to copy/train on its media. The local rights JSONL must contain an item-specific grant for:
-- media retrieval;
-- media analysis;
-- temporary processing;
-- derived-artifact retention;
-- model training;
-- a provenance/evidence reference and current expiry/revocation status.
+A target of 100 is best-effort. It is not a promise that 100 new videos above 1M views exist in the search result pool for that run. The raw search count is not the success metric; new unique eligible IDs are.
 
-The example at examples/rights_manifest.example.jsonl is deliberately non-authorizing. Replace it only with real permission records. Keep the actual file under data/private/.
+## 8. Media acquisition and rights boundary
 
-    shorts-lm discover download --rights-manifest data/private/rights.jsonl --limit 25 --output-dir data/private/acquired
+The `discover run` command does not download media. The separate `discover download` command still requires a private item-specific rights-manifest entry. A publicly accessible link or an open-source downloader does not grant permission for media retrieval, persistent storage, analysis, derived-artifact retention or model training. No private media, cookies, credentials, session files, raw videos or non-redistributable artifacts may be committed to this repository.
 
-The acquisition command refuses items without a matching rights row. It writes the MP4 and a private metadata/rights sidecar. FFmpeg is used by yt-dlp to remux to MP4.
-
-
-## 4.1 YouTube flat search and EJS requirements
-
-The previous search path allowed yt-dlp to resolve playlist/search entries as full video pages. Individual unavailable videos could therefore produce repeated "This video is not available" errors even though the search page had returned the entry. ShortsLM now uses extract_flat=in_playlist to retain flat search entries, reads view_count/duration from search metadata where exposed and captures yt-dlp log messages instead of printing each result failure.
-
-The EJS challenge solver and JavaScript runtime are separate from flat search. Full YouTube media extraction/download needs the yt-dlp EJS scripts and a supported JS runtime. The discovery extra installs yt-dlp's default dependency group (including yt-dlp-ejs); install Deno 2.3+ or Node.js 22+ separately. The doctor command checks both.
-
-- EJS instructions: https://github.com/yt-dlp/yt-dlp/wiki/EJS
-- Deno installation: https://docs.deno.com/runtime/getting_started/installation/
-- Node.js: https://nodejs.org/en/download/
-
-See PHASE_1_DISCOVERY_RELIABILITY.md for Windows setup, diagnostics, the previous-run interpretation and local rerun commands.
-
-## 5. Run output states
-
-- eligible: current metric meets threshold and short-format status is at least candidate.
-- metric_unknown: view/play field unavailable; never treated as zero or as 1M+.
-- below_threshold: the available configured metric is below 1M.
-- format_unknown: not enough metadata to classify the item.
-- not_short: duration/aspect-ratio metadata rules disqualify it.
-- downloaded: authorized MP4 exists locally.
-- download_failed: extractor or delivery failed and can be retried.
-- duplicate_media: SHA-256 matches an already downloaded item.
-
-The run report distinguishes new source candidates from actual MP4 files. A discovery target of 100 does not imply 100 successful downloads.
-
-## 6. Known reliability boundaries
-
-- yt-dlp's supported-site list warns that support may break when websites change.
-- Instagram public search engines may surface incomplete or stale results.
-- Instaloader may need a logged-in session for some hashtag/content pages and is subject to Instagram's current throttling.
-- The gallery-dl project has moved active development from GitHub to Codeberg; keep it an optional fallback, not the main dependency.
-- Private/restricted content and unavailable media are not retrieved by using stealth, proxy rotation, copied browser cookies or challenge bypass.
-- View and play counts are platform-specific metrics and should not be combined into one unlabeled column.
-- Search engine result ranking is biased; shuffled queries/results are not a uniform platform-wide sample.
-
-## 7. References checked
-
-- yt-dlp repository and search extractor: https://github.com/yt-dlp/yt-dlp
-- yt-dlp supported-site list: https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md
-- Instaloader repository: https://github.com/instaloader/instaloader
-- Instaloader Post fields: https://instaloader.github.io/module/structures.html
-- Instaloader hashtags and Posts: https://instaloader.github.io/module/structures.html
-- Instaloader basic usage and Reels target: https://instaloader.github.io/basic-usage.html
-- Instaloader session/login and rate-limit guidance: https://instaloader.github.io/troubleshooting.html
-- DDGS repository: https://github.com/deedy5/ddgs
-- gallery-dl README and Codeberg migration: https://github.com/mikf/gallery-dl
-- gallery-dl release notes: https://codeberg.org/mikf/gallery-dl/releases
-
-This is a non-official-API implementation. The search and extractors are open source, but their access is best-effort and depends on upstream platform changes.
+See [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md) for the detailed architecture, research notes, limits, test coverage and troubleshooting guide.

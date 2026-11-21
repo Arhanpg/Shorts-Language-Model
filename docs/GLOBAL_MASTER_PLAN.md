@@ -28,8 +28,8 @@ The user explicitly selected open-source repositories rather than the YouTube Da
 
 | Platform/task | Selected open-source tool | Implementation role |
 |---|---|---|
-| YouTube search | yt-dlp | Uses the ytsearchN query extractor; metadata and video URL extraction |
-| YouTube download | yt-dlp + FFmpeg | Downloads an eligible video and remuxes to MP4 |
+| YouTube Shorts search | ytscrape (MIT, v2.2.0) | Dedicated Shorts search filter, paginated typed results, view count and duration; internal InnerTube web endpoints, not the official Data API |
+| YouTube download | yt-dlp + FFmpeg | Downloads an item only after its rights gate and remuxes to MP4 |
 | Instagram public Reel link search | DDGS | Searches the public web index for indexed instagram.com/reel links |
 | Instagram Reel metadata | Instaloader | Resolves shortcode and reads available caption, hashtag, duration, view/play metrics |
 | Instagram hashtag/profile expansion | Instaloader | Optional; requires the user's own existing Instaloader session for some queries |
@@ -51,7 +51,7 @@ Planned command:
 shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
 ```
 
-The query planner builds a set of phrases across language, region, category and topic. Example topics include cricket, comedy, education, music, gaming, technology, cooking, travel and editing. Query order and candidate order are shuffled using a recorded seed. Search engine results remain ranked/indexed; this is not mathematically uniform random sampling.
+The query planner builds a large pool across language, region, category and topic. YouTube uses ytscrape's Shorts-only filter; Instagram uses DDGS-indexed Reel URL searches followed by bounded Instaloader metadata lookups. Exact query/locale keys and last-run times are stored in SQLite. Never-used and cooldown-expired queries are preferred before recent queries. Query order is randomized by default; --seed is optional for reproducibility. Search engine results remain ranked/indexed; this is not mathematically uniform random sampling.
 
 Default objective: 100 new unique qualifying candidates in a run. 200 can be configured by raising target-new. The command stops at the target, maximum candidate budget or available results. If only 43 new items qualify, it reports 43; it does not fabricate candidates or loop without limit.
 
@@ -69,7 +69,7 @@ Unknown metrics are never converted to zero and never pass the 1M filter by defa
 
 ### YouTube format classification
 
-A URL explicitly returned as a Shorts URL is a strong format indicator. Otherwise, metadata dimensions and duration are used. For standard channels, YouTube's three-minute Shorts eligibility applies to square/vertical uploads on/after 15 October 2024; the earlier duration ceiling was 60 seconds. If upload date or dimensions are missing, the candidate remains uncertain instead of being confidently labelled a Short. Landscape videos are rejected as non-Shorts by this heuristic.
+YouTube candidates are returned by the dedicated ytscrape Shorts search filter and are classified as Shorts from that filtered search context. Search records can still omit view count or duration. A capped detail-enrichment pass uses ytscrape player metadata for a limited number of new incomplete candidates. This lookup does not download the media. The library uses internal InnerTube web endpoints; it is not an official Data API client and upstream changes may break extraction.
 
 ### Instagram metrics
 
@@ -84,6 +84,20 @@ The default Instagram DDGS region is India English (in-en), and the search adapt
 SQLite upserts calculate eligibility from merged incoming and previously stored metadata. A later result that omits a metric cannot downgrade a row that already has a valid observation.
 
 For full YouTube video extraction and downloading, the environment also needs yt-dlp EJS scripts and a supported JavaScript runtime (Deno 2.3+ recommended, Node.js 22+ accepted). The doctor command checks these separately from flat search prerequisites. See [Phase 1 Discovery Reliability](PHASE_1_DISCOVERY_RELIABILITY.md).
+
+## 3.1 Updated discovery reliability design
+
+- Default YouTube search provider: ytscrape v2.2+ with SearchFilter.SHORTS.
+- YouTube results are locale-aware (Hindi, Marathi, Kannada, Tamil, Telugu, Bengali, English and additional regions).
+- Search-query usage is persisted in SQLite. The default query cooldown is seven days.
+- Fresh unseen platform/source IDs are evaluated before known inventory rows.
+- YouTube detail enrichment is capped at 40 new incomplete candidates per run by default.
+- Instagram uses DDGS timeout=8 seconds, an explicit primary backend set and one fallback engine.
+- Instaloader per-request timeout is 12 seconds with one attempt by default. Repeated failures or block/rate-limit responses open a circuit for the remainder of that run.
+- Instagram metadata lookups are capped at 40 per run by default.
+- The JSON report includes query rotation, provider errors, enrichment counts, lookup counts and circuit-breaker reason.
+
+See [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md) for detailed research, rationale, options and validation.
 
 ## 4. Local inventory and unique selection
 

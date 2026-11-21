@@ -8,7 +8,8 @@ The objective is to search for YouTube Shorts and Instagram Reels, filter curren
 
 | Purpose | Open-source tool | Use |
 |---|---|---|
-| YouTube search + metadata + download | yt-dlp | ytsearchN:query, view_count, duration, dimensions and media download |
+| YouTube Shorts search + metadata | ytscrape (MIT) | Shorts-only InnerTube web search, typed views/duration, pagination; not the official Data API |
+| YouTube media download | yt-dlp + FFmpeg | Authorized MP4 acquisition, remuxing and download retry |
 | Instagram public-link discovery | DDGS | Search indexed public Reel URLs without an Instagram developer token |
 | Instagram Reel metadata + primary download | Instaloader | Resolve shortcode; view/play count, caption/hashtags, duration and Post download |
 | Instagram alternate extractor | yt-dlp Instagram extractor | Second download attempt on a discovered Reel URL |
@@ -19,11 +20,11 @@ The detailed rationale and limitations are in [docs/NON_API_DISCOVERY_TOOLCHAIN.
 
 ## Important metric handling
 
-- YouTube view_count is stored as the view metric where yt-dlp returns it.
+- YouTube view_count is stored as the view metric where ytscrape returns it; capped detail enrichment uses ytscrape player metadata when search results omit the metric.
 - Instagram video_view_count is stored separately from video_play_count.
 - The default filter uses view_count only. The optional --instagram-use-play-count switch permits play_count when the view_count field is absent, but preserves the metric label.
 - Missing metrics are unknown, not zero, and never pass the default 1M threshold.
-- YouTube format confirmation uses Shorts URL evidence or metadata dimensions/duration. An eligible duration alone is not proof that a landscape video is a Short.
+- YouTube candidates come from ytscrape's dedicated Shorts search filter. This is stronger format evidence than generic video search, but not a guarantee that every result will remain available for later download.
 - Instagram search results are confirmed Reels when they came from a /reel/ search result and the resolved media is video. Profile/hashtag discoveries are candidates unless more source evidence is available.
 
 ## Current commands
@@ -43,28 +44,45 @@ Check dependencies:
 
     shorts-lm doctor
 
-### Phase 1 diagnostics and reliability\n\nYouTube search uses yt-dlp flat playlist mode so unavailable individual video pages do not flood the terminal or discard otherwise usable search-page metadata. Instagram DDGS search defaults to India English (in-en) and checks multiple pages. The terminal and outputs/discovery/latest.json separate repeated IDs, IDs already in SQLite, missing metrics, below-threshold items, uncertain format and provider errors. A later incomplete metadata lookup will not overwrite previously known counts. See [Phase 1 Discovery Reliability](docs/PHASE_1_DISCOVERY_RELIABILITY.md).\n\n### Discover 100 new unique candidates
+Discovery requires ytscrape, yt-dlp, Instaloader and DDGS. The doctor output checks ytscrape separately. Deno 2.3+ or Node.js 22+ is still recommended for yt-dlp YouTube media downloads.
 
-    shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
+### Phase 1 discovery reliability and coverage
 
-Add search phrases by repeating --query:
+YouTube search now uses the Shorts-specific filter from the MIT-licensed [ytscrape](https://github.com/vsmutok/ytscrape) library, rather than generic yt-dlp search results. It returns typed view-count/duration metadata and paginated results; a capped number of new candidates with missing fields can be enriched through a detail lookup.
 
-    shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --query "cricket viral shorts India" --query "education facts short videos" --query "comedy viral reels India"
+The query planner rotates a broad topic/language/region pool (including Hindi, Marathi, Kannada, Tamil, Telugu, Bengali, English, Spanish, Portuguese and Indonesian). SQLite records every exact query/locale combination, so later runs prefer queries not used in the previous seven days. The new-candidate target is evaluated against unseen platform/source IDs first; known records no longer dominate the candidate evaluation budget.
+
+Instagram public Reel URLs are discovered through DDGS with bounded timeouts, explicit search backends and one fallback engine. Instaloader now uses a 12-second request timeout and one connection attempt rather than its 300-second/three-attempt defaults. After repeated failures or a block/rate-limit response, the provider stops further Instagram lookups for that run instead of hanging or flooding the logs.
+
+The latest JSON report separates query rotation, raw hits, new/known IDs, view-metric coverage, YouTube enrichment attempts, Instagram lookup successes/failures and circuit-breaker reasons. See [Phase 1 Discovery Coverage and Provider Reliability](docs/PHASE_1_DISCOVERY_COVERAGE.md).
+
+### Discover 100 new unique eligible candidates
+
+```powershell
+shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
+```
+
+Useful controls:
+- `--max-search-queries 24`: YouTube query budget per run.
+- `--instagram-max-search-queries 8`: DDGS query budget per run.
+- `--query-cooldown-days 7`: avoid repeating the same query/locale within seven days.
+- `--metadata-enrichment-limit 40`: cap detailed YouTube lookups for missing search metadata.
+- `--instagram-max-lookups 40`: cap individual Instaloader metadata fetches.
+- `--seed 42`: optional reproducible query ordering. Omit it for a fresh random ordering.
 
 YouTube only:
 
-    shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000
+```powershell
+shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000 --max-search-queries 30
+```
 
-Instagram indexed Reel search only:
+Instagram only:
 
-    shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000
+```powershell
+shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000 --instagram-max-search-queries 8 --instagram-max-lookups 40 --instagram-timeout 8 --instagram-request-timeout 12
+```
 
-Optional Instagram hashtag discovery requires an existing local Instaloader session:
-
-    instaloader --login YOUR_USERNAME --no-posts --no-profile-pic YOUR_USERNAME
-    shorts-lm discover run --platform instagram --instagram-session-user YOUR_USERNAME --instagram-hashtag cricket --instagram-hashtag comedy --target-new 100 --min-views 1000000
-
-The password is prompted interactively by Instaloader; never pass it as a command-line argument or commit a session file.
+A result target is best-effort, not guaranteed. Search result ranking is biased, and only new unique IDs with a reported qualifying view metric count. Missing views remain unknown and never become zero or 1M+. The README and coverage guide distinguish this from platform-wide random sampling.
 
 ### Download candidates
 

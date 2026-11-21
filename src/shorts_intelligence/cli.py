@@ -175,6 +175,7 @@ def doctor(
         "faster_whisper": importlib.util.find_spec("faster_whisper") is not None,
         "paddleocr": importlib.util.find_spec("paddleocr") is not None,
         "vidtrace": importlib.util.find_spec("vidtrace") is not None,
+        "ytscrape": _distribution_installed("ytscrape"),
         "yt_dlp": importlib.util.find_spec("yt_dlp") is not None,
         "yt_dlp_ejs": _distribution_installed("yt-dlp-ejs"),
         "deno_2_3_or_newer": deno_ok,
@@ -197,6 +198,8 @@ def doctor(
     console.print(table)
     if not checks["ffmpeg"] or not checks["ffprobe"]:
         console.print("[red]FFmpeg and ffprobe are required for media processing.[/red]")
+    if not checks["ytscrape"]:
+        console.print('[yellow]YouTube Shorts discovery needs ytscrape >=2.2; install with pip install -e ".[discovery]".[/yellow]')
     if checks["yt_dlp"] and not checks["yt_dlp_ejs"]:
         console.print("[yellow]YouTube extraction: install matching EJS scripts with pip install -U 'yt-dlp[default]'.[/yellow]")
     if checks["yt_dlp"] and not (deno_ok or node_ok):

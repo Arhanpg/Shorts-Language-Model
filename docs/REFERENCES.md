@@ -4,6 +4,10 @@ Checked 21 November 2026. Upstream site support and project versions can change.
 
 ## Open-source search and download tools (selected)
 
+- ytscrape GitHub repository (MIT, v2.2.0): https://github.com/vsmutok/ytscrape
+- ytscrape Shorts filter source: https://github.com/vsmutok/ytscrape/blob/v2.2.0/src/ytscrape/filters.py
+- ytscrape typed search result models: https://github.com/vsmutok/ytscrape/blob/v2.2.0/src/ytscrape/models.py
+- ytscrape retry/rate-limit implementation: https://github.com/vsmutok/ytscrape/blob/v2.2.0/src/ytscrape/client.py
 - yt-dlp GitHub repository: https://github.com/yt-dlp/yt-dlp
 - yt-dlp supported-site list: https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md
 - yt-dlp EJS challenge setup: https://github.com/yt-dlp/yt-dlp/wiki/EJS
@@ -11,11 +15,13 @@ Checked 21 November 2026. Upstream site support and project versions can change.
 - Deno runtime: https://docs.deno.com/runtime/getting_started/installation/
 - Node.js runtime: https://nodejs.org/en/download/
 - yt-dlp README/search options: https://github.com/yt-dlp/yt-dlp#usage-and-options
-- Instaloader GitHub repository: https://github.com/instaloader/instaloader
+- Instaloader GitHub repository (v4.16 inspected): https://github.com/instaloader/instaloader
+- Instaloader v4.16 timeout/retry constructor: https://github.com/instaloader/instaloader/blob/v4.16/instaloader/instaloader.py
 - Instaloader data structures (Post fields): https://instaloader.github.io/module/structures.html
 - Instaloader basic usage: https://instaloader.github.io/basic-usage.html
 - Instaloader troubleshooting, sessions and rate controller: https://instaloader.github.io/troubleshooting.html
-- DDGS public-web search: https://github.com/deedy5/ddgs
+- DDGS public-web search (v9.16.1 inspected): https://github.com/deedy5/ddgs
+- DDGS v9.16.1 timeout/backend implementation: https://github.com/deedy5/ddgs/blob/v9.16.1/ddgs/ddgs.py
 - gallery-dl source repository: https://github.com/mikf/gallery-dl
 - gallery-dl current development/releases: https://codeberg.org/mikf/gallery-dl/releases
 - FFmpeg: https://ffmpeg.org/
