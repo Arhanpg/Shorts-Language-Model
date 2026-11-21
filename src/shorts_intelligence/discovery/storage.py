@@ -105,6 +105,12 @@ class DiscoveryStore:
             self.connection.execute(
                 "UPDATE discovery_queries SET total_candidate_count=last_candidate_count*run_count"
             )
+        # Existing databases may contain high-view candidates that were
+        # previously accepted without confirmed Short/Reel format evidence.
+        self.connection.execute(
+            "UPDATE candidates SET status='format_unknown' "
+            "WHERE status='eligible' AND short_format_status!='confirmed'"
+        )
         self.connection.commit()
 
     def close(self) -> None:
@@ -263,7 +269,7 @@ class DiscoveryStore:
             status = "metric_unknown"
         elif metric < min_views:
             status = "below_threshold"
-        elif effective_format == "unknown":
+        elif effective_format != "confirmed":
             status = "format_unknown"
         else:
             status = "eligible"
