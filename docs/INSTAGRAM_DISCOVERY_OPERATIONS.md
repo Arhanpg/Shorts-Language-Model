@@ -151,6 +151,7 @@ Public visibility does not itself grant rights to download, retain, analyze or t
 ## Windows browser lifecycle troubleshooting (November 2026)
 
 The browser collector now treats Chrome shutdown as a recoverable lifecycle event:
+- It checks the underlying browser connection before reusing a cached persistent context; a disconnected Chrome session is closed and relaunched once with the same profile.
 - Provider shutdown is idempotent; context or Proactor pipe cleanup errors cannot replace the original collection result.
 - A page-creation failure caused by an already-closed target triggers one fresh context attempt with the same profile.
 - If Chrome's persistent profile is locked, an actionable message asks you to close every window using that profile and check for leftover `chrome.exe` processes. Never delete the profile or session files.
