@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import random
+import time
 import uuid
 from collections import Counter
 from datetime import UTC, datetime
@@ -103,7 +104,23 @@ def run_discovery(
     target_new: int = typer.Option(100, "--target-new", min=1, max=2000),
     min_views: int = typer.Option(1_000_000, "--min-views", min=0),
     max_candidates: int = typer.Option(1500, "--max-candidates", min=1, max=20000),
-    results_per_query: int = typer.Option(50, "--results-per-query", min=1, max=100),
+    results_per_query: int = typer.Option(20, "--results-per-query", min=1, max=30),
+    max_runtime_seconds: int = typer.Option(
+        180, "--max-runtime-seconds", min=30, max=600,
+        help="Hard overall discovery-run budget. The command stops cleanly when it expires.",
+    ),
+    youtube_request_timeout: float = typer.Option(
+        6.0, "--youtube-request-timeout", min=2.0, max=10.0,
+        help="Per-request YouTube timeout. Retries are disabled in discovery mode.",
+    ),
+    youtube_request_interval: float = typer.Option(
+        0.5, "--youtube-request-interval", min=0.25, max=5.0,
+        help="Minimum interval between YouTube HTTP requests.",
+    ),
+    enrichment_budget_seconds: int = typer.Option(
+        20, "--enrichment-budget-seconds", min=0, max=120,
+        help="Maximum wall-clock time reserved for optional YouTube detail enrichment.",
+    ),
     max_search_queries: int = typer.Option(
         24, "--max-search-queries", min=1, max=100,
         help="Maximum distinct YouTube searches in this run.",
@@ -180,7 +197,7 @@ def run_discovery(
         "--instagram-use-play-count",
         help="Explicitly allow Instagram play_count when view_count is absent.",
     ),
-    pause_seconds: float = typer.Option(2.5, "--pause-seconds", min=1.0, max=60.0),
+    pause_seconds: float = typer.Option(1.0, "--pause-seconds", min=1.0, max=10.0),
 ) -> None:
     """Discover new Shorts/Reels with rotating queries, local dedup and bounded metadata lookup.
 
@@ -192,6 +209,10 @@ def run_discovery(
     """
     run_id = uuid.uuid4().hex
     run_started_at = datetime.now(UTC)
+    run_started_monotonic = time.monotonic()
+    run_deadline = run_started_monotonic + max_runtime_seconds
+    stop_reason = "completed"
+    enrichment_budget_exhausted = False
     rng: random.Random | random.SystemRandom = (
         random.Random(seed) if seed is not None else random.SystemRandom()
     )
@@ -213,6 +234,7 @@ def run_discovery(
         "instagram": Counter(),
     }
     unique_candidates: dict[tuple[str, str], DiscoveredCandidate] = {}
+    provisional_new_eligible_ids: set[str] = set()
 
     with DiscoveryStore(database) as store:
         youtube_queries: list[SearchQuery] = []
@@ -242,11 +264,29 @@ def run_discovery(
         try:
             if platform in {"all", "youtube"}:
                 youtube_provider = YouTubeSearchProvider(
-                    detail_enrichment_limit=metadata_enrichment_limit
+                    request_timeout=youtube_request_timeout,
+                    request_interval=youtube_request_interval,
+                    max_retries=0,
+                    detail_enrichment_limit=metadata_enrichment_limit,
                 )
-                for search_query in youtube_queries:
+                console.print(
+                    f"[cyan]YouTube discovery: {len(youtube_queries)} queries selected; "
+                    f"{results_per_query} first-page results/query; "
+                    f"{max_runtime_seconds}s total run budget.[/cyan]"
+                )
+                for query_index, search_query in enumerate(youtube_queries, start=1):
                     if youtube_provider.circuit_open:
+                        stop_reason = "youtube_circuit_open"
                         break
+                    if time.monotonic() >= run_deadline:
+                        stop_reason = "runtime_budget_reached"
+                        break
+                    console.print(
+                        f"[dim]YouTube {query_index}/{len(youtube_queries)} · "
+                        f"{search_query.language}/{search_query.region} · "
+                        f"{search_query.query}[/dim]"
+                    )
+                    query_started = time.monotonic()
                     before = youtube_provider.search_results_seen
                     query_candidates = list(
                         youtube_provider.search(
@@ -261,7 +301,25 @@ def run_discovery(
                     query_count["youtube"] += 1
                     query_records.append(("youtube", search_query, raw_count, len(query_candidates)))
                     candidates.extend(query_candidates)
+                    for item in query_candidates:
+                        if item.short_format_status == "confirmed":
+                            metric = item.qualifying_metric(
+                                accept_instagram_play_count=instagram_use_play_count
+                            )
+                            if metric is not None and metric >= min_views and not store.has_candidate(
+                                item.platform, item.source_id
+                            ):
+                                provisional_new_eligible_ids.add(item.source_id)
+                    console.print(
+                        f"[dim]  -> {raw_count} first-page hits, {len(query_candidates)} unique IDs "
+                        f"in {time.monotonic() - query_started:.1f}s; "
+                        f"{len(provisional_new_eligible_ids)} provisional new qualifying IDs[/dim]"
+                    )
+                    if len(provisional_new_eligible_ids) >= target_new:
+                        stop_reason = "target_reached_during_search"
+                        break
                     if youtube_provider.circuit_open:
+                        stop_reason = "youtube_circuit_open"
                         break
 
             if platform in {"all", "instagram"}:
@@ -277,15 +335,24 @@ def run_discovery(
                     request_timeout=instagram_request_timeout,
                     max_lookups=instagram_max_lookups,
                 )
-                for search_query in instagram_queries:
+                for query_index, search_query in enumerate(instagram_queries, start=1):
                     if instagram_provider.circuit_open:
+                        stop_reason = "instagram_circuit_open"
                         break
+                    if time.monotonic() >= run_deadline:
+                        stop_reason = "runtime_budget_reached"
+                        break
+                    console.print(
+                        f"[dim]Instagram {query_index}/{len(instagram_queries)} · "
+                        f"{search_query.region} · {search_query.query}[/dim]"
+                    )
                     instagram_provider.region = search_query.region
                     before = instagram_provider.search_results_seen
                     query_candidates = list(
                         instagram_provider.search(
                             search_query.query,
                             limit=min(results_per_query, 30),
+                            deadline=run_deadline,
                         )
                     )
                     raw_count = instagram_provider.search_results_seen - before
@@ -297,13 +364,15 @@ def run_discovery(
                         break
 
                 for tag in instagram_hashtag:
-                    if instagram_provider.circuit_open:
+                    if instagram_provider.circuit_open or time.monotonic() >= run_deadline:
+                        stop_reason = "runtime_budget_reached" if time.monotonic() >= run_deadline else "instagram_circuit_open"
                         break
                     before = instagram_provider.search_results_seen
                     query_candidates = list(
                         instagram_provider.search_hashtag(
                             tag,
                             limit=min(results_per_query, instagram_max_lookups),
+                            deadline=run_deadline,
                         )
                     )
                     raw_count = instagram_provider.search_results_seen - before
@@ -405,11 +474,22 @@ def run_discovery(
         # Selectively hydrate new YouTube records whose search-page view count
         # or duration is missing. This is intentionally bounded and uses the
         # same client rate limiter; it never calls the downloader.
-        if youtube_provider and metadata_enrichment_limit > 0:
+        if youtube_provider and metadata_enrichment_limit > 0 and enrichment_budget_seconds > 0:
             enriched: list[DiscoveredCandidate] = []
             remaining = metadata_enrichment_limit
+            enrichment_deadline = min(
+                run_deadline, time.monotonic() + enrichment_budget_seconds
+            )
+            console.print(
+                f"[cyan]YouTube metadata enrichment: at most {remaining} lookups, "
+                f"{max(0, enrichment_deadline - time.monotonic()):.0f}s budget.[/cyan]"
+            )
             for candidate in ordered:
                 if remaining <= 0:
+                    enriched.append(candidate)
+                    continue
+                if time.monotonic() + youtube_request_timeout > enrichment_deadline:
+                    enrichment_budget_exhausted = True
                     enriched.append(candidate)
                     continue
                 if (
@@ -425,7 +505,8 @@ def run_discovery(
                     )
                     remaining -= youtube_provider.enrichment_attempts - before
                 enriched.append(candidate)
-                if youtube_provider.circuit_open:
+                if youtube_provider.circuit_open or time.monotonic() >= enrichment_deadline:
+                    enrichment_budget_exhausted = True
                     break
             ordered = enriched + [c for c in ordered[len(enriched):]]
 
@@ -499,6 +580,8 @@ def run_discovery(
             "query_status_counts": {
                 name: dict(counts) for name, counts in status_by_platform.items()
             },
+            "stop_reason": stop_reason,
+            "elapsed_seconds": round(time.monotonic() - run_started_monotonic, 2),
         }
         store.finish_run(run_id, run_summary)
         database_counts = store.summary()
@@ -515,12 +598,18 @@ def run_discovery(
     ig_lookup_backlog = instagram_provider.lookup_backlog if instagram_provider else 0
     ig_ddgs_failures = instagram_provider.ddgs_failures if instagram_provider else 0
 
+    elapsed_seconds = round(time.monotonic() - run_started_monotonic, 2)
     payload: dict[str, object] = {
         "run_id": run_id,
         "started_at": run_started_at.isoformat(),
         "finished_at": datetime.now(UTC).isoformat(),
         "platform": platform,
         "target_new": target_new,
+        "runtime_budget_seconds": max_runtime_seconds,
+        "elapsed_seconds": elapsed_seconds,
+        "stop_reason": stop_reason,
+        "youtube_search_pages_fetched": youtube_provider.search_pages_fetched if youtube_provider else 0,
+        "youtube_queries_completed": youtube_provider.search_queries_completed if youtube_provider else 0,
         "min_views": min_views,
         "raw_search_results": {
             "youtube": youtube_raw,
@@ -548,6 +637,8 @@ def run_discovery(
             "attempted": yt_enrichment_attempts,
             "succeeded": yt_enrichment_successes,
             "limit": metadata_enrichment_limit,
+            "budget_seconds": enrichment_budget_seconds,
+            "budget_exhausted": enrichment_budget_exhausted,
         },
         "instagram_metadata": {
             "lookups": ig_metadata_lookups,
@@ -588,6 +679,8 @@ def run_discovery(
         ("YouTube Shorts search hits", youtube_raw),
         ("Instagram indexed Reel links", instagram_raw),
         ("YouTube queries used", query_count["youtube"]),
+        ("YouTube first pages fetched", youtube_provider.search_pages_fetched if youtube_provider else 0),
+        ("Elapsed seconds", elapsed_seconds),
         ("Instagram queries used", query_count["instagram"]),
         ("Unique source IDs evaluated", stats["unique_evaluated"]),
         ("Repeated IDs in this run", stats["duplicate_search_results"]),
@@ -628,6 +721,9 @@ def run_discovery(
     console.print(platform_table)
     console.print(f"Database: {database.expanduser().resolve()}")
     console.print(f"Report: {report.expanduser().resolve()}")
+    console.print(f"Runtime: {elapsed_seconds:.1f}s / {max_runtime_seconds}s · Stop reason: {stop_reason}")
+    if enrichment_budget_exhausted:
+        console.print("[yellow]Optional metadata enrichment stopped at its time budget; all discovered search results are still processed.[/yellow]")
     if instagram_provider and instagram_provider.circuit_open:
         console.print(
             f"[yellow]Instagram circuit breaker opened: {instagram_provider.circuit_reason}[/yellow]"
