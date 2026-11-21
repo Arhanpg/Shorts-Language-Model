@@ -65,3 +65,26 @@ def test_query_selection_can_replay_with_seed():
         queries, {}, limit=15, cooldown_days=7, rng=random.Random(42)
     )
     assert [item.key for item in a] == [item.key for item in b]
+
+
+def test_query_selection_does_not_reuse_queries_inside_cooldown():
+    now = datetime(2026, 11, 21, tzinfo=UTC)
+    queries = [
+        SearchQuery("youtube", "one", "en", "IN", "topic"),
+        SearchQuery("youtube", "two", "en", "IN", "topic"),
+    ]
+    history = {
+        item.key: (now - timedelta(days=1)).isoformat()
+        for item in queries
+    }
+
+    selected = select_due_queries(
+        queries,
+        history,
+        limit=10,
+        cooldown_days=7,
+        rng=random.Random(2),
+        now=now,
+    )
+
+    assert selected == []
