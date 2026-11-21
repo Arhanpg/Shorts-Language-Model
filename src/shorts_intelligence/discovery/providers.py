@@ -395,7 +395,7 @@ class InstagramSearchProvider:
             f"site:instagram.com/reel/ {query}"
         )
         for page in range(1, self.pages + 1):
-            if deadline is not None and time.monotonic() + self.search_timeout >= deadline:
+            if deadline is not None and time.monotonic() + self.search_timeout > deadline:
                 break
             try:
                 results = self._search_page(
@@ -532,7 +532,10 @@ class InstagramSearchProvider:
         for url in urls[:remaining]:
             if (
                 self.circuit_open
-                or (deadline is not None and time.monotonic() >= deadline)
+                or (
+                    deadline is not None
+                    and time.monotonic() + self.request_timeout > deadline
+                )
             ):
                 self.lookup_backlog += 1
                 break
@@ -584,7 +587,10 @@ class InstagramSearchProvider:
             if (
                 self.circuit_open
                 or len(seen) >= remaining
-                or (deadline is not None and time.monotonic() >= deadline)
+                or (
+                    deadline is not None
+                    and time.monotonic() + self.request_timeout > deadline
+                )
             ):
                 break
             try:
