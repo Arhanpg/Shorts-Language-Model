@@ -140,7 +140,14 @@ def instagram_login(
             raise RuntimeError("Instagram did not confirm the requested account session.")
         loader.save_session_to_file(filename=str(session_path))
     except Exception as exc:
-        console.print(f"[red]Instagram login/session creation failed: {type(exc).__name__}: {str(exc)[:220]}[/red]")
+        message = str(exc)
+        if "checkpoint" in message.casefold():
+            console.print(
+                "[yellow]Instagram requires an account checkpoint. Complete verification "
+                "in Instagram's official app or browser, wait until the account is usable, "
+                "then retry this login command. ShortsLM will not bypass the checkpoint.[/yellow]"
+            )
+        console.print(f"[red]Instagram login/session creation failed: {type(exc).__name__}: {message[:220]}[/red]")
         raise typer.Exit(code=1) from exc
     finally:
         with contextlib.suppress(Exception):
@@ -244,6 +251,11 @@ def run_discovery(
         "google",
         "--instagram-fallback-backend",
         help="One fallback DDGS engine used only after the primary backend list fails.",
+    ),
+    instagram_ytdlp_fallback: bool = typer.Option(
+        False,
+        "--instagram-ytdlp-fallback",
+        help="Opt in to yt-dlp metadata-only fallback after non-access-related Instaloader parser errors.",
     ),
     instagram_pages: int = typer.Option(
         1,
@@ -493,6 +505,7 @@ def run_discovery(
                     search_timeout=instagram_timeout,
                     request_timeout=instagram_request_timeout,
                     max_lookups=instagram_max_lookups,
+                    enable_ytdlp_fallback=instagram_ytdlp_fallback,
                 )
                 if instagram_session_user and not instagram_provider.preflight():
                     errors.extend(instagram_provider.errors)
