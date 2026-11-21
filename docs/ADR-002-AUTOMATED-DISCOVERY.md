@@ -5,6 +5,10 @@
 - **Chosen by:** project owner
 - **Implementation:** feature/non-api-discovery-ytdlp-instaloader
 
+## Current decision (22 November 2026)
+
+This ADR is retained as the historical decision for the first non-API implementation. Its DDGS + anonymous Instaloader discovery path is now superseded by [ADR-003: Creator-Graph and Popularity-First Discovery](ADR-003-CREATOR-GRAPH-DISCOVERY.md). The legacy `discover run` command remains available during migration, but it is no longer the target architecture.
+
 ## Context
 
 The previous PR #5 plan proposed YouTube Data API and Instagram Graph API discovery. The project owner explicitly rejected that direction and requested open-source GitHub tools which can search links and download the media locally.

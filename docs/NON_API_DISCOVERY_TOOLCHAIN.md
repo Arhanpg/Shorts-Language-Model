@@ -1,3 +1,5 @@
+> **Architecture update — 22 November 2026:** This document records the first-generation keyword-search implementation and its observed limitations. The replacement design and current implementation status are maintained in [CREATOR_GRAPH_DISCOVERY_PLAN.md](CREATOR_GRAPH_DISCOVERY_PLAN.md) and [ADR-003](ADR-003-CREATOR-GRAPH-DISCOVERY.md).
+
 # Non-API Discovery and Downloader Toolchain
 
 **Updated:** 21 November 2026  
