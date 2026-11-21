@@ -14,16 +14,16 @@
 
 ## Phase 1 — Non-API discovery + SQLite
 
-- YouTube search via ytscrape v2.2+ with the dedicated Shorts-only filter (not generic yt-dlp search).
+- YouTube search via ytscrape v2.2+ with the dedicated Shorts-only filter, first-page-only consumption and no lazy pagination.
 - YouTube media acquisition remains a separate yt-dlp + FFmpeg step after the rights gate.
 - Rotate locale/topic query pools across English, Hindi, Marathi, Kannada, Tamil, Telugu, Bengali, Spanish, Portuguese and Indonesian strata.
 - Persist exact query/locale history and default seven-day cooldown in SQLite; use random order by default and an optional --seed for reproducibility.
 - Instagram public Reel URL discovery via DDGS, with explicit backends, an 8-second timeout and one fallback engine.
 - Resolve Instagram metadata through Instaloader with 12-second per-request timeout, one connection attempt, 40 lookup cap and circuit breaker.
-- Enrich only a capped number of new YouTube candidates whose view count or duration is missing.
+- Enrich only a capped number of new YouTube candidates whose view count or duration is missing; optional enrichment has a separate 20-second budget.
 - Evaluate unseen platform/source IDs before previously known IDs; count an item as new only if its platform/source key was absent before the run.
 - Preserve view/play metric provenance and keep Instagram view_count distinct from play_count.
-- Persist query usage, provider errors, enrichment statistics, lookup counts and circuit-breaker reasons in the run report.
+- Persist query usage, provider errors, enrichment statistics, lookup counts and circuit-breaker reasons in the run report. Show progress and enforce a three-minute default overall runtime budget, short YouTube timeouts and zero retries.
 - Keep threshold default at 1,000,000; unknown metrics do not pass and targets remain best-effort.
 
 **Exit tests:** YouTube provider invokes SearchFilter.SHORTS and parses typed views/duration; two runs with persisted query history rotate to never-used queries; existing IDs are not counted as new; query-history survives DB reopen; YouTube enrichment is capped; Instagram timeout and attempt settings are bounded; repeated Instaloader failures open the circuit; DDGS primary timeout can use one configured fallback; missing/below-threshold/eligible records remain distinct.
