@@ -168,7 +168,7 @@ def run_discovery(
         help="DDGS request timeout in seconds.",
     ),
     instagram_max_lookups: int = typer.Option(
-        15, "--instagram-max-lookups", min=1, max=100,
+        40, "--instagram-max-lookups", min=1, max=100,
         help="Maximum individual Instagram metadata lookups per run.",
     ),
     instagram_request_timeout: float = typer.Option(
