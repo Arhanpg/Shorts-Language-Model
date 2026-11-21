@@ -8,7 +8,8 @@ The objective is to search for YouTube Shorts and Instagram Reels, filter curren
 
 | Purpose | Open-source tool | Use |
 |---|---|---|
-| YouTube Shorts search + metadata | ytscrape (MIT) | Shorts-only InnerTube web search, typed views/duration, pagination; not the official Data API |\n| YouTube media download | yt-dlp + FFmpeg | Authorized MP4 acquisition, remuxing and download retry |
+| YouTube Shorts search + metadata | ytscrape (MIT) | Shorts-only InnerTube web search, typed views/duration, pagination; not the official Data API 
+| YouTube media download | yt-dlp + FFmpeg | Authorized MP4 acquisition, remuxing and download retry |
 | Instagram public-link discovery | DDGS | Search indexed public Reel URLs without an Instagram developer token |
 | Instagram Reel metadata + primary download | Instaloader | Resolve shortcode; view/play count, caption/hashtags, duration and Post download |
 | Instagram alternate extractor | yt-dlp Instagram extractor | Second download attempt on a discovered Reel URL |
