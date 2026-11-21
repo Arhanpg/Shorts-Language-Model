@@ -322,7 +322,11 @@ def run_discovery(
                         stop_reason = "youtube_circuit_open"
                         break
 
-            if platform in {"all", "instagram"}:
+            if (
+                platform in {"all", "instagram"}
+                and stop_reason != "target_reached_during_search"
+                and time.monotonic() < run_deadline
+            ):
                 instagram_provider = InstagramSearchProvider(
                     session_username=instagram_session_user,
                     session_file=str(instagram_session_file) if instagram_session_file else None,
@@ -572,6 +576,9 @@ def run_discovery(
                 errors.append(f"instagram circuit opened: {instagram_provider.circuit_reason}")
             instagram_provider.close()
 
+        if time.monotonic() >= run_deadline and stop_reason == "completed":
+            stop_reason = "runtime_budget_reached"
+
         # Include exact provider totals in durable run history.
         total_provider_errors = sum(provider_errors.values()) + stats["unexpected_errors"]
         run_summary: dict[str, object] = {
@@ -617,6 +624,8 @@ def run_discovery(
         "stop_reason": stop_reason,
         "youtube_search_pages_fetched": youtube_provider.search_pages_fetched if youtube_provider else 0,
         "youtube_queries_completed": youtube_provider.search_queries_completed if youtube_provider else 0,
+        "youtube_request_timeout_seconds": youtube_request_timeout,
+        "youtube_request_retries": 0,
         "min_views": min_views,
         "raw_search_results": {
             "youtube": youtube_raw,
