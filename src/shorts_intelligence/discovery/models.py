@@ -39,8 +39,12 @@ class DiscoveredCandidate(BaseModel):
     metadata: dict[str, object] = Field(default_factory=dict)
 
     def qualifying_metric(self) -> int | None:
-        """Return the observed view count; play_count is never interchangeable with views."""
-        return self.view_count
+        """Return the platform-native metric without conflating views and plays."""
+        return self.view_count if self.platform == "youtube" else self.play_count
+
+    def qualifying_metric_kind(self) -> str:
+        """Return the explicit metric label used for this platform."""
+        return "views" if self.platform == "youtube" else "plays"
 
 
 class AcquisitionAuthorization(BaseModel):

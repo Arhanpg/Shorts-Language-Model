@@ -283,9 +283,9 @@ class DiscoveryStore:
         )
         effective_metadata = {**previous_metadata, **candidate.metadata}
 
-        # Keep play_count as separate metadata. The hard eligibility rule is
-        # based exclusively on the observed view_count on both platforms.
-        metric = effective_view_count
+        # Compare platform-native metrics without relabeling Instagram plays
+        # as views. Reports must retain the metric kind and source.
+        metric = effective_view_count if candidate.platform == "youtube" else effective_play_count
 
         if effective_format == "not_short":
             status = "not_short"
@@ -355,7 +355,7 @@ class DiscoveryStore:
     def eligible_candidates(self, limit: int = 100) -> list[DiscoveredCandidate]:
         rows = self.connection.execute(
             "SELECT * FROM candidates WHERE status='eligible' AND download_status IN ('not_downloaded','download_failed') "
-            "ORDER BY COALESCE(view_count, play_count) DESC LIMIT ?", (limit,),
+            "ORDER BY CASE WHEN platform='youtube' THEN view_count ELSE play_count END DESC LIMIT ?", (limit,),
         ).fetchall()
         return [self._candidate_from_row(row) for row in rows]
 
