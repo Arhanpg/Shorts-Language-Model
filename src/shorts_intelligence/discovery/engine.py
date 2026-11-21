@@ -16,7 +16,8 @@ from shorts_intelligence.discovery.storage import DiscoveryStore
 async def run_creator_graph(
     store: DiscoveryStore, *, platform: str = "youtube", target_new: int = 100,
     min_metric: int = 1_000_000, max_runtime_seconds: int = 240,
-    max_seed_queries: int = 8, max_creators: int = 40, max_expansions: int = 80,
+    max_seed_queries: int = 8, max_hashtag_queries: int = 4,
+    max_creators: int = 40, max_expansions: int = 80,
     max_depth: int = 3, youtube_concurrency: int = 5,
     instagram_profile_dir: Path | None = None,
     instagram_creators: list[str] | None = None,
@@ -96,6 +97,48 @@ async def run_creator_graph(
                 except Exception as exc:
                     stats["seed_search_failures"] += 1
                     errors.append(f"seed search {query!r}: {type(exc).__name__}: {str(exc)[:180]}")
+
+            hashtags = ["shorts", "viralshorts", "comedyshorts", "cricketshorts",
+                        "cooking", "education", "travel", "technology"][:max_hashtag_queries]
+            for hashtag in hashtags:
+                if loop.time() >= deadline or getattr(yt, "blocked", False):
+                    break
+                try:
+                    listed = await within_budget(yt.search_hashtag_videos(hashtag, limit=20))
+                    details = await within_budget(yt.enrich_seed_videos(listed))
+                    stats["hashtag_search_requests"] += 1
+                    stats["hashtag_search_results"] += len(listed)
+                    for candidate in details:
+                        stats["candidates_observed"] += 1
+                        channel_id = candidate.metadata.get("channel_id")
+                        metric = candidate.qualifying_metric()
+                        qualifies = (
+                            metric is not None and metric >= min_metric
+                            and candidate.short_format_status == "confirmed"
+                        )
+                        if qualifies and channel_id:
+                            frontier.enqueue_creator(
+                                "youtube", str(channel_id), handle=candidate.creator,
+                                discovered_via="hashtag_seed", priority_score=float(metric or 1),
+                                depth=0)
+                            frontier.enqueue_seed(
+                                "youtube", candidate.source_id, creator_id=str(channel_id), depth=0)
+                        _, became = store.upsert_candidate(
+                            candidate, min_views=min_metric, run_id=run_id)
+                        frontier.record_candidate_observation(
+                            candidate.platform, candidate.source_id, run_id=run_id,
+                            metric_kind=candidate.qualifying_metric_kind(),
+                            metric_value=candidate.qualifying_metric(),
+                            metric_source=candidate.metric_source,
+                            format_status=candidate.short_format_status,
+                            evidence=candidate.metadata,
+                        )
+                        if became:
+                            new_eligible += 1
+                            stats["eligible_new"] += 1
+                except Exception as exc:
+                    stats["hashtag_search_failures"] += 1
+                    errors.append(f"hashtag search #{hashtag}: {type(exc).__name__}: {str(exc)[:180]}")
 
         if "instagram" in providers:
             for username in instagram_creators or []:

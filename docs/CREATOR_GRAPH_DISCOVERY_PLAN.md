@@ -67,7 +67,7 @@ Metric semantics are explicit:
 
 ### YouTube path
 
-1. Seed with curated queries, hashtag Shorts, and previously eligible local Shorts.
+1. Seed with curated search queries and hashtag Shorts (`aget_hashtag_shorts`), plus previously eligible local Shorts.
 2. Use TubeScrape `search(type="short", sort_by="view_count")` as a seed finder, not as the main harvesting loop.
 3. Resolve seed details in bounded batches and add confirmed Shorts to `expansion_seeds`.
 4. Call `get_related_shorts` / `aget_related_shorts` on eligible seeds. This returns a small related-Shorts sequence with detailed video metadata; store each observed source→related edge.
@@ -130,7 +130,7 @@ The initial quality gate is not “100 results in 180 seconds”. It is a reprod
 ## 7. Dependency policy
 
 - `tubescrape==0.6.0`: primary YouTube Shorts/channel/related-sequence adapter; pin exact version and contract-test methods.
-- `ytscrape==2.2.0`: optional secondary YouTube web extractor only; no fallback after an explicit block/rate-limit signal.
+- `ytscrape==2.2.0`: legacy provider only; the new graph engine does not use it as a fallback or as a way to evade TubeScrape access restrictions.
 - `playwright`: optional `instagram-browser` extra; install Chromium separately.
 - `ddgs` and `instaloader`: moved to `legacy-discovery`; not required by the new graph engine.
 - `yt-dlp`: remains the separate authorized acquisition/downloader tool, not the discovery engine.

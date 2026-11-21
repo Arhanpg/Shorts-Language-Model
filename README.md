@@ -53,7 +53,7 @@ Install on Windows PowerShell:
     py -3.11 -m venv .venv
     .venv/Scripts/Activate.ps1
     python -m pip install --upgrade pip
-    pip install -e ".[dev,discovery,audio]" --upgrade
+    pip install -e ".[dev,discovery,legacy-discovery,audio]" --upgrade
 
 Install FFmpeg and ffprobe and ensure both are on PATH. The gallery-dl Instagram fallback is optional:
 
@@ -211,7 +211,7 @@ Run both providers:
 
     shorts-lm discover graph-run --platform all --instagram-creator creator_handle
 
-The graph engine is opt-in until repeated Windows runs validate real provider behavior. It preserves the existing SQLite inventory and does not download media. YouTube eligibility uses numeric views; Instagram eligibility uses an explicitly labeled numeric plays metric when that is what the browser payload provides. The two metrics are never relabeled as one another.
+The graph engine is opt-in until repeated Windows runs validate real provider behavior. The first-generation `discover run` command is retained for comparison and requires the `legacy-discovery` extra. It preserves the existing SQLite inventory and does not download media. YouTube eligibility uses numeric views; Instagram eligibility uses an explicitly labeled numeric plays metric when that is what the browser payload provides. The two metrics are never relabeled as one another.
 
 TubeScrape is pinned to 0.6.0 and uses YouTube's public web/InnerTube interface; it is not the official YouTube Data API. The engine uses channel Shorts tabs, related-Shorts sequences, bounded batch enrichment and persistent creator scheduling. A popular-sort label is not assumed to guarantee strict descending numeric views, so the initial engine does not use an unsafe first-below-threshold cutoff.
 

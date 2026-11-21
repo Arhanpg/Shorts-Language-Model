@@ -13,6 +13,8 @@ def test_tubescrape_provider_uses_verified_async_methods(monkeypatch):
             assert kwargs["type"] == "short"
             assert kwargs["sort_by"] == "view_count"
             return SimpleNamespace(videos=[SimpleNamespace(video_id="AbCdEfGh123")])
+        async def aget_hashtag_shorts(self, hashtag, **kwargs):
+            return [SimpleNamespace(video_id="HashTagVideo123")]
         async def aget_channel_shorts(self, channel, **kwargs):
             assert kwargs["sort_by"] == "popular"
             return SimpleNamespace(shorts=[])
@@ -26,6 +28,10 @@ def test_tubescrape_provider_uses_verified_async_methods(monkeypatch):
     provider = TubeScrapeProvider()
     result = __import__("asyncio").run(provider.search_seed_videos("cricket", limit=10))
     assert result[0].video_id == "AbCdEfGh123"
+    hashtag_results = __import__("asyncio").run(
+        provider.search_hashtag_videos("viralshorts", limit=5)
+    )
+    assert hashtag_results[0].video_id == "HashTagVideo123"
     assert provider.client.kwargs["max_retries"] == 1
     __import__("asyncio").run(provider.close())
     assert provider.client.closed

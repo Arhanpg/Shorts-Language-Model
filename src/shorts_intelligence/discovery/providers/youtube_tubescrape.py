@@ -41,6 +41,13 @@ class TubeScrapeProvider:
             self.timeout * 3)
         return list(result.videos)
 
+    async def search_hashtag_videos(self, hashtag: str, *, limit: int = 20) -> list[Any]:
+        self.requests += 1
+        return await self._bounded(
+            self.client.aget_hashtag_shorts(hashtag, max_results=limit),
+            self.timeout * 4,
+        )
+
     async def harvest_creator(self, creator_id: str, *, limit: int = 48) -> list[DiscoveredCandidate]:
         self.requests += 1
         result = await self._bounded(

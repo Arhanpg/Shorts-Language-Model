@@ -40,3 +40,14 @@ def test_instagram_explicit_view_count_remains_a_views_metric():
     assert item.play_count is None
     assert item.qualifying_metric() == 2_000_000
     assert item.qualifying_metric_kind() == "views"
+
+
+def test_instagram_video_play_count_is_preserved_as_plays():
+    payload = {"items": [{
+        "code": "VideoPlayCount123",
+        "product_type": "clips",
+        "video_play_count": 1_250_000,
+    }]}
+    item = extract_reel_records(payload, creator_handle="creator")[0]
+    assert item.play_count == 1_250_000
+    assert item.qualifying_metric_kind() == "plays"

@@ -25,7 +25,10 @@ def extract_reel_records(payload: object, *, creator_handle: str) -> list[Discov
             is_video = value.get("is_video")
             is_reel = product_type in {"clips", "reels", "reel"} or media_type == 2 or is_video is True
             if isinstance(code, str) and _CODE.fullmatch(code) and is_reel:
-                raw_plays, raw_views = value.get("play_count"), value.get("view_count")
+                raw_plays = value.get("play_count")
+                if raw_plays is None:
+                    raw_plays = value.get("video_play_count")
+                raw_views = value.get("view_count")
                 plays = raw_plays if isinstance(raw_plays, int) and not isinstance(raw_plays, bool) else None
                 views = raw_views if isinstance(raw_views, int) and not isinstance(raw_views, bool) else None
                 coauthors = value.get("coauthor_producers") or []
