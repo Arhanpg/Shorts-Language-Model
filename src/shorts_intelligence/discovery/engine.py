@@ -397,8 +397,9 @@ async def run_creator_graph(
                                         "youtube", candidate.source_id,
                                         creator_id=str(channel_id) if channel_id else None,
                                         depth=int(seed["depth"]) + 1)
-                                _, became = store.upsert_candidate(
+                                is_new, became = store.upsert_candidate(
                                     candidate, min_views=min_metric, run_id=run_id)
+                                record_candidate_metrics(candidate, is_new=is_new)
                                 frontier.record_candidate_observation(
                                     candidate.platform, candidate.source_id, run_id=run_id,
                                     metric_kind=candidate.qualifying_metric_kind(),
@@ -440,6 +441,9 @@ async def run_creator_graph(
         summary = {
             **dict(stats), **graph_summary, "run_id": run_id, "platform": platform,
             "elapsed_seconds": elapsed, "new_eligible": new_eligible,
+            "target_new": target_new,
+            "youtube_creator_candidates": stats["youtube_creator_candidates"],
+            "youtube_related_candidates": stats["related_candidates"],
             "min_metric": min_metric, "max_depth": max_depth,
             "stage_deadlines_seconds_from_start": {
                 "youtube": round(youtube_deadline - started, 2),
