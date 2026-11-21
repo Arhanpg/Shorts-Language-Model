@@ -148,7 +148,7 @@ def test_youtube_metadata_enrichment_is_bounded_and_merges_fields(monkeypatch):
     enriched = provider.enrich(candidate, language="en", region="IN")
     assert enriched.view_count == 1_500_000
     assert enriched.duration_seconds == 45
-    assert enriched.title == "Cricket finish #cricket"
+    assert enriched.title == "Detailed cricket finish"
     assert enriched.metadata["detail_enriched"] is True
     assert provider.enrichment_attempts == 1
     assert provider.enrichment_successes == 1
@@ -309,7 +309,9 @@ def test_instagram_provider_falls_back_once_after_primary_timeout(monkeypatch):
 
     assert len(results) == 1
     assert provider.ddgs_failures == 1
-    assert len(FakeDDGS.instances[0].calls) == 2
+    assert len(FakeDDGS.instances) == 2
+    assert FakeDDGS.instances[0].calls[0][1]["backend"] == "broken"
+    assert FakeDDGS.instances[1].calls[0][1]["backend"] == "bing"
     assert provider.circuit_open is False
     provider.close()
 
