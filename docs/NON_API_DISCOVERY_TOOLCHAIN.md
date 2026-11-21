@@ -104,7 +104,7 @@ The `discovery` extra installs ytscrape, yt-dlp with its default extras, Instalo
 shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000 --max-search-queries 30
 
 # Instagram indexed link discovery + bounded metadata
-shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000 --instagram-max-search-queries 8 --instagram-max-lookups 15 --instagram-timeout 8 --instagram-request-timeout 12
+shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000 --instagram-max-search-queries 8 --instagram-max-lookups 40 --instagram-timeout 8 --instagram-request-timeout 12
 
 # Both providers
 shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
