@@ -124,3 +124,38 @@ def test_summary_by_platform_separates_youtube_and_instagram(tmp_path: Path):
         counts = store.summary_by_platform()
         assert counts["youtube"]["eligible"] == 1
         assert counts["instagram"]["metric_unknown"] == 1
+
+
+def test_query_history_is_persisted_and_updated_by_query_key(tmp_path: Path):
+    from datetime import UTC, datetime
+
+    with DiscoveryStore(tmp_path / "query-history.sqlite3") as store:
+        store.record_query(
+            platform="youtube",
+            query_key="query-abc",
+            query="cricket shorts",
+            language="en",
+            region="IN",
+            strategy="localized_topic",
+            raw_results=50,
+            candidate_count=42,
+            run_at=datetime(2026, 11, 1, tzinfo=UTC),
+        )
+        history = store.query_history("youtube")
+        assert "query-abc" in history
+        first_run = history["query-abc"]
+
+        store.record_query(
+            platform="youtube",
+            query_key="query-abc",
+            query="cricket shorts",
+            language="en",
+            region="IN",
+            strategy="localized_topic",
+            raw_results=50,
+            candidate_count=35,
+            run_at=datetime(2026, 11, 21, tzinfo=UTC),
+        )
+        refreshed = store.query_history("youtube")
+        assert refreshed["query-abc"] != first_run
+        assert store.query_summary() == {"youtube": 1}
