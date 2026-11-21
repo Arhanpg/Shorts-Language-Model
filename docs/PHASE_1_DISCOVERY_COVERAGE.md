@@ -57,7 +57,7 @@ DDGS v9.16.1 accepts a timeout and a comma-separated backend list. The discovery
 - one fallback engine: `google`;
 - default per-request timeout: 8 seconds;
 - one indexed result page per query by default;
-- a cap of 15 individual Instagram metadata lookups per run by default.
+- a cap of 40 individual Instagram metadata lookups per run by default.
 
 A provider circuit breaker stops further work after repeated metadata failures or rate-limit/login/timeout/connection conditions. The purpose is to make a run finish and report failure rather than wait five minutes repeatedly. A circuit-breaker stop is a deliberate safety/reliability decision, not proof that no additional Reels exist.
 
