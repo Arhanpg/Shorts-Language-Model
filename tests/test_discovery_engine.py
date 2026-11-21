@@ -30,6 +30,8 @@ def test_graph_engine_persists_seed_creator_and_related_video(monkeypatch, tmp_p
         async def search_hashtag_videos(self, hashtag, *, limit):
             return []
         async def enrich_seed_videos(self, videos):
+            if not videos:
+                return []
             return [_candidate("SeedVideo123", "UC" + "a" * 22, 2_000_000)]
         async def harvest_creator(self, creator_id, *, limit):
             self.requests += 1
