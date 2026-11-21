@@ -169,3 +169,50 @@ def test_training_rights_reject_missing_scope_and_revocation():
     )
     with pytest.raises(ValueError, match="revoked"):
         revoked.validate_for_training()
+
+
+def test_ytscrape_duration_text_parsing():
+    from shorts_intelligence.discovery.normalization import parse_duration_text
+
+    assert parse_duration_text("0:45") == 45.0
+    assert parse_duration_text("12:34") == 754.0
+    assert parse_duration_text("1:02:03") == 3723.0
+    assert parse_duration_text("not a duration") is None
+
+
+def test_ytscrape_shorts_result_is_marked_as_confirmed_and_keeps_search_provenance():
+    from datetime import UTC, datetime
+    from types import SimpleNamespace
+
+    from shorts_intelligence.discovery.normalization import candidate_from_ytscrape_video
+
+    video = SimpleNamespace(
+        video_id="AbCdEfGh123",
+        title="Cricket finish #Cricket",
+        channel="Sports Creator",
+        channel_id="UC" + "a" * 22,
+        description="Last ball #Shorts",
+        duration="0:45",
+        views=1_450_000,
+        views_text="1.45M views",
+        published_text="2 days ago",
+        published_at=datetime(2026, 11, 19, tzinfo=UTC),
+        thumbnail="https://example.invalid/thumb.jpg",
+    )
+    candidate = candidate_from_ytscrape_video(
+        video,
+        query="cricket shorts",
+        language="hi",
+        region="IN",
+    )
+
+    assert candidate is not None
+    assert candidate.short_format_status == "confirmed"
+    assert candidate.canonical_url == "https://www.youtube.com/shorts/AbCdEfGh123"
+    assert candidate.view_count == 1_450_000
+    assert candidate.duration_seconds == 45
+    assert candidate.metric_source == "ytscrape_shorts_search_views"
+    assert candidate.metadata["search_filter"] == "shorts"
+    assert candidate.metadata["search_language"] == "hi"
+    assert candidate.metadata["search_region"] == "IN"
+    assert set(candidate.hashtags) == {"cricket", "shorts"}
