@@ -176,6 +176,91 @@ def candidate_from_ytdlp(info: dict[str, object]) -> DiscoveredCandidate | None:
     )
 
 
+
+_DURATION_RE = re.compile(r"^(?:(\\d+):)?(\\d{1,2}):(\\d{2})$")
+
+
+def parse_duration_text(value: str | None) -> float | None:
+    """Convert a YouTube duration display (MM:SS or HH:MM:SS) to seconds."""
+    if not value:
+        return None
+    match = _DURATION_RE.fullmatch(value.strip())
+    if not match:
+        return None
+    hours = int(match.group(1) or 0)
+    minutes = int(match.group(2))
+    seconds = int(match.group(3))
+    if seconds >= 60 or minutes >= 60 and match.group(1) is not None:
+        return None
+    return float(hours * 3600 + minutes * 60 + seconds)
+
+
+def candidate_from_ytscrape_video(
+    video: object,
+    *,
+    query: str,
+    language: str,
+    region: str,
+) -> DiscoveredCandidate | None:
+    """Normalize a ytscrape Video returned by YouTube's Shorts-only search filter.
+
+    ytscrape exposes a typed video model and a native SearchFilter.SHORTS.
+    A result returned by that filter has stronger format evidence than a
+    generic search result whose aspect ratio/duration metadata is missing.
+    """
+    video_id = str(getattr(video, "video_id", "") or "")
+    if not _YOUTUBE_ID_RE.fullmatch(video_id):
+        return None
+
+    views_raw = getattr(video, "views", None)
+    views = int(views_raw) if isinstance(views_raw, int) and views_raw >= 0 else None
+    duration_text = getattr(video, "duration", None)
+    published_at = getattr(video, "published_at", None)
+    upload_date = (
+        published_at.strftime("%Y%m%d")
+        if isinstance(published_at, datetime)
+        else None
+    )
+    title = str(getattr(video, "title", "") or "") or None
+    description = str(getattr(video, "description", "") or "") or None
+    hashtags = extract_hashtags(title, description)
+
+    return DiscoveredCandidate(
+        platform="youtube",
+        source_id=video_id,
+        canonical_url=f"https://www.youtube.com/shorts/{video_id}",
+        title=title,
+        description=description,
+        creator=str(getattr(video, "channel", "") or "") or None,
+        view_count=views,
+        metric_source="ytscrape_shorts_search_views" if views is not None else None,
+        duration_seconds=parse_duration_text(
+            str(duration_text) if duration_text is not None else None
+        ),
+        upload_date=upload_date,
+        hashtags=hashtags,
+        short_format_status="confirmed",
+        discovered_at=datetime.now(UTC),
+        metadata={
+            "discovery_engine": "ytscrape",
+            "discovery_engine_version": "2.2.x",
+            "search_filter": "shorts",
+            "search_query": query,
+            "search_language": language,
+            "search_region": region,
+            "channel_id": getattr(video, "channel_id", None),
+            "duration_text": duration_text,
+            "views_text": getattr(video, "views_text", None),
+            "published_text": getattr(video, "published_text", None),
+            "published_at_estimate": (
+                published_at.isoformat()
+                if isinstance(published_at, datetime)
+                else None
+            ),
+            "thumbnail": getattr(video, "thumbnail", None),
+        },
+    )
+
 def _safe_post_value(post: object, name: str) -> object | None:
     try:
         return getattr(post, name, None)
