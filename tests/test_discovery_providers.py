@@ -341,6 +341,7 @@ def test_youtube_provider_opens_circuit_on_timeout(monkeypatch):
         instances = []
 
         def __init__(self, **kwargs):
+            self.kwargs = kwargs
             self.calls = 0
             self.__class__.instances.append(self)
 
@@ -366,3 +367,5 @@ def test_youtube_provider_opens_circuit_on_timeout(monkeypatch):
     assert list(provider.search("comedy shorts", limit=10)) == []
     assert FailingYouTube.instances[0].calls == 1
     assert provider.circuit_reason is not None
+    assert FailingYouTube.instances[0].kwargs["timeout"] == 6.0
+    assert FailingYouTube.instances[0].kwargs["retry"].kwargs["max_retries"] == 0
