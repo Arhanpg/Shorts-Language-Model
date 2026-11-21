@@ -48,3 +48,16 @@ def test_expired_creator_lease_can_be_reclaimed(tmp_path):
     second = frontier.claim_creators("youtube", limit=1)
     assert len(second) == 1
     connection.close()
+
+
+def test_expired_expansion_seed_lease_can_be_reclaimed(tmp_path):
+    connection = sqlite3.connect(tmp_path / "seed-lease.sqlite3")
+    connection.row_factory = sqlite3.Row
+    frontier = CreatorFrontier(connection)
+    frontier.enqueue_seed("youtube", "SeedLease123")
+    first = frontier.claim_seeds("youtube", limit=1, lease_seconds=0)
+    assert len(first) == 1
+    second = frontier.claim_seeds("youtube", limit=1)
+    assert len(second) == 1
+    assert second[0]["attempts"] == 1
+    connection.close()

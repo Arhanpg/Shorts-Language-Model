@@ -31,8 +31,8 @@ CREATE INDEX IF NOT EXISTS idx_creator_frontier_due
 CREATE TABLE IF NOT EXISTS expansion_seeds (
  platform TEXT NOT NULL, video_id TEXT NOT NULL, creator_id TEXT,
  depth INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'pending',
- discovered_at TEXT NOT NULL, expanded_at TEXT, attempts INTEGER NOT NULL DEFAULT 0,
- last_error TEXT, PRIMARY KEY(platform, video_id)
+ discovered_at TEXT NOT NULL, expanded_at TEXT, lease_until TEXT,
+ attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT, PRIMARY KEY(platform, video_id)
 );
 CREATE INDEX IF NOT EXISTS idx_expansion_seeds_due
  ON expansion_seeds(platform, status, depth, discovered_at);
@@ -145,17 +145,24 @@ class CreatorFrontier:
              max(0, eligible_yield), error[:500] if error else None, platform, creator_id))
         self.connection.commit()
 
-    def claim_seeds(self, platform: str, *, limit: int = 20) -> list[sqlite3.Row]:
+    def claim_seeds(
+        self, platform: str, *, limit: int = 20, lease_seconds: int = 180
+    ) -> list[sqlite3.Row]:
+        now = datetime.now(UTC)
+        timestamp = now.isoformat()
+        lease = (now + timedelta(seconds=lease_seconds)).isoformat()
         self.connection.execute("BEGIN IMMEDIATE")
         try:
             rows = self.connection.execute(
-                """SELECT * FROM expansion_seeds WHERE platform=? AND status='pending'
-                ORDER BY depth ASC, discovered_at ASC LIMIT ?""",
-                (platform, max(1, limit))).fetchall()
+                """SELECT * FROM expansion_seeds WHERE platform=? AND (
+                    status='pending' OR (status='active' AND lease_until<=?)
+                ) ORDER BY depth ASC, discovered_at ASC LIMIT ?""",
+                (platform, timestamp, max(1, limit))).fetchall()
             for row in rows:
                 self.connection.execute(
-                    "UPDATE expansion_seeds SET status='active', attempts=attempts+1 "
-                    "WHERE platform=? AND video_id=?", (platform, row["video_id"]))
+                    """UPDATE expansion_seeds SET status='active', lease_until=?,
+                    attempts=attempts+1 WHERE platform=? AND video_id=?""",
+                    (lease, platform, row["video_id"]))
             self.connection.commit()
         except Exception:
             self.connection.rollback()
@@ -166,7 +173,7 @@ class CreatorFrontier:
         self.connection.execute(
             """UPDATE expansion_seeds SET status=CASE WHEN ? IS NULL THEN 'expanded'
                 WHEN attempts>=2 THEN 'failed' ELSE 'pending' END,
-                expanded_at=?, last_error=? WHERE platform=? AND video_id=?""",
+                expanded_at=?, lease_until=NULL, last_error=? WHERE platform=? AND video_id=?""",
             (error, datetime.now(UTC).isoformat(),
              error[:500] if error else None, platform, video_id))
         self.connection.commit()
