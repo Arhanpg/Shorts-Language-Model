@@ -278,11 +278,11 @@ def run_discovery(
                     if youtube_provider.circuit_open:
                         stop_reason = "youtube_circuit_open"
                         break
-                    if time.monotonic() >= run_deadline:
+                    if time.monotonic() + (youtube_request_timeout * 2) > run_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     console.print(
-                        f"[dim]YouTube {query_index}/{len(youtube_queries)} · "
+                        f"[dim]YouTube {query_index}/{len(youtube_queries} · "
                         f"{search_query.language}/{search_query.region} · "
                         f"{search_query.query}[/dim]"
                     )
