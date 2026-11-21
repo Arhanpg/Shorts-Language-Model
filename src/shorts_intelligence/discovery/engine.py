@@ -469,7 +469,6 @@ async def run_creator_graph(
                 ),
             },
             "continue_graph_after_target": continue_graph_after_target,
-            },
             "creator_results": creator_results,
             "hashtag_results": hashtag_results,
             "hashtags_with_candidates": sum(
