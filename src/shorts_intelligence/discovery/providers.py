@@ -12,6 +12,7 @@ CAPTCHAs, platform access controls, or rate limits.
 
 from __future__ import annotations
 
+import contextlib
 import time
 from collections.abc import Iterator
 from typing import Any
@@ -238,10 +239,8 @@ class YouTubeSearchProvider:
     def close(self) -> None:
         """Close the HTTP sessions used for each locale."""
         for client in self._clients.values():
-            try:
+            with contextlib.suppress(Exception):
                 client.close()
-            except Exception:
-                pass
         self._clients.clear()
 
     def __enter__(self) -> YouTubeSearchProvider:
@@ -553,10 +552,8 @@ class InstagramSearchProvider:
 
     def close(self) -> None:
         if self._loader_instance is not None:
-            try:
+            with contextlib.suppress(Exception):
                 self._loader_instance.close()
-            except Exception:
-                pass
             self._loader_instance = None
 
     def __enter__(self) -> InstagramSearchProvider:
