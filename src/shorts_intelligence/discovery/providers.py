@@ -137,6 +137,7 @@ class YouTubeSearchProvider:
             )
             seen: set[str] = set()
             for video in results:
+                self.search_results_seen += 1
                 candidate = candidate_from_ytscrape_video(
                     video,
                     query=query,
@@ -146,7 +147,6 @@ class YouTubeSearchProvider:
                 if candidate is None or candidate.source_id in seen:
                     continue
                 seen.add(candidate.source_id)
-                self.search_results_seen += 1
                 yield candidate
         except (RateLimited, BotDetected) as exc:
             self._record_error("youtube", exc)
