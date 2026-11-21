@@ -180,3 +180,51 @@ def test_instagram_hashtag_harvest_persists_reels_and_reports_metrics(monkeypatc
         assert saved is not None
         assert saved.play_count == 2_500_000
         assert saved.metadata["discovery_surface"] == "hashtag_page"
+
+
+def test_youtube_run_reports_candidates_by_discovery_stage(monkeypatch, tmp_path):
+    import shorts_intelligence.discovery.engine as engine
+
+    class FakeYouTube:
+        def __init__(self, **kwargs):
+            self.requests = 0
+
+        async def search_seed_videos(self, query, *, limit):
+            return [SimpleNamespace(video_id="SeedCandidate123", channel_id=None)]
+
+        async def search_hashtag_videos(self, hashtag, *, limit):
+            return []
+
+        async def enrich_seed_videos(self, videos):
+            if not videos:
+                return []
+            return [_candidate("SeedCandidate123", "UC" + "c" * 22, 2_000_000)]
+
+        async def harvest_creator(self, creator_id, *, limit):
+            return [_candidate("CreatorCandidate123", creator_id, 3_000_000)]
+
+        async def expand_related(self, video_id, *, limit):
+            return []
+
+        async def close(self):
+            return None
+
+    monkeypatch.setattr(engine, "TubeScrapeProvider", FakeYouTube)
+    with DiscoveryStore(tmp_path / "stage-counts.sqlite3") as store:
+        summary = asyncio.run(run_creator_graph(
+            store,
+            platform="youtube",
+            target_new=50,
+            min_metric=1_000_000,
+            max_runtime_seconds=30,
+            max_seed_queries=1,
+            max_hashtag_queries=0,
+            max_creators=0,
+            max_expansions=0,
+        ))
+    counts = summary["discovery_stage_counts"]
+    assert counts["youtube_seed_search_results"] == 1
+    assert counts["youtube_seed_detail_candidates"] == 1
+    assert counts["youtube_creator_candidates"] == 0
+    assert counts["youtube_related_candidates"] == 0
+    assert counts["all_candidates_observed"] == 1
