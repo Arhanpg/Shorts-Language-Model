@@ -19,11 +19,11 @@ The detailed rationale and limitations are in [docs/NON_API_DISCOVERY_TOOLCHAIN.
 
 ## Important metric handling
 
-- YouTube view_count is stored as the view metric where yt-dlp returns it.
+- YouTube view_count is stored as the view metric where ytscrape returns it; capped detail enrichment uses ytscrape player metadata when search results omit the metric.
 - Instagram video_view_count is stored separately from video_play_count.
 - The default filter uses view_count only. The optional --instagram-use-play-count switch permits play_count when the view_count field is absent, but preserves the metric label.
 - Missing metrics are unknown, not zero, and never pass the default 1M threshold.
-- YouTube format confirmation uses Shorts URL evidence or metadata dimensions/duration. An eligible duration alone is not proof that a landscape video is a Short.
+- YouTube candidates come from ytscrape's dedicated Shorts search filter. This is stronger format evidence than generic video search, but not a guarantee that every result will remain available for later download.
 - Instagram search results are confirmed Reels when they came from a /reel/ search result and the resolved media is video. Profile/hashtag discoveries are candidates unless more source evidence is available.
 
 ## Current commands
@@ -42,6 +42,8 @@ Install FFmpeg and ffprobe and ensure both are on PATH. The gallery-dl Instagram
 Check dependencies:
 
     shorts-lm doctor
+
+Discovery requires ytscrape, yt-dlp, Instaloader and DDGS. The doctor output checks ytscrape separately. Deno 2.3+ or Node.js 22+ is still recommended for yt-dlp YouTube media downloads.
 
 ### Phase 1 discovery reliability and coverage
 
