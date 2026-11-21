@@ -88,6 +88,7 @@ async def run_creator_graph(
                     stats["seed_search_results"] += len(listed)
                     details = await within_budget(yt.enrich_seed_videos(listed), youtube_seed_deadline)
                     stats["seed_detail_batches"] += 1
+                    stats["seed_detail_candidates"] += len(details)
                     for candidate in details:
                         stats["candidates_observed"] += 1
                         channel_id = candidate.metadata.get("channel_id")
@@ -130,6 +131,7 @@ async def run_creator_graph(
                     details = await within_budget(yt.enrich_seed_videos(listed))
                     stats["hashtag_search_requests"] += 1
                     stats["hashtag_search_results"] += len(listed)
+                    stats["hashtag_detail_candidates"] += len(details)
                     for candidate in details:
                         stats["candidates_observed"] += 1
                         channel_id = candidate.metadata.get("channel_id")
@@ -443,6 +445,23 @@ async def run_creator_graph(
                 "instagram": "numeric plays; retained separately from views",
             },
             "provider_requests": request_counts,
+            "discovery_stage_counts": {
+                "youtube_seed_search_results": stats["seed_search_results"],
+                "youtube_seed_detail_candidates": stats["seed_detail_candidates"],
+                "youtube_hashtag_search_results": stats["hashtag_search_results"],
+                "youtube_hashtag_detail_candidates": stats["hashtag_detail_candidates"],
+                "youtube_creator_candidates": sum(
+                    item.get("candidates_observed", 0) for item in creator_results
+                    if item.get("platform") == "youtube"
+                ),
+                "youtube_related_candidates": stats["related_candidates"],
+                "instagram_hashtag_candidates": stats["instagram_hashtag_candidates"],
+                "instagram_creator_candidates": sum(
+                    item.get("candidates_observed", 0) for item in creator_results
+                    if item.get("platform") == "instagram"
+                ),
+                "all_candidates_observed": stats["candidates_observed"],
+            },
             "creator_results": creator_results,
             "hashtag_results": hashtag_results,
             "hashtags_with_candidates": sum(
@@ -467,9 +486,18 @@ async def run_creator_graph(
             **summary})
         return summary
     finally:
-        for provider in providers.values():
+        for provider_name, provider in providers.items():
             close = getattr(provider, "close", None)
             if close:
-                result = close()
-                if asyncio.iscoroutine(result):
-                    await result
+                try:
+                    result = close()
+                    if asyncio.iscoroutine(result):
+                        await result
+                except Exception as exc:
+                    # Shutdown of a browser process can race with Chrome being
+                    # closed by the user. Never replace a useful run summary or
+                    # the original provider failure with a teardown traceback.
+                    errors.append(
+                        f"{provider_name} provider cleanup: "
+                        f"{type(exc).__name__}: {str(exc)[:160]}"
+                    )
