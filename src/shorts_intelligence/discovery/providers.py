@@ -379,6 +379,8 @@ class InstagramSearchProvider:
                 results = self._search_page(
                     search_query, limit=limit, page=page, backend=self.backend
                 )
+            except ProviderUnavailable:
+                raise
             except Exception as exc:
                 self.ddgs_failures += 1
                 self._record_error(
@@ -516,6 +518,8 @@ class InstagramSearchProvider:
             loader = self._loader()
             tag = instaloader.Hashtag.from_name(loader.context, hashtag.lstrip("#"))
             iterator = tag.get_posts_resumable()
+        except ProviderUnavailable:
+            raise
         except Exception as exc:
             self._open_circuit(f"Hashtag search could not start: {type(exc).__name__}: {exc}")
             self._record_error(self.circuit_reason or str(exc))
