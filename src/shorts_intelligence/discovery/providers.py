@@ -133,7 +133,7 @@ class YouTubeSearchProvider:
             results = client.search(
                 query,
                 filter=SearchFilter.SHORTS,
-                max_results=max(1, min(limit, 100)),
+                max_results=max(1, min(limit, 50)),
             )
             seen: set[str] = set()
             for video in results:
@@ -277,6 +277,7 @@ class InstagramSearchProvider:
         self.metadata_failures = 0
         self.metadata_successes = 0
         self.ddgs_failures = 0
+        self.consecutive_search_failures = 0
         self.request_pause_seconds = max(1.0, request_pause_seconds)
         self.region = region
         self.backend = backend
@@ -390,6 +391,15 @@ class InstagramSearchProvider:
                             f"DDGS fallback {self.fallback_backend}: "
                             f"{type(fallback_exc).__name__}: {str(fallback_exc)[:180]}"
                         )
+            if results:
+                self.consecutive_search_failures = 0
+            else:
+                self.consecutive_search_failures += 1
+                if self.consecutive_search_failures >= self.failure_threshold:
+                    self._open_circuit(
+                        f"DDGS returned no results after {self.consecutive_search_failures} "
+                        "consecutive failed searches"
+                    )
             for result in results:
                 if not isinstance(result, dict):
                     continue
