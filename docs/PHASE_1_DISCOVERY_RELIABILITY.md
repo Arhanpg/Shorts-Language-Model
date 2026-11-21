@@ -57,7 +57,7 @@ The doctor command now detects the yt-dlp package, yt-dlp-ejs, Deno and Node.js.
 
 DDGS searches public indexed Reel links using an explicit primary backend set, a single fallback engine, and an eight-second request timeout. The default Instagram query pool rotates topic and language strata; it is not a complete Instagram catalogue.
 
-Instaloader is configured with a 12-second per-request timeout and one connection attempt, instead of its upstream defaults of 300 seconds and three attempts. A maximum of 15 individual metadata lookups is allowed by default. Repeated metadata failures, timeouts, rate-limit responses or login/challenge conditions open a circuit for the rest of the run.
+Instaloader is configured with a 12-second per-request timeout and one connection attempt, instead of its upstream defaults of 300 seconds and three attempts. A maximum of 40 individual metadata lookups is allowed by default. Repeated metadata failures, timeouts, rate-limit responses or login/challenge conditions open a circuit for the rest of the run.
 
 The provider uses short, bounded retries and records its failure reason in the JSON report. It does not rotate proxies or bypass access restrictions. See [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md) for exact options and upstream references.
 
@@ -131,7 +131,7 @@ The LF-to-CRLF messages were Git line-ending notices, not the reason discovery f
 ## 9. Validation
 
 The new tests cover:
-- yt-dlp search using flat playlist mode;
+- ytscrape Shorts-filter search and typed result parsing;
 - no per-result terminal error flood;
 - raw result count versus deduplicated candidate count;
 - metric preservation across incomplete repeat searches;
