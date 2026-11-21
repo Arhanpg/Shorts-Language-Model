@@ -226,7 +226,6 @@ def select_due_queries(
     cutoff = now - timedelta(days=max(0, cooldown_days))
     never_used: list[SearchQuery] = []
     due: list[SearchQuery] = []
-    stale: list[tuple[datetime, SearchQuery]] = []
 
     for query in queries:
         last_run = history.get(query.key)
@@ -242,11 +241,13 @@ def select_due_queries(
             continue
         if parsed <= cutoff:
             due.append(query)
+        # Queries still inside the cooldown are intentionally not selected.
+        # Returning fewer searches is preferable to silently repeating the same
+        # sources; set cooldown_days=0 to deliberately force-refresh the pool.
         else:
-            stale.append((parsed, query))
+            continue
 
     rng.shuffle(never_used)
     rng.shuffle(due)
-    stale.sort(key=lambda item: item[0])
-    selected = never_used + due + [item[1] for item in stale]
+    selected = never_used + due
     return selected[: max(0, limit)]
