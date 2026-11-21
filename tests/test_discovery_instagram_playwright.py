@@ -1,4 +1,7 @@
-from shorts_intelligence.discovery.providers.instagram_playwright import extract_reel_records
+from shorts_intelligence.discovery.providers.instagram_playwright import (
+    _raw_count,
+    extract_reel_records,
+)
 
 
 def test_instagram_parser_keeps_plays_distinct_and_extracts_coauthors():
@@ -6,7 +9,7 @@ def test_instagram_parser_keeps_plays_distinct_and_extracts_coauthors():
         "code": "AbCdEf12345",
         "product_type": "clips",
         "play_count": 1_500_000,
-        "coauthor_producers": [{"username": "collaborator"}],
+        "coauthor_producers": [{"username": "Collaborator"}],
     }]}
     records = extract_reel_records(payload, creator_handle="creator")
     assert len(records) == 1
@@ -27,6 +30,17 @@ def test_instagram_parser_rejects_non_reel_video_and_display_strings():
     assert len(records) == 1
     assert records[0].play_count is None
     assert records[0].qualifying_metric() is None
+
+
+def test_instagram_parser_accepts_numeric_string_counts_and_reel_flags():
+    payload = {"items": [
+        {"shortcode": "NumericString123", "is_reel": True, "play_count": "1,500,000"},
+        {"code": "MediaTypeString123", "media_type": "2", "video_play_count": "2000000"},
+    ]}
+    records = extract_reel_records(payload, creator_handle="creator")
+    by_id = {item.source_id: item for item in records}
+    assert by_id["NumericString123"].play_count == 1_500_000
+    assert by_id["MediaTypeString123"].play_count == 2_000_000
 
 
 def test_instagram_explicit_view_count_remains_a_views_metric():
@@ -51,3 +65,9 @@ def test_instagram_video_play_count_is_preserved_as_plays():
     item = extract_reel_records(payload, creator_handle="creator")[0]
     assert item.play_count == 1_250_000
     assert item.qualifying_metric_kind() == "plays"
+
+
+def test_raw_count_never_parses_abbreviated_display_values():
+    assert _raw_count("1,500,000") == 1_500_000
+    assert _raw_count("1.5M") is None
+    assert _raw_count(True) is None

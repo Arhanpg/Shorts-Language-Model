@@ -1,0 +1,118 @@
+# ShortsLM Instagram discovery starter seeds
+# One username per line. These are discovery candidates, not endorsements or a
+# guarantee that the account is active, public, Reel-heavy, or has 1M+ Reels.
+# The collector verifies each profile during the live run. Edit/remove freely.
+#
+# Source references used to compile this initial public-profile shortlist:
+# https://www.socialhipper.com/top/instagram/in/india (2026 creator/category index)
+# https://tryklint.ai/influencers/instagram/in/india/ (2026 Indian creator index)
+# https://www.tring.co.in/influencer-marketing/influencers-in-india (creator handles)
+# https://www.influencer.in/wp-content/uploads/2025/12/Influencer_Marketing_Report_25.pdf
+# https://www.influencer.in/wp-content/themes/influencer-2022/images/IMR-2024-report.pdf
+# https://www.socialveins.com/influencers/lists/best-meme-pages-instagram-india
+# https://www.moshimoshi.in/post/best-meme-pages-on-instagram-india-s-funniest-accounts
+# https://www.influencer.in/best-25-meme-pages-on-instagram-in-india-2025/
+#
+# Vloggers, comedy and entertainment creators
+taneja.gaurav
+souravjoshivlogs
+souravjoshi_arts
+aaryankelvin
+maisamayhoon
+keshavshashivlogs
+fukra_insaan
+triggeredinsaan
+elvish_yadav
+awez_darbar
+theamitbhadana
+loveneet_valechaa
+ashishchanchlani
+mr_faisu_07
+riyaz.14
+nikkkhil
+bhuvan.bam22
+harshbeniwal
+kushakapila
+dollysingh
+komalpandeyofficial
+ankushbahuguna
+aashnashroff
+sejalkumar1195
+ahsaassy_
+jannatzubair29
+anushkasen0408
+avneetkaur
+i_ashisinghh
+thesiddharthnigam
+thatbohogirl
+rajshamani
+adnaan_07dz
+parmishverma
+samayraina
+viralbhayani
+surbhijyoti
+jasminesandlas
+gyangaming
+pranjali_papnai
+chaitaliandharshil
+abhijeetkain
+thatindianchick_
+vgrover1000
+govinuts
+jbshashankk
+kenavita
+sirraunaqrajani
+mafiamundeersimp
+souravjoshivlogs
+technicalguruji
+gyantherapy
+beebomco
+manojsaru
+nawabnabeel
+techviner
+shreemanitripathi
+mosttechy
+nandupatilofficial
+techysomz_kannada
+#
+# Meme, fan and high-volume entertainment publisher pages
+rvcjinsta
+tedthestoner
+sarcasm_only
+theviralfever
+ghantaa
+laughingcolours
+jeejaji
+theindianidiot
+dank.indian.memes
+slaypoint
+log.kya.sochenge
+desihumor
+shitindianssay
+bakchodbilli
+thelaughterchapter
+trollsofficials
+andhbhaktmemes
+memesoverload
+corporate_millennial_memes
+indianmemefactory
+sarcastic_us
+trolls_official
+epicfunnypage
+adultsociety
+log.kya.kahenge
+tamilmemes_3
+corporatcomics
+viralndianofficial_2
+hindii.jokes
+naughty_chachaji
+thedopeindian
+troll.ktu.official
+maharashtriansmemeofficial
+icse_toughest_of_all_existing
+body_union
+rvcj_hindi
+filmytadkka
+besarcasmic
+the_great_gujarati
+ourschoooldays

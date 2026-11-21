@@ -35,6 +35,7 @@ from shorts_intelligence.discovery.query_planner import (
     build_youtube_query_pool,
     select_due_queries,
 )
+from shorts_intelligence.discovery.seed_loader import load_instagram_creator_seeds
 from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.media.probe import sha256_file
 
@@ -1103,23 +1104,42 @@ def graph_run(
     platform: Literal["youtube", "instagram", "all"] = typer.Option("youtube", "--platform"),
     target_new: int = typer.Option(100, "--target-new", min=1, max=2000),
     min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
-    max_runtime_seconds: int = typer.Option(240, "--max-runtime-seconds", min=30, max=900),
+    max_runtime_seconds: int = typer.Option(600, "--max-runtime-seconds", min=30, max=900),
     max_seed_queries: int = typer.Option(8, "--max-seed-queries", min=0, max=20),
     max_hashtag_queries: int = typer.Option(4, "--max-hashtag-queries", min=0, max=20),
-    max_creators: int = typer.Option(40, "--max-creators", min=1, max=500),
+    max_creators: int = typer.Option(80, "--max-creators", min=1, max=500),
     max_expansions: int = typer.Option(80, "--max-expansions", min=0, max=1000),
     max_depth: int = typer.Option(3, "--max-depth", min=0, max=10),
     instagram_creator: list[str] = typer.Option([], "--instagram-creator"),
+    instagram_seeds_file: Path = typer.Option(
+        Path("data/instagram_creator_seeds.txt"), "--instagram-seeds-file"
+    ),
+    instagram_max_scrolls: int = typer.Option(8, "--instagram-max-scrolls", min=0, max=20),
+    force: bool = typer.Option(
+        False, "--force", help="Requeue supplied Instagram seed handles even if previously completed, empty, failed, or blocked."
+    ),
     instagram_profile_dir: Path = typer.Option(
         Path(".shortslm/browser/instagram"), "--instagram-profile-dir"
     ),
     database: Path = typer.Option(Path(".shortslm/discovery.sqlite3"), "--database"),
     report: Path = typer.Option(Path("outputs/discovery/graph-latest.json"), "--report"),
 ) -> None:
-    """Run the new persistent creator-graph engine; does not download media."""
+    """Run persistent creator-graph discovery; does not download media."""
     from shorts_intelligence.discovery.engine import run_creator_graph
 
     try:
+        creator_seeds = (
+            load_instagram_creator_seeds(
+                instagram_seeds_file, explicit_handles=instagram_creator
+            )
+            if platform in {"instagram", "all"}
+            else []
+        )
+        if platform in {"instagram", "all"} and not creator_seeds:
+            raise ValueError(
+                "No Instagram creator seeds found. Supply --instagram-creator or "
+                f"populate {instagram_seeds_file}."
+            )
         with DiscoveryStore(database) as store:
             summary = asyncio.run(run_creator_graph(
                 store,
@@ -1132,8 +1152,12 @@ def graph_run(
                 max_creators=max_creators,
                 max_expansions=max_expansions,
                 max_depth=max_depth,
-                instagram_profile_dir=instagram_profile_dir if platform in {"instagram", "all"} else None,
-                instagram_creators=instagram_creator,
+                instagram_profile_dir=(
+                    instagram_profile_dir if platform in {"instagram", "all"} else None
+                ),
+                instagram_creators=creator_seeds,
+                force=force,
+                instagram_max_scrolls=instagram_max_scrolls,
             ))
         _write_report(report, summary)
     except Exception as exc:
@@ -1144,14 +1168,31 @@ def graph_run(
     table.add_column("Metric")
     table.add_column("Value", justify="right")
     for key in (
-        "eligible_new", "candidates_observed", "creator_harvest_batches",
-        "related_sequence_requests", "creator_edges", "creators_pending",
-        "creators_exhausted", "creators_blocked", "elapsed_seconds",
+        "eligible_new", "candidates_observed", "creators_with_candidates",
+        "creators_empty", "creators_completed", "creators_pending",
+        "creators_exhausted", "creators_blocked", "creators_failed",
+        "creator_edges", "elapsed_seconds",
     ):
         table.add_row(key.replace("_", " ").title(), str(summary.get(key, 0)))
     console.print(table)
+
+    instagram_requests = summary.get("provider_requests", {}).get("instagram", {})
+    if instagram_requests:
+        console.print(
+            "Instagram capture: "
+            f"{instagram_requests.get('json_responses_observed', 0)} JSON responses, "
+            f"{instagram_requests.get('responses_parsed', 0)} responses with Reel records, "
+            f"{instagram_requests.get('responses_unparsed', 0)} without recognized Reel records."
+        )
+        for item in summary.get("creator_results", []):
+            provider = item.get("provider", {})
+            if item.get("candidates_observed", 0) == 0:
+                console.print(
+                    f"[yellow]@{item.get('handle')}: {provider.get('reason') or item.get('error') or 'No Reel candidates captured'}[/yellow]"
+                )
+    console.print(f"Creator seed file: {instagram_seeds_file.expanduser().resolve()}")
     console.print(f"Report: {report.expanduser().resolve()}")
-    console.print("[yellow]Instagram plays and YouTube views are reported as separate platform metrics.[/yellow]")
+    console.print("[yellow]Instagram plays and YouTube views remain separate platform metrics.[/yellow]")
 
 
 @discovery_app.command("instagram-browser-login")

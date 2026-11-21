@@ -61,3 +61,46 @@ def test_expired_expansion_seed_lease_can_be_reclaimed(tmp_path):
     assert len(second) == 1
     assert second[0]["attempts"] == 1
     connection.close()
+
+
+def test_force_requeues_completed_exhausted_empty_and_blocked_creators(tmp_path):
+    connection = sqlite3.connect(tmp_path / "force.sqlite3")
+    connection.row_factory = sqlite3.Row
+    frontier = CreatorFrontier(connection)
+    for handle, error, exhausted in [
+        ("completed", None, False),
+        ("empty", "empty_harvest", False),
+        ("blocked", "HTTP 403", False),
+        ("exhausted", None, True),
+    ]:
+        frontier.enqueue_creator("instagram", handle, handle=handle)
+        claimed = frontier.claim_creators("instagram", limit=1)
+        assert claimed[0].creator_id == handle
+        frontier.finish_creator(
+            "instagram", handle, error=error, exhausted=exhausted
+        )
+    assert frontier.summary("instagram")["creators_completed"] == 1
+    assert frontier.summary("instagram")["creators_empty"] == 1
+    assert frontier.summary("instagram")["creators_blocked"] == 1
+    assert frontier.summary("instagram")["creators_exhausted"] == 1
+    assert frontier.enqueue_creator(
+        "instagram", "blocked", handle="blocked", force=True, priority_score=999
+    )
+    assert frontier.enqueue_creator(
+        "instagram", "empty", handle="empty", force=True, priority_score=999
+    )
+    claimed = frontier.claim_creators("instagram", limit=2)
+    assert {item.creator_id for item in claimed} == {"blocked", "empty"}
+    connection.close()
+
+
+def test_frontier_summary_is_platform_scoped(tmp_path):
+    connection = sqlite3.connect(tmp_path / "scoped.sqlite3")
+    connection.row_factory = sqlite3.Row
+    frontier = CreatorFrontier(connection)
+    frontier.enqueue_creator("instagram", "ig")
+    frontier.enqueue_creator("youtube", "yt")
+    assert frontier.summary("instagram")["creators_pending"] == 1
+    assert frontier.summary("youtube")["creators_pending"] == 1
+    assert frontier.summary()["creators_pending"] == 2
+    connection.close()

@@ -61,7 +61,8 @@ class CreatorFrontier:
 
     def enqueue_creator(self, platform: str, creator_id: str, *, handle: str | None = None,
                         discovered_via: str = "seed", priority_score: float = 1.0,
-                        depth: int = 0, metadata: dict[str, object] | None = None) -> bool:
+                        depth: int = 0, metadata: dict[str, object] | None = None,
+                        force: bool = False) -> bool:
         creator_id = creator_id.strip()
         if not creator_id:
             return False
@@ -72,14 +73,27 @@ class CreatorFrontier:
             status, discovered_at, metadata_json) VALUES(?,?,?,?,?,?,'pending',?,?)""",
             (platform, creator_id, handle, discovered_via, priority_score, depth, now,
              json.dumps(metadata or {}, ensure_ascii=False)))
+        requeued = False
         if cursor.rowcount == 0:
-            self.connection.execute(
-                """UPDATE creator_frontier SET priority_score=MAX(priority_score, ?),
-                depth=MIN(depth, ?), handle=COALESCE(handle, ?)
-                WHERE platform=? AND creator_id=? AND status='pending'""",
-                (priority_score, depth, handle, platform, creator_id))
+            if force:
+                update = self.connection.execute(
+                    """UPDATE creator_frontier SET
+                    status='pending', next_crawl_after=NULL, lease_until=NULL,
+                    last_error=NULL, attempts=0,
+                    priority_score=MAX(priority_score, ?),
+                    depth=MIN(depth, ?), handle=COALESCE(?, handle)
+                    WHERE platform=? AND creator_id=?
+                      AND status IN ('pending', 'exhausted', 'completed', 'failed', 'empty', 'blocked')""",
+                    (priority_score, depth, handle, platform, creator_id))
+                requeued = update.rowcount == 1
+            else:
+                self.connection.execute(
+                    """UPDATE creator_frontier SET priority_score=MAX(priority_score, ?),
+                    depth=MIN(depth, ?), handle=COALESCE(?, handle)
+                    WHERE platform=? AND creator_id=? AND status='pending'""",
+                    (priority_score, depth, handle, platform, creator_id))
         self.connection.commit()
-        return cursor.rowcount == 1
+        return cursor.rowcount == 1 or requeued
 
     def enqueue_seed(self, platform: str, video_id: str, *,
                      creator_id: str | None = None, depth: int = 0) -> bool:
@@ -128,10 +142,17 @@ class CreatorFrontier:
             (platform, creator_id),
         ).fetchone()
         attempts = int(attempts_row["attempts"]) if attempts_row else 0
-        failed = bool(error and attempts >= 3 and not blocked)
-        status = "blocked" if blocked else "failed" if failed else "exhausted" if exhausted else "pending"
-        if exhausted and not blocked:
+        empty = error == "empty_harvest"
+        failed = bool(error and not empty and attempts >= 3 and not blocked)
+        status = (
+            "blocked" if blocked else "failed" if failed
+            else "empty" if empty else "exhausted" if exhausted
+            else "completed" if not error else "pending"
+        )
+        if status in {"exhausted", "completed"}:
             next_crawl = (now + timedelta(days=cooldown_days)).isoformat()
+        elif empty:
+            next_crawl = (now + timedelta(hours=6)).isoformat()
         elif error and not blocked and not failed:
             next_crawl = (now + timedelta(minutes=30)).isoformat()
         else:
@@ -214,15 +235,28 @@ class CreatorFrontier:
         )
         self.connection.commit()
 
-    def summary(self) -> dict[str, int]:
-        queries = {
-            "creators_pending": "SELECT COUNT(*) FROM creator_frontier WHERE status='pending'",
-            "creators_exhausted": "SELECT COUNT(*) FROM creator_frontier WHERE status='exhausted'",
-            "creators_blocked": "SELECT COUNT(*) FROM creator_frontier WHERE status='blocked'",
-            "creators_failed": "SELECT COUNT(*) FROM creator_frontier WHERE status='failed'",
-            "expansion_seeds_pending": "SELECT COUNT(*) FROM expansion_seeds WHERE status='pending'",
-            "creator_edges": "SELECT COUNT(*) FROM creator_edges",
-            "candidate_observations": "SELECT COUNT(*) FROM candidate_observations",
+    def summary(self, platform: str | None = None) -> dict[str, int]:
+        """Return graph counts, optionally scoped to one platform."""
+        where = " WHERE platform=?" if platform else ""
+        args = (platform,) if platform else ()
+
+        def count(table: str, status: str | None = None) -> int:
+            sql = f"SELECT COUNT(*) FROM {table}{where}"
+            if status:
+                sql += (" AND " if where else " WHERE ") + "status=?"
+                values = (*args, status)
+            else:
+                values = args
+            return int(self.connection.execute(sql, values).fetchone()[0])
+
+        return {
+            "creators_pending": count("creator_frontier", "pending"),
+            "creators_exhausted": count("creator_frontier", "exhausted"),
+            "creators_completed": count("creator_frontier", "completed"),
+            "creators_empty": count("creator_frontier", "empty"),
+            "creators_blocked": count("creator_frontier", "blocked"),
+            "creators_failed": count("creator_frontier", "failed"),
+            "expansion_seeds_pending": count("expansion_seeds", "pending"),
+            "creator_edges": count("creator_edges"),
+            "candidate_observations": count("candidate_observations"),
         }
-        return {key: int(self.connection.execute(sql).fetchone()[0])
-                for key, sql in queries.items()}
