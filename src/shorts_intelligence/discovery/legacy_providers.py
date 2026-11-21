@@ -73,7 +73,7 @@ class YouTubeSearchProvider:
         except ImportError as exc:
             raise ProviderUnavailable(
                 'YouTube Shorts discovery requires ytscrape: '
-                'pip install -e ".[discovery]" --upgrade'
+                'pip install -e ".[legacy-discovery]" --upgrade'
             ) from exc
 
         retry = RetryPolicy(
@@ -143,7 +143,7 @@ class YouTubeSearchProvider:
         except ImportError as exc:
             raise ProviderUnavailable(
                 'YouTube Shorts discovery requires ytscrape 2.2+: '
-                'pip install -e ".[discovery]" --upgrade'
+                'pip install -e ".[legacy-discovery]" --upgrade'
             ) from exc
 
         try:
@@ -290,7 +290,7 @@ class YouTubeShortsSurfaceProvider:
         except ImportError as exc:
             raise ProviderUnavailable(
                 'YouTube Shorts surface discovery requires yt-dlp: '
-                'pip install -e ".[discovery]" --upgrade'
+                'pip install -e ".[legacy-discovery]" --upgrade'
             ) from exc
         options: dict[str, object] = {
             "quiet": True,
@@ -468,7 +468,7 @@ class InstagramSearchProvider:
         except ImportError as exc:
             raise ProviderUnavailable(
                 'Instagram metadata discovery requires Instaloader: '
-                'pip install -e ".[discovery]" --upgrade'
+                'pip install -e ".[legacy-discovery]" --upgrade'
             ) from exc
 
         loader = instaloader.Instaloader(

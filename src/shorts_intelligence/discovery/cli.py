@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import json
 import random
@@ -17,13 +18,13 @@ from rich.console import Console
 from rich.table import Table
 
 from shorts_intelligence.discovery.downloader import download_candidate
-from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
-from shorts_intelligence.discovery.providers import (
+from shorts_intelligence.discovery.legacy_providers import (
     InstagramSearchProvider,
     ProviderUnavailable,
     YouTubeSearchProvider,
     YouTubeShortsSurfaceProvider,
 )
+from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
 from shorts_intelligence.discovery.query_planner import (
     SearchQuery,
     build_instagram_query_pool,
@@ -119,7 +120,7 @@ def instagram_login(
     try:
         import instaloader
     except ImportError as exc:
-        console.print('[red]Install discovery dependencies first: pip install -e ".[discovery]"[/red]')
+        console.print('[red]Install discovery dependencies first: pip install -e ".[legacy-discovery]"[/red]')
         raise typer.Exit(code=2) from exc
     session_path = session_file.expanduser().resolve()
     session_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1092,3 +1093,90 @@ def download_eligible(
             "[yellow]Blocked items remain queued. Add a matching private rights-manifest row "
             "only after the required rights have actually been obtained.[/yellow]"
         )
+
+
+@discovery_app.command("graph-run")
+def graph_run(
+    platform: Literal["youtube", "instagram", "all"] = typer.Option("youtube", "--platform"),
+    target_new: int = typer.Option(100, "--target-new", min=1, max=2000),
+    min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
+    max_runtime_seconds: int = typer.Option(240, "--max-runtime-seconds", min=30, max=900),
+    max_seed_queries: int = typer.Option(8, "--max-seed-queries", min=0, max=20),
+    max_creators: int = typer.Option(40, "--max-creators", min=1, max=500),
+    max_expansions: int = typer.Option(80, "--max-expansions", min=0, max=1000),
+    max_depth: int = typer.Option(3, "--max-depth", min=0, max=10),
+    instagram_creator: list[str] = typer.Option([], "--instagram-creator"),
+    instagram_profile_dir: Path = typer.Option(
+        Path(".shortslm/browser/instagram"), "--instagram-profile-dir"
+    ),
+    database: Path = typer.Option(Path(".shortslm/discovery.sqlite3"), "--database"),
+    report: Path = typer.Option(Path("outputs/discovery/graph-latest.json"), "--report"),
+) -> None:
+    """Run the new persistent creator-graph engine; does not download media."""
+    from shorts_intelligence.discovery.engine import run_creator_graph
+
+    try:
+        with DiscoveryStore(database) as store:
+            summary = asyncio.run(run_creator_graph(
+                store,
+                platform=platform,
+                target_new=target_new,
+                min_metric=min_metric,
+                max_runtime_seconds=max_runtime_seconds,
+                max_seed_queries=max_seed_queries,
+                max_creators=max_creators,
+                max_expansions=max_expansions,
+                max_depth=max_depth,
+                instagram_profile_dir=instagram_profile_dir if platform in {"instagram", "all"} else None,
+                instagram_creators=instagram_creator,
+            ))
+        _write_report(report, summary)
+    except Exception as exc:
+        console.print(f"[bold red]Graph discovery failed:[/bold red] {type(exc).__name__}: {exc}")
+        raise typer.Exit(code=1) from exc
+
+    table = Table(title="Creator-graph discovery")
+    table.add_column("Metric")
+    table.add_column("Value", justify="right")
+    for key in (
+        "eligible_new", "candidates_observed", "creator_harvest_batches",
+        "related_sequence_requests", "creator_edges", "creators_pending",
+        "creators_exhausted", "creators_blocked", "elapsed_seconds",
+    ):
+        table.add_row(key.replace("_", " ").title(), str(summary.get(key, 0)))
+    console.print(table)
+    console.print(f"Report: {report.expanduser().resolve()}")
+    console.print("[yellow]Instagram plays and YouTube views are reported as separate platform metrics.[/yellow]")
+
+
+@discovery_app.command("instagram-browser-login")
+def instagram_browser_login(
+    profile_dir: Path = typer.Option(
+        Path(".shortslm/browser/instagram"), "--profile-dir"
+    ),
+) -> None:
+    """Open a persistent visible browser so you can log in manually to Instagram."""
+    async def open_profile() -> None:
+        try:
+            from playwright.async_api import async_playwright
+        except ImportError as exc:
+            raise RuntimeError(
+                'Install browser support: pip install -e ".[instagram-browser]" '
+                'then run playwright install chromium'
+            ) from exc
+        profile_dir.expanduser().resolve().mkdir(parents=True, exist_ok=True)
+        async with async_playwright() as playwright:
+            context = await playwright.chromium.launch_persistent_context(
+                user_data_dir=str(profile_dir.expanduser().resolve()), headless=False
+            )
+            page = await context.new_page()
+            await page.goto("https://www.instagram.com/", wait_until="domcontentloaded")
+            console.print("[yellow]Log in normally in the opened browser. Complete any verification yourself.[/yellow]")
+            await asyncio.to_thread(input, "When the account is ready, press Enter here to close the browser...")
+            await context.close()
+
+    try:
+        asyncio.run(open_profile())
+    except Exception as exc:
+        console.print(f"[bold red]Instagram browser setup failed:[/bold red] {type(exc).__name__}: {exc}")
+        raise typer.Exit(code=1) from exc

@@ -254,7 +254,7 @@ def test_legacy_eligible_uncertain_format_is_migrated(tmp_path: Path):
         assert migrated.eligible_candidates() == []
 
 
-def test_instagram_play_count_never_substitutes_for_view_count(tmp_path: Path):
+def test_instagram_play_count_qualifies_as_plays_without_becoming_views(tmp_path: Path):
     instagram = DiscoveredCandidate(
         platform="instagram",
         source_id="PlayCount123",
@@ -273,5 +273,8 @@ def test_instagram_play_count_never_substitutes_for_view_count(tmp_path: Path):
         assert saved is not None
         assert saved.play_count == 3_000_000
         assert saved.view_count is None
-        assert saved.status == "metric_unknown"
-        assert store.eligible_candidates() == []
+        assert saved.status == "eligible"
+        assert saved.qualifying_metric() == 3_000_000
+        assert saved.qualifying_metric_kind() == "plays"
+        assert saved.view_count is None
+        assert store.eligible_candidates()[0].source_id == "PlayCount123"
