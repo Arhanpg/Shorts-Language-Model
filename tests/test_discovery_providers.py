@@ -388,6 +388,13 @@ def test_youtube_provider_opens_circuit_on_timeout(monkeypatch):
     assert FailingYouTube.instances[0].kwargs["retry"].kwargs["max_retries"] == 0
 
 
+def test_youtube_error_classifier_distinguishes_transient_and_access_errors():
+    assert YouTubeSearchProvider._is_stop_error(TimeoutError("read timed out")) is False
+    assert YouTubeSearchProvider._is_stop_error(ConnectionError("connection reset")) is False
+    assert YouTubeSearchProvider._is_stop_error(RuntimeError("HTTP 429 Too Many Requests")) is True
+    assert YouTubeSearchProvider._is_stop_error(RuntimeError("CAPTCHA required")) is True
+
+
 def test_instagram_provider_does_not_start_search_after_run_deadline(monkeypatch):
     FakeDDGS = _fake_ddgs(monkeypatch, [])
     FakeLoader = _fake_instaloader(monkeypatch, _fake_post)
