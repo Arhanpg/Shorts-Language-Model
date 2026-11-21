@@ -14,6 +14,12 @@ def _fake_ytscrape(monkeypatch):
     class FakeSearchFilter:
         SHORTS = "shorts"
 
+    class FakeRateLimited(Exception):
+        pass
+
+    class FakeBotDetected(Exception):
+        pass
+
     class FakeRetryPolicy:
         def __init__(self, **kwargs):
             self.kwargs = kwargs
@@ -79,6 +85,8 @@ def _fake_ytscrape(monkeypatch):
     fake_module = ModuleType("ytscrape")
     fake_module.SearchFilter = FakeSearchFilter
     fake_module.RetryPolicy = FakeRetryPolicy
+    fake_module.RateLimited = FakeRateLimited
+    fake_module.BotDetected = FakeBotDetected
     fake_module.YouTube = FakeYouTube
     monkeypatch.setitem(sys.modules, "ytscrape", fake_module)
     return FakeYouTube
