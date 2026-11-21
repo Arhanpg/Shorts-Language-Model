@@ -1,6 +1,6 @@
 # Phase 1 — Discovery Coverage, Query Rotation and Provider Reliability
 
-**Status:** implementation on `feature/discovery-coverage-reliability`  
+**Status:** merged implementation on `main`; live Windows provider validation remains outstanding  
 **Design date:** 21 November 2026  
 **Scope:** unattended public-link discovery, metadata qualification and persistent deduplication. No MP4 download occurs in the `discover run` command.
 
@@ -260,9 +260,9 @@ The revised execution contract is deliberately bounded:
 
 The first-page implementation is isolated in `YouTubeSearchProvider.search()`. In the inspected ytscrape 2.2.0 source, `SearchResults` stores the parsed initial-page items in `_buffer`; calling `iter(results)` is what triggers lazy continuation retrieval. The adapter reads the initial `_buffer` directly and does not iterate the object. The provider tests use a fake lazy result whose iterator raises if accessed, proving that this path does not paginate.
 
-The CLI emits progress before and after each query, including locale, elapsed query time and the number of qualifying unseen IDs seen so far. It also stops searching additional queries once the requested number of qualifying new IDs has been observed. If that target is reached, it skips later platform phases and optional enrichment.
+The CLI emits progress before and after each query, including locale, elapsed query time and the number of qualifying unseen IDs seen so far. In combined mode, both selected platform stages are scheduled while the overall runtime deadline allows; a provisional YouTube yield no longer prevents Instagram from starting. Final candidate eligibility is evaluated after selected platform stages contribute their results. The runtime budget still applies, and a stage may not start if the earlier stage consumes the full deadline.
 
-The same monotonic deadline is passed into Instagram URL search and shortcode lookup scheduling. A currently executing synchronous HTTP request can still finish up to its configured request timeout after the deadline; the deadline prevents starting further requests. The report stores `elapsed_seconds`, `runtime_budget_seconds`, `stop_reason`, `youtube_search_pages_fetched`, `youtube_queries_completed`, request settings and enrichment-budget state.
+The same monotonic deadline is passed into Instagram URL search and shortcode lookup scheduling. A currently executing synchronous HTTP request can still finish up to its configured request timeout after the deadline; the deadline prevents starting further requests. Instagram now respects configured Instaloader request timeouts down to the CLI's three-second floor instead of silently increasing a requested three-second timeout to five seconds. The JSON report also distinguishes a platform that was not selected from one that was selected but not started, completed or opened its circuit breaker. The report stores `elapsed_seconds`, `runtime_budget_seconds`, `stop_reason`, `youtube_search_pages_fetched`, `youtube_queries_completed`, request settings and enrichment-budget state.
 
 The time limit guarantees bounded scheduling, not a guaranteed candidate yield. The command retains all candidates collected before the deadline and completes deduplication/storage/reporting rather than abandoning partial work.
 
@@ -302,6 +302,7 @@ The automated suite covers:
 - DDGS timeout/backend configuration and fallback behaviour;
 - Instaloader timeout/attempt/status configuration;
 - Instagram circuit-breaker behaviour after repeated metadata failures;
+- configured Instaloader timeout values are respected down to the CLI's three-second floor;
 - duration and metadata normalization;
 - source-ID and media-hash deduplication.
 

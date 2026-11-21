@@ -381,3 +381,15 @@ def test_instagram_provider_does_not_start_search_after_run_deadline(monkeypatch
     assert FakeLoader.instances == []
     assert provider.metadata_lookups == 0
     provider.close()
+
+
+
+def test_instagram_provider_respects_three_second_request_timeout():
+    provider = InstagramSearchProvider(
+        request_timeout=3,
+        search_timeout=3,
+        max_connection_attempts=1,
+    )
+    assert provider.request_timeout == 3
+    assert provider.search_timeout == 3
+    provider.close()

@@ -307,7 +307,8 @@ class InstagramSearchProvider:
         self.fallback_backend = fallback_backend
         self.pages = max(1, min(pages, 3))
         self.search_timeout = max(3, min(search_timeout, 15))
-        self.request_timeout = max(5.0, min(request_timeout, 30.0))
+        # Match the CLI's documented minimum; do not silently raise 3s to 5s.
+        self.request_timeout = max(3.0, min(request_timeout, 30.0))
         self.max_connection_attempts = max(1, min(max_connection_attempts, 2))
         self.max_lookups = max(1, min(max_lookups, 100))
         self.failure_threshold = max(1, min(failure_threshold, 5))

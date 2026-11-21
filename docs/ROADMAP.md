@@ -26,7 +26,7 @@
 - Persist query usage, provider errors, enrichment statistics, lookup counts and circuit-breaker reasons in the run report. Show progress and enforce a three-minute default overall runtime budget, short YouTube timeouts and zero retries.
 - Keep threshold default at 1,000,000; unknown metrics do not pass and targets remain best-effort.
 
-**Exit tests:** YouTube provider invokes SearchFilter.SHORTS and parses typed views/duration; two runs with persisted query history rotate to never-used queries; existing IDs are not counted as new; query-history survives DB reopen; YouTube enrichment is capped; Instagram timeout and attempt settings are bounded; repeated Instaloader failures open the circuit; DDGS primary timeout can use one configured fallback; missing/below-threshold/eligible records remain distinct.
+**Exit tests:** YouTube provider invokes SearchFilter.SHORTS and parses typed views/duration; two runs with persisted query history rotate to never-used queries; existing IDs are not counted as new; query-history survives DB reopen; YouTube enrichment is capped; Instagram timeout and attempt settings are bounded and respected; repeated Instaloader failures open the circuit; DDGS primary timeout can use one configured fallback; combined runs schedule both selected platform stages when the shared deadline permits; per-platform reports distinguish not-selected, not-started, completed and circuit-open states; missing/below-threshold/eligible records remain distinct.
 
 See [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md) for detailed testing commands and provider limits.
 

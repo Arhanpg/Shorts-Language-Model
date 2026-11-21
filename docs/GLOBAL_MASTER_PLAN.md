@@ -77,7 +77,7 @@ Store Instaloader's video_view_count as view_count and video_play_count as play_
 
 ### Phase 1 reliability implementation
 
-YouTube discovery uses yt-dlp's flat playlist extraction mode (extract_flat=in_playlist) so playlist search entries are not each resolved as a full individual video page. View counts and durations are taken from search-page metadata when present. The provider uses a quiet logger and records errors instead of flooding the terminal with one failure per unavailable video.
+YouTube discovery uses ytscrape v2.2.0 with the dedicated `SearchFilter.SHORTS` filter. The current adapter consumes only the first parsed search page and deliberately avoids iterating ytscrape's lazy continuation iterator. Typed search metadata supplies view counts and duration where available; capped player-detail enrichment can fill missing values. yt-dlp is reserved for the separately authorized media-download stage.
 
 The default Instagram DDGS region is India English (in-en), and the search adapter supports multiple result pages. Discovery diagnostics distinguish raw search hits, unique IDs, repeated results, source IDs already stored, missing view metrics, below-threshold counts, uncertain short format and provider failures. Per-platform counts are written to the JSON report.
 

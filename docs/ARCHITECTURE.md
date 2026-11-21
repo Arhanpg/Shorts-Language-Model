@@ -8,7 +8,7 @@
 ```text
 Query planner (topic/language/region/date)
         |
-        +----> yt-dlp ytsearch provider (YouTube)
+        +----> ytscrape SearchFilter.SHORTS provider (YouTube)
         |
         +----> DDGS public-web search (Instagram Reel URLs)
                       |
@@ -51,9 +51,10 @@ Query planner (topic/language/region/date)
 
 ### Discovery adapters
 
-- YouTube: yt-dlp search extractor, parse metadata.
+- YouTube: ytscrape's dedicated Shorts search filter, parse typed search metadata.
 - Instagram: DDGS query public Reel URLs and Instaloader resolves shortcodes.
 - Instaloader's hashtag discovery is optional and requires a user session.
+- Combined discovery schedules both selected platform stages under the shared runtime deadline and reports independent execution states.
 - No official platform API is used by the discovery CLI.
 
 ### Candidate normalizer

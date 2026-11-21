@@ -115,6 +115,8 @@ Then run both:
 
     shorts-lm discover run --platform all --target-new 100 --min-views 1000000 --max-candidates 1500
 
+In combined mode, both selected platform stages are scheduled when the shared deadline permits. The JSON report's `platform_execution` records selected/not-selected, not-started, completed and circuit-open states separately.
+
 The existing .shortslm/discovery.sqlite3 is preserved. Do not delete it just to hide duplicate counts; repeat source IDs are intentionally excluded from new candidate totals. Existing rows with missing metrics can be updated when a later search returns better metadata.
 
 The report is saved to outputs/discovery/latest.json.
