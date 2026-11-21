@@ -481,6 +481,12 @@ def run_discovery(
                     request_timeout=instagram_request_timeout,
                     max_lookups=instagram_max_lookups,
                 )
+                if instagram_session_user and not instagram_provider.preflight():
+                    errors.extend(instagram_provider.errors)
+                    console.print(
+                        f"[yellow]Instagram authentication preflight failed: "
+                        f"{instagram_provider.circuit_reason}[/yellow]"
+                    )
                 if not instagram_session_user:
                     console.print(
                         "[yellow]Instagram metadata mode: anonymous. A local user-owned session "
@@ -516,7 +522,7 @@ def run_discovery(
 
                 for tag in instagram_hashtag:
                     if instagram_provider.circuit_open or time.monotonic() >= instagram_deadline:
-                        stop_reason = "runtime_budget_reached" if time.monotonic() >= run_deadline else "instagram_circuit_open"
+                        stop_reason = "runtime_budget_reached" if time.monotonic() >= instagram_deadline else "instagram_circuit_open"
                         break
                     before = instagram_provider.search_results_seen
                     query_candidates = list(
