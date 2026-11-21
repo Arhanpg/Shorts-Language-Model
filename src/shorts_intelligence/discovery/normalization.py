@@ -177,7 +177,7 @@ def candidate_from_ytdlp(info: dict[str, object]) -> DiscoveredCandidate | None:
 
 
 
-_DURATION_RE = re.compile(r"^(?:(\\d+):)?(\\d{1,2}):(\\d{2})$")
+_DURATION_RE = re.compile(r"^(?:(\d+):)?(\d{1,2}):(\d{2})$")
 
 
 def parse_duration_text(value: str | None) -> float | None:
