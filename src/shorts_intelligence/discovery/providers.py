@@ -148,19 +148,21 @@ class YouTubeSearchProvider:
 
         try:
             client = self._client_for(language, region)
+            result_limit = max(1, min(limit, 50))
             page = client.search(
                 query,
                 filter=SearchFilter.SHORTS,
-                max_results=max(1, min(limit, 50)),
+                max_results=result_limit,
             )
-            # Public iteration performs bounded continuation paging because
-            # max_results is always set above.
-            items = list(page)
+            # Count the initial search page as soon as the search object is
+            # returned. Consume incrementally: if a continuation page times
+            # out, already-yielded candidates must not be discarded.
             self.search_pages_fetched += 1
-            self.search_queries_completed += 1
-            self.search_results_seen += len(items)
             seen: set[str] = set()
-            for video in items:
+            for index, video in enumerate(page):
+                if index >= result_limit:
+                    break
+                self.search_results_seen += 1
                 candidate = candidate_from_ytscrape_video(
                     video,
                     query=query,
@@ -174,6 +176,7 @@ class YouTubeSearchProvider:
                     continue
                 seen.add(candidate.source_id)
                 yield candidate
+            self.search_queries_completed += 1
             self.consecutive_failures = 0
         except (RateLimited, BotDetected) as exc:
             self._record_error("youtube", exc)

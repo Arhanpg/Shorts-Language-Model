@@ -377,7 +377,7 @@ def run_discovery(
                     if youtube_provider.circuit_open:
                         stop_reason = "youtube_circuit_open"
                         break
-                    if time.monotonic() + (youtube_request_timeout * 2) + youtube_request_interval > youtube_deadline:
+                    if time.monotonic() + (youtube_request_timeout * 4) + youtube_request_interval > youtube_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     console.print(

@@ -348,3 +348,10 @@ The 1M rule is applied independently per platform. Instagram `play_count` remain
 ## 14. Query-performance storage API regression fix
 
 The adaptive query planner consumes `DiscoveryStore.query_performance(platform)`. This method returns per-query average raw-result and normalized-candidate counts from persisted cumulative totals, scoped to the requested platform. It is part of the storage/CLI contract and is covered by a regression test for average calculation and platform isolation.
+
+
+## 16. Partial-page preservation and combined-stage scheduling
+
+The YouTube provider consumes the bounded public result iterator incrementally. If a continuation request fails after the first page yielded usable records, already-yielded candidates remain in the run and are persisted; the query is marked incomplete and the transient error is recorded. The per-query result cap is enforced in the adapter as well as passed to ytscrape. Raw records, duplicate IDs and unique candidates are counted separately.
+
+For combined runs, the scheduler uses reserved stage deadlines (62% for YouTube, 95% for Instagram, with the remainder for finalization/enrichment). Before starting another paginated YouTube query it uses a conservative request-time estimate; a currently executing synchronous request can still overrun its estimate, but partial results are retained and Instagram receives the remaining reserved window. A single-platform run keeps the full overall deadline.

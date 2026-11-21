@@ -137,6 +137,35 @@ def test_youtube_provider_uses_shorts_filter_and_deduplicates(monkeypatch):
     assert client.search_calls == [("cricket shorts", "shorts", 25)]
 
 
+def test_youtube_provider_preserves_partial_results_when_pagination_times_out(monkeypatch):
+    FakeYouTube = _fake_ytscrape(monkeypatch)
+    FakeYouTube.instances.clear()
+    original_search = FakeYouTube.search
+
+    def search_then_timeout(self, query, *, filter, max_results):
+        page = original_search(self, query, filter=filter, max_results=max_results)
+
+        def partial_results():
+            yield page.items[0]
+            yield page.items[1]
+            raise TimeoutError("continuation page read timed out")
+
+        return partial_results()
+
+    FakeYouTube.search = search_then_timeout
+    provider = YouTubeSearchProvider()
+    results = list(provider.search("cricket shorts", limit=10))
+
+    assert len(results) == 1
+    assert results[0].source_id == "AbCdEfGh123"
+    assert provider.search_results_seen == 2
+    assert provider.duplicate_results == 1
+    assert provider.search_pages_fetched == 1
+    assert provider.search_queries_completed == 0
+    assert provider.circuit_open is False
+    provider.close()
+
+
 def test_youtube_provider_reuses_locale_client(monkeypatch):
     FakeYouTube = _fake_ytscrape(monkeypatch)
     FakeYouTube.instances.clear()
