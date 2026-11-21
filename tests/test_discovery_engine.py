@@ -54,3 +54,67 @@ def test_graph_engine_persists_seed_creator_and_related_video(monkeypatch, tmp_p
         assert summary["candidate_observations"] == 3
         assert store.get_candidate("youtube", "RelatedVideo12") is not None
         assert summary["creators_pending"] >= 0
+
+
+def test_instagram_force_rechecks_completed_creator_and_reports_capture(monkeypatch, tmp_path):
+    import shorts_intelligence.discovery.engine as engine
+
+    class FakeInstagram:
+        calls = 0
+
+        def __init__(self, **kwargs):
+            self.requests_observed = 3
+            self.responses_parsed = 1
+            self.responses_unparsed = 2
+            self.errors = []
+            self.blocked = False
+            self.creator_diagnostics = []
+
+        async def harvest_creator(self, username, *, max_scrolls=8):
+            type(self).calls += 1
+            self.creator_diagnostics.append({
+                "handle": username,
+                "http_json_responses": 3,
+                "responses_with_reels": 1,
+                "candidate_count": 1,
+                "reason": None,
+            })
+            candidate = DiscoveredCandidate(
+                platform="instagram",
+                source_id="ReelCandidate123",
+                canonical_url="https://www.instagram.com/reel/ReelCandidate123/",
+                creator=username,
+                play_count=2_000_000,
+                metric_source="fixture",
+                short_format_status="confirmed",
+                metadata={"metric_kind": "plays"},
+            )
+            return [candidate], set()
+
+    monkeypatch.setattr(engine, "InstagramPlaywrightProvider", FakeInstagram)
+    with DiscoveryStore(tmp_path / "instagram-force.sqlite3") as store:
+        first = asyncio.run(run_creator_graph(
+            store, platform="instagram", target_new=10, min_metric=1_000_000,
+            max_runtime_seconds=30, instagram_profile_dir=tmp_path / "profile",
+            instagram_creators=["@creator"], max_creators=1,
+        ))
+        assert first["creator_harvest_batches"] == 1
+        assert first["creators_completed"] == 1
+        assert first["creators_with_candidates"] == 1
+        assert first["provider_requests"]["instagram"]["json_responses_observed"] == 3
+
+        second = asyncio.run(run_creator_graph(
+            store, platform="instagram", target_new=10, min_metric=1_000_000,
+            max_runtime_seconds=30, instagram_profile_dir=tmp_path / "profile",
+            instagram_creators=["creator"], max_creators=1,
+        ))
+        assert second.get("creator_harvest_batches", 0) == 0
+
+        third = asyncio.run(run_creator_graph(
+            store, platform="instagram", target_new=10, min_metric=1_000_000,
+            max_runtime_seconds=30, instagram_profile_dir=tmp_path / "profile",
+            instagram_creators=["creator"], max_creators=1, force=True,
+        ))
+        assert third["creator_harvest_batches"] == 1
+        assert third["candidates_observed"] == 1
+        assert FakeInstagram.calls == 2

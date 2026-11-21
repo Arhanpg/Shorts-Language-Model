@@ -35,7 +35,10 @@ Instagram's `play_count` remains a distinct raw metric. It is never written into
 
 ## Safety and reliability constraints
 
-- Playwright observes only responses created by normal browser navigation. It does not replay requests or construct private GraphQL calls.
+- Playwright observes only responses and rendered Reel links created by normal browser navigation. It does not replay requests or construct private GraphQL calls.
+- A versioned, reviewable 100-handle starter seed file gives repeatable test coverage across creator and meme/publisher categories. Seed membership is not a claim that the account is active or has million-play Reels.
+- The CLI's `--force` flag requeues only supplied seed handles without deleting candidate history. Empty results, successful harvests, and access blocks are separate states.
+- Per-creator reports include the requested/final profile URL, response counts, parser outcomes, rendered Reel-link counts, and a reason when zero candidates were observed.
 - The user signs in manually; browser profile data remains local and is gitignored.
 - Challenges, checkpoints, rate limits and access restrictions stop the affected backend. No bypass, identity rotation, or alternate scraper fallback to evade a block.
 - Discovery does not download media. Rights authorization remains a separate gate.

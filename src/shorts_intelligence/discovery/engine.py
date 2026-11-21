@@ -21,6 +21,8 @@ async def run_creator_graph(
     max_depth: int = 3, youtube_concurrency: int = 5,
     instagram_profile_dir: Path | None = None,
     instagram_creators: list[str] | None = None,
+    force: bool = False,
+    instagram_max_scrolls: int = 8,
 ) -> dict[str, Any]:
     """Run bounded graph discovery. This function never downloads media."""
     if platform not in {"youtube", "instagram", "all"}:
@@ -46,6 +48,7 @@ async def run_creator_graph(
     stats: Counter[str] = Counter()
     errors: list[str] = []
     providers: dict[str, Any] = {}
+    creator_results: list[dict[str, Any]] = []
     new_eligible = 0
 
     async def within_budget(awaitable: Any, stage_deadline: float = deadline) -> Any:
@@ -156,7 +159,8 @@ async def run_creator_graph(
             for username in instagram_creators or []:
                 frontier.enqueue_creator(
                     "instagram", username.casefold().lstrip("@"), handle=username.lstrip("@"),
-                    discovered_via="manual_seed", priority_score=1.0, depth=0)
+                    discovered_via="seed_file" if not force else "forced_seed",
+                    priority_score=10_000.0, depth=0, force=force)
 
         creators_claimed = {"youtube": 0, "instagram": 0}
         expansions_done = 0
@@ -180,7 +184,13 @@ async def run_creator_graph(
                         candidates = await within_budget(provider.harvest_creator(creator.creator_id, limit=48), stage_deadline)
                         stats["creator_harvest_batches"] += 1
                     else:
-                        candidates, coauthors = await within_budget(provider.harvest_creator(creator.handle or creator.creator_id), stage_deadline)
+                        candidates, coauthors = await within_budget(
+                            provider.harvest_creator(
+                                creator.handle or creator.creator_id,
+                                max_scrolls=instagram_max_scrolls,
+                            ),
+                            stage_deadline,
+                        )
                         stats["creator_harvest_batches"] += 1
                         for handle in coauthors:
                             frontier.enqueue_creator(
@@ -212,14 +222,48 @@ async def run_creator_graph(
                                 frontier.enqueue_seed(
                                     "youtube", candidate.source_id, creator_id=creator.creator_id,
                                     depth=creator.depth)
-                    frontier.finish_creator(
-                        current_platform, creator.creator_id,
-                        eligible_yield=creator_yield, exhausted=True)
+                    if current_platform == "instagram":
+                        provider_diag = (
+                            provider.creator_diagnostics[-1]
+                            if provider.creator_diagnostics else {}
+                        )
+                        creator_results.append({
+                            "platform": current_platform,
+                            "creator_id": creator.creator_id,
+                            "handle": creator.handle or creator.creator_id,
+                            "candidates_observed": len(candidates),
+                            "eligible_new": creator_yield,
+                            "status": "completed" if candidates else "empty",
+                            "provider": provider_diag,
+                        })
+                    if candidates:
+                        frontier.finish_creator(
+                            current_platform, creator.creator_id,
+                            eligible_yield=creator_yield, exhausted=False)
+                    else:
+                        frontier.finish_creator(
+                            current_platform, creator.creator_id,
+                            error="empty_harvest")
                 except Exception as exc:
                     message = f"{type(exc).__name__}: {str(exc)[:180]}"
                     errors.append(f"{current_platform} creator {creator.creator_id}: {message}")
                     stats["creator_failures"] += 1
                     frontier.finish_creator(current_platform, creator.creator_id, error=message)
+                    if current_platform == "instagram":
+                        creator_results.append({
+                            "platform": current_platform,
+                            "creator_id": creator.creator_id,
+                            "handle": creator.handle or creator.creator_id,
+                            "candidates_observed": 0,
+                            "eligible_new": 0,
+                            "status": "blocked" if getattr(provider, "blocked", False) else "failed",
+                            "error": message,
+                            "provider": (
+                                provider.creator_diagnostics[-1]
+                                if getattr(provider, "creator_diagnostics", [])
+                                else {}
+                            ),
+                        })
 
             if ("youtube" in providers and expansions_done < max_expansions
                     and loop.time() < youtube_deadline):
@@ -279,12 +323,18 @@ async def run_creator_graph(
                 break
 
         elapsed = round(loop.time() - started, 2)
-        graph_summary = frontier.summary()
+        graph_summary = frontier.summary(
+            "instagram" if platform == "instagram"
+            else "youtube" if platform == "youtube"
+            else None
+        )
         request_counts = {
             name: (
                 {"json_responses_observed": provider.requests_observed,
                  "responses_parsed": provider.responses_parsed,
-                 "responses_unparsed": provider.responses_unparsed}
+                 "responses_unparsed": provider.responses_unparsed,
+                 "creator_diagnostics": provider.creator_diagnostics,
+                 "provider_errors": provider.errors}
                 if name == "instagram" else {"library_calls": provider.requests}
             )
             for name, provider in providers.items()
@@ -303,6 +353,13 @@ async def run_creator_graph(
                 "instagram": "numeric plays; retained separately from views",
             },
             "provider_requests": request_counts,
+            "creator_results": creator_results,
+            "creators_with_candidates": sum(
+                item["candidates_observed"] > 0 for item in creator_results
+            ),
+            "creators_empty": sum(
+                item["status"] == "empty" for item in creator_results
+            ),
             "errors": len(errors),
             "error_details": errors[:100],
         }
