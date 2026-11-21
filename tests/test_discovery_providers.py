@@ -312,3 +312,42 @@ def test_instagram_provider_falls_back_once_after_primary_timeout(monkeypatch):
     assert len(FakeDDGS.instances[0].calls) == 2
     assert provider.circuit_open is False
     provider.close()
+
+
+def test_youtube_provider_opens_circuit_on_timeout(monkeypatch):
+    class FakeSearchFilter:
+        SHORTS = "shorts"
+
+    class FakeRetryPolicy:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    class FailingYouTube:
+        instances = []
+
+        def __init__(self, **kwargs):
+            self.calls = 0
+            self.__class__.instances.append(self)
+
+        def search(self, query, *, filter, max_results):
+            self.calls += 1
+            raise TimeoutError("YouTube request timed out")
+
+        def close(self):
+            return None
+
+    module = ModuleType("ytscrape")
+    module.SearchFilter = FakeSearchFilter
+    module.RetryPolicy = FakeRetryPolicy
+    module.YouTube = FailingYouTube
+    module.RateLimited = type("RateLimited", (Exception,), {})
+    module.BotDetected = type("BotDetected", (Exception,), {})
+    monkeypatch.setitem(sys.modules, "ytscrape", module)
+
+    provider = YouTubeSearchProvider()
+    assert list(provider.search("cricket shorts", limit=10)) == []
+    assert provider.circuit_open is True
+    assert len(FailingYouTube.instances) == 1
+    assert list(provider.search("comedy shorts", limit=10)) == []
+    assert FailingYouTube.instances[0].calls == 1
+    assert provider.circuit_reason is not None
