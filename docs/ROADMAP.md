@@ -19,7 +19,7 @@
 - Rotate locale/topic query pools across English, Hindi, Marathi, Kannada, Tamil, Telugu, Bengali, Spanish, Portuguese and Indonesian strata.
 - Persist exact query/locale history and default seven-day cooldown in SQLite; use random order by default and an optional --seed for reproducibility.
 - Instagram public Reel URL discovery via DDGS, with explicit backends, an 8-second timeout and one fallback engine.
-- Resolve Instagram metadata through Instaloader with 12-second per-request timeout, one connection attempt, 15 lookup cap and circuit breaker.
+- Resolve Instagram metadata through Instaloader with 12-second per-request timeout, one connection attempt, 40 lookup cap and circuit breaker.
 - Enrich only a capped number of new YouTube candidates whose view count or duration is missing.
 - Evaluate unseen platform/source IDs before previously known IDs; count an item as new only if its platform/source key was absent before the run.
 - Preserve view/play metric provenance and keep Instagram view_count distinct from play_count.
