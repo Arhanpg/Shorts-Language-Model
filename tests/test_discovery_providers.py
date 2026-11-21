@@ -4,7 +4,7 @@ import sys
 from datetime import UTC, datetime
 from types import ModuleType, SimpleNamespace
 
-from shorts_intelligence.discovery.providers import (
+from shorts_intelligence.discovery.legacy_providers import (
     InstagramSearchProvider,
     YouTubeSearchProvider,
     YouTubeShortsSurfaceProvider,
@@ -280,7 +280,7 @@ def test_instagram_provider_uses_bounded_timeouts_and_metadata(monkeypatch):
     ]
     FakeDDGS = _fake_ddgs(monkeypatch, urls)
     FakeLoader = _fake_instaloader(monkeypatch, _fake_post)
-    monkeypatch.setattr("shorts_intelligence.discovery.providers.time.sleep", lambda _: None)
+    monkeypatch.setattr("shorts_intelligence.discovery.legacy_providers.time.sleep", lambda _: None)
 
     provider = InstagramSearchProvider(
         region="in-en",
@@ -334,7 +334,7 @@ def test_instagram_provider_circuit_breaks_after_repeated_metadata_failures(monk
         monkeypatch,
         lambda shortcode: (_ for _ in ()).throw(RuntimeError("Fetching Post metadata failed")),
     )
-    monkeypatch.setattr("shorts_intelligence.discovery.providers.time.sleep", lambda _: None)
+    monkeypatch.setattr("shorts_intelligence.discovery.legacy_providers.time.sleep", lambda _: None)
 
     provider = InstagramSearchProvider(
         request_pause_seconds=1,
@@ -355,7 +355,7 @@ def test_instagram_provider_falls_back_once_after_primary_timeout(monkeypatch):
     urls = ["https://www.instagram.com/reel/ABCxyz_123/"]
     FakeDDGS = _fake_ddgs(monkeypatch, urls)
     _fake_instaloader(monkeypatch, _fake_post)
-    monkeypatch.setattr("shorts_intelligence.discovery.providers.time.sleep", lambda _: None)
+    monkeypatch.setattr("shorts_intelligence.discovery.legacy_providers.time.sleep", lambda _: None)
 
     provider = InstagramSearchProvider(
         request_pause_seconds=1,
@@ -572,7 +572,7 @@ def test_instagram_ytdlp_metadata_fallback_after_instaloader_parse_failure(monke
     module = ModuleType("yt_dlp")
     module.YoutubeDL = FakeYoutubeDL
     monkeypatch.setitem(sys.modules, "yt_dlp", module)
-    monkeypatch.setattr("shorts_intelligence.discovery.providers.time.sleep", lambda _: None)
+    monkeypatch.setattr("shorts_intelligence.discovery.legacy_providers.time.sleep", lambda _: None)
 
     provider = InstagramSearchProvider(
         request_pause_seconds=1,
