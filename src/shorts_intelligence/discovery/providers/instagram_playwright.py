@@ -4,6 +4,7 @@ This adapter observes JSON responses produced by ordinary visible browser naviga
 It does not construct, replay, or modify Instagram requests.
 """
 from __future__ import annotations
+
 import asyncio
 import re
 from pathlib import Path
