@@ -1,5 +1,6 @@
-from types import SimpleNamespace
 import sys
+from types import SimpleNamespace
+
 from shorts_intelligence.discovery.providers.youtube_tubescrape import TubeScrapeProvider
 
 

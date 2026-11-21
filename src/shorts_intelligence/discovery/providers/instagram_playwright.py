@@ -8,6 +8,7 @@ import asyncio
 import re
 from pathlib import Path
 from typing import Any
+
 from shorts_intelligence.discovery.models import DiscoveredCandidate
 
 _CODE = re.compile(r"^[A-Za-z0-9_-]{5,}$")

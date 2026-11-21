@@ -5,6 +5,7 @@ import uuid
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
 from shorts_intelligence.discovery.frontier import CreatorFrontier
 from shorts_intelligence.discovery.providers.instagram_playwright import InstagramPlaywrightProvider
 from shorts_intelligence.discovery.providers.youtube_tubescrape import TubeScrapeProvider

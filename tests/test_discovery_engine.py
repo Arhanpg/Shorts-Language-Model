@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 from types import SimpleNamespace
+
 from shorts_intelligence.discovery.engine import run_creator_graph
 from shorts_intelligence.discovery.models import DiscoveredCandidate
 from shorts_intelligence.discovery.storage import DiscoveryStore
