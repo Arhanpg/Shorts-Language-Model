@@ -228,3 +228,74 @@ def test_youtube_run_reports_candidates_by_discovery_stage(monkeypatch, tmp_path
     assert counts["youtube_creator_candidates"] == 0
     assert counts["youtube_related_candidates"] == 0
     assert counts["all_candidates_observed"] == 1
+
+
+def test_youtube_seed_stage_updates_metric_and_inventory_counters(monkeypatch, tmp_path):
+    import shorts_intelligence.discovery.engine as engine
+
+    class FakeYouTube:
+        def __init__(self, **kwargs):
+            pass
+
+        async def search_seed_videos(self, query, *, limit):
+            return [SimpleNamespace(video_id="SeedMetrics123", channel_id=None)]
+
+        async def search_hashtag_videos(self, hashtag, *, limit):
+            return []
+
+        async def enrich_seed_videos(self, videos):
+            return [_candidate("SeedMetrics123", "UC" + "d" * 22, 2_000_000)]
+
+        async def close(self):
+            return None
+
+    monkeypatch.setattr(engine, "TubeScrapeProvider", FakeYouTube)
+    with DiscoveryStore(tmp_path / "seed-metrics.sqlite3") as store:
+        summary = asyncio.run(run_creator_graph(
+            store, platform="youtube", target_new=50, min_metric=1_000_000,
+            max_runtime_seconds=30, max_seed_queries=1, max_hashtag_queries=0,
+            max_creators=0, max_expansions=0,
+        ))
+    assert summary["new_inventory_candidates"] == 1
+    assert summary["metric_observed_candidates"] == 1
+    assert summary["metric_unknown_candidates"] == 0
+    assert summary["metric_above_threshold_candidates"] == 1
+    assert summary["discovery_stage_counts"]["youtube_seed_detail_candidates"] == 1
+
+
+def test_continue_graph_after_target_processes_creator_frontier(monkeypatch, tmp_path):
+    import shorts_intelligence.discovery.engine as engine
+
+    class FakeYouTube:
+        def __init__(self, **kwargs):
+            self.harvested = 0
+
+        async def search_seed_videos(self, query, *, limit):
+            return [SimpleNamespace(video_id="SeedGraph123", channel_id="UC" + "e" * 22)]
+
+        async def search_hashtag_videos(self, hashtag, *, limit):
+            return []
+
+        async def enrich_seed_videos(self, videos):
+            return [_candidate("SeedGraph123", "UC" + "e" * 22, 2_000_000)]
+
+        async def harvest_creator(self, creator_id, *, limit):
+            self.harvested += 1
+            return [_candidate("CreatorGraph123", creator_id, 3_000_000)]
+
+        async def expand_related(self, video_id, *, limit):
+            return []
+
+        async def close(self):
+            return None
+
+    monkeypatch.setattr(engine, "TubeScrapeProvider", FakeYouTube)
+    with DiscoveryStore(tmp_path / "continue-graph.sqlite3") as store:
+        summary = asyncio.run(run_creator_graph(
+            store, platform="youtube", target_new=1, min_metric=1_000_000,
+            max_runtime_seconds=30, max_seed_queries=1, max_hashtag_queries=0,
+            max_creators=1, max_expansions=0, continue_graph_after_target=True,
+        ))
+    assert summary["eligible_new"] == 2
+    assert summary["youtube_creator_candidates"] == 1
+    assert summary["continue_graph_after_target"] is True
