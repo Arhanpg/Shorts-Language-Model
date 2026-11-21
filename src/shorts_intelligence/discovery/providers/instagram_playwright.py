@@ -196,7 +196,15 @@ class InstagramPlaywrightProvider:
 
     async def _ensure_context(self) -> Any:
         if self._context is not None:
-            return self._context
+            # Chrome can be closed by the user while a run is active. Never
+            # return a stale BrowserContext and let new_page fail opaquely.
+            try:
+                if self._context.browser is not None:
+                    return self._context
+            except Exception:
+                pass
+            self._context = None
+            self._playwright = None
         try:
             from playwright.async_api import async_playwright
         except ImportError as exc:
@@ -217,19 +225,44 @@ class InstagramPlaywrightProvider:
             # below own their pages explicitly and close them after each visit.
             for initial_page in list(self._context.pages):
                 await initial_page.close()
-        except Exception:
-            await self._playwright.stop()
+        except Exception as exc:
+            playwright = self._playwright
+            self._context = None
             self._playwright = None
+            if playwright is not None:
+                try:
+                    await playwright.stop()
+                except Exception:
+                    pass
+            message = str(exc)
+            if any(token in message.casefold() for token in (
+                "target.createtarget", "target page", "browser has been closed",
+                "user data directory is already in use", "process singleton"
+            )):
+                raise RuntimeError(
+                    "Could not open the Instagram Chrome profile. Close every Chrome "
+                    "window using this profile, check Task Manager for leftover chrome.exe "
+                    "processes, then retry. Do not delete the profile or its session files."
+                ) from exc
             raise
         return self._context
 
     async def close(self) -> None:
-        if self._context is not None:
-            await self._context.close()
-            self._context = None
-        if self._playwright is not None:
-            await self._playwright.stop()
-            self._playwright = None
+        # Cleanup must be idempotent and must not mask the real collection error
+        # when the user closes Chrome or Windows tears down its pipe transport.
+        context, playwright = self._context, self._playwright
+        self._context = None
+        self._playwright = None
+        if context is not None:
+            try:
+                await context.close()
+            except Exception:
+                pass
+        if playwright is not None:
+            try:
+                await playwright.stop()
+            except Exception:
+                pass
 
     async def _collect_surface(
         self,
@@ -242,7 +275,22 @@ class InstagramPlaywrightProvider:
         max_reel_details: int,
     ) -> tuple[list[DiscoveredCandidate], set[str], dict[str, Any]]:
         context = await self._ensure_context()
-        page = await context.new_page()
+        try:
+            page = await context.new_page()
+        except Exception as exc:
+            # Recover once from an externally closed target/context. The
+            # persistent profile is reused; no second profile is created.
+            self._context = None
+            message = str(exc).casefold()
+            if any(token in message for token in (
+                "targetclosederror", "target page, context or browser has been closed",
+                "target.createtarget", "browser has been closed"
+            )):
+                await self.close()
+                context = await self._ensure_context()
+                page = await context.new_page()
+            else:
+                raise
         candidates: dict[str, DiscoveredCandidate] = {}
         coauthors: set[str] = set()
         tasks: set[asyncio.Task[Any]] = set()
@@ -492,7 +540,20 @@ class InstagramPlaywrightProvider:
             if tasks:
                 await asyncio.gather(*tuple(tasks), return_exceptions=True)
             diagnostic["candidate_count"] = len(candidates)
-            await page.close()
+            diagnostic["metric_count"] = sum(
+                item.qualifying_metric() is not None for item in candidates.values()
+            )
+            try:
+                if not page.is_closed():
+                    await page.close()
+            except Exception as exc:
+                # The browser may have exited between the is_closed check and
+                # close(). Keep harvested candidates and retain a diagnostic.
+                if len(self.errors) < 50:
+                    self.errors.append(
+                        f"{surface} {creator_handle}: page cleanup: "
+                        f"{type(exc).__name__}: {str(exc)[:100]}"
+                    )
 
         return list(candidates.values()), coauthors, diagnostic
 
