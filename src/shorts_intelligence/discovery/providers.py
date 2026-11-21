@@ -53,7 +53,7 @@ class YouTubeSearchProvider:
         self.circuit_reason: str | None = None
         self.consecutive_failures = 0
         self.failure_threshold = 3
-        self._clients: dict[tuple[str, str], Any] =
+        self._clients: dict[tuple[str, str], Any] = {}
 
     def _client_for(self, language: str, region: str) -> Any:
         key = (language.casefold(), region.upper())
