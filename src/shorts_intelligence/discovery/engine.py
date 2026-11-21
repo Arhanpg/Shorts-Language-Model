@@ -238,7 +238,9 @@ async def run_creator_graph(
                 "youtube": "numeric views",
                 "instagram": "numeric plays; retained separately from views",
             },
-            "provider_requests": request_counts, "errors": errors[:100],
+            "provider_requests": request_counts,
+            "errors": len(errors),
+            "error_details": errors[:100],
         }
         store.finish_run(run_id, {
             "scanned": stats["candidates_observed"] + stats["related_candidates"],
