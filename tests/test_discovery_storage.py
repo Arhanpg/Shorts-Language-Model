@@ -165,6 +165,51 @@ def test_query_history_is_persisted_and_updated_by_query_key(tmp_path: Path):
         assert performance["query-abc"]["candidate_count"] == 38
 
 
+def test_query_performance_returns_per_platform_average_yield(tmp_path: Path):
+    from datetime import UTC, datetime
+
+    with DiscoveryStore(tmp_path / "query-performance.sqlite3") as store:
+        for raw, candidates, day in [(50, 42, 1), (50, 35, 21)]:
+            store.record_query(
+                platform="youtube",
+                query_key="query-abc",
+                query="cricket shorts",
+                language="en",
+                region="IN",
+                strategy="localized_topic",
+                raw_results=raw,
+                candidate_count=candidates,
+                run_at=datetime(2026, 11, day, tzinfo=UTC),
+            )
+        store.record_query(
+            platform="instagram",
+            query_key="reels-abc",
+            query="cricket reels",
+            language="en",
+            region="IN",
+            strategy="localized_topic",
+            raw_results=12,
+            candidate_count=3,
+            run_at=datetime(2026, 11, 21, tzinfo=UTC),
+        )
+
+        assert store.query_performance("youtube") == {
+            "query-abc": {
+                "run_count": 2,
+                "raw_results": 50,
+                "candidate_count": 38,
+            }
+        }
+        assert store.query_performance("instagram") == {
+            "reels-abc": {
+                "run_count": 1,
+                "raw_results": 12,
+                "candidate_count": 3,
+            }
+        }
+        assert store.query_performance("tiktok") == {}
+
+
 def test_candidate_format_is_not_eligible_until_confirmed(tmp_path: Path):
     uncertain = DiscoveredCandidate(
         platform="youtube",
