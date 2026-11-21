@@ -103,7 +103,7 @@ Keep `candidates`, `discovery_runs`, and download/rights tables. Migrations must
 ## 5. Orchestration and reliability
 
 - Async engine with bounded semaphores; initial YouTube detail concurrency: 5; recommendation expansion concurrency: 2; Instagram browser: one profile/context at a time.
-- Separate per-request timeout from total run deadline.
+- Separate per-request timeout from total run deadline. In combined runs with Instagram seeds, reserve 62% for YouTube, 95% for Instagram, and cap YouTube seed-search bootstrap at 35%; the engine alternates creator work within those stage windows. Single-platform runs retain the full budget.
 - Circuit breaker is per backend and failure class. Explicit access/rate-limit/challenge signals stop that backend; they do not trigger a second scraper to evade the restriction.
 - Transient transport failures use bounded retry with jitter; partial results are persisted.
 - Creator leases prevent duplicate work and recover cleanly after process termination.
