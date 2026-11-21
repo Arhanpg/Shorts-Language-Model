@@ -1217,7 +1217,7 @@ def graph_run(
             f"Instagram hashtag Reels {discovery_stages.get('instagram_hashtag_candidates', 0)}, "
             f"Instagram creator Reels {discovery_stages.get('instagram_creator_candidates', 0)}."
         )
-        if summary.get("new_eligible", 0) >= summary.get("target_new", 0) and not summary.get("continue_graph_after_target"):
+        if summary.get("new_eligible", 0) >= summary.get("target_new", 0) and summary.get("target_new", 0) > 0 and not summary.get("continue_graph_after_target"):
             console.print(
                 "[yellow]The new-eligible target was reached during seed discovery; "
                 "creator/related-video expansion was skipped. Use --continue-graph-after-target "
