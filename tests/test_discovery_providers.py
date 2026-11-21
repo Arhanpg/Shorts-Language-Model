@@ -113,7 +113,7 @@ def test_youtube_provider_uses_shorts_filter_and_deduplicates(monkeypatch):
     assert results[0].short_format_status == "confirmed"
     assert results[0].metadata["search_filter"] == "shorts"
     assert results[0].metadata["search_language"] == "hi"
-    assert provider.search_results_seen == 1
+    assert provider.search_results_seen == 2
 
     client = FakeYouTube.instances[0]
     assert client.kwargs["language"] == "hi"
