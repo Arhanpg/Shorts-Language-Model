@@ -211,6 +211,9 @@ def test_ytscrape_shorts_result_is_marked_as_confirmed_and_keeps_search_provenan
     assert str(candidate.canonical_url) == "https://www.youtube.com/shorts/AbCdEfGh123"
     assert candidate.view_count == 1_450_000
     assert candidate.duration_seconds == 45
+    assert candidate.upload_date is None
+    assert candidate.metadata["upload_date_accuracy"] == "approximate_from_search_relative_time"
+    assert candidate.metadata["views_observed_at"]
     assert candidate.metric_source == "ytscrape_shorts_search_views"
     assert candidate.metadata["search_filter"] == "shorts"
     assert candidate.metadata["search_language"] == "hi"
