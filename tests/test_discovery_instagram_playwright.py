@@ -27,3 +27,16 @@ def test_instagram_parser_rejects_non_reel_video_and_display_strings():
     assert len(records) == 1
     assert records[0].play_count is None
     assert records[0].qualifying_metric() is None
+
+
+def test_instagram_explicit_view_count_remains_a_views_metric():
+    payload = {"items": [{
+        "code": "ExplicitViews123",
+        "product_type": "clips",
+        "view_count": 2_000_000,
+    }]}
+    item = extract_reel_records(payload, creator_handle="creator")[0]
+    assert item.view_count == 2_000_000
+    assert item.play_count is None
+    assert item.qualifying_metric() == 2_000_000
+    assert item.qualifying_metric_kind() == "views"

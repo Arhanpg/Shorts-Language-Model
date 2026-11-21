@@ -40,11 +40,15 @@ class DiscoveredCandidate(BaseModel):
 
     def qualifying_metric(self) -> int | None:
         """Return the platform-native metric without conflating views and plays."""
-        return self.view_count if self.platform == "youtube" else self.play_count
+        if self.platform == "youtube":
+            return self.view_count
+        return self.play_count if self.play_count is not None else self.view_count
 
     def qualifying_metric_kind(self) -> str:
         """Return the explicit metric label used for this platform."""
-        return "views" if self.platform == "youtube" else "plays"
+        if self.platform == "youtube":
+            return "views"
+        return "plays" if self.play_count is not None else "views"
 
 
 class AcquisitionAuthorization(BaseModel):

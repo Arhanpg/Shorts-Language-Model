@@ -113,8 +113,19 @@ class CreatorFrontier:
         now = datetime.now(UTC)
         blocked = bool(error and any(t in error.casefold()
                        for t in ("checkpoint", "challenge", "rate limit", "429", "403")))
-        status = "blocked" if blocked else "exhausted" if exhausted else "pending"
-        next_crawl = (now + timedelta(days=cooldown_days)).isoformat() if exhausted and not blocked else None
+        attempts_row = self.connection.execute(
+            "SELECT attempts FROM creator_frontier WHERE platform=? AND creator_id=?",
+            (platform, creator_id),
+        ).fetchone()
+        attempts = int(attempts_row["attempts"]) if attempts_row else 0
+        failed = bool(error and attempts >= 3 and not blocked)
+        status = "blocked" if blocked else "failed" if failed else "exhausted" if exhausted else "pending"
+        if exhausted and not blocked:
+            next_crawl = (now + timedelta(days=cooldown_days)).isoformat()
+        elif error and not blocked and not failed:
+            next_crawl = (now + timedelta(minutes=30)).isoformat()
+        else:
+            next_crawl = None
         self.connection.execute(
             """UPDATE creator_frontier SET status=?, last_crawled_at=?, next_crawl_after=?,
             lease_until=NULL, eligible_yield_count=eligible_yield_count+?, last_error=?
@@ -142,9 +153,10 @@ class CreatorFrontier:
 
     def finish_seed(self, platform: str, video_id: str, *, error: str | None = None) -> None:
         self.connection.execute(
-            """UPDATE expansion_seeds SET status=?, expanded_at=?, last_error=?
-            WHERE platform=? AND video_id=?""",
-            ("pending" if error else "expanded", datetime.now(UTC).isoformat(),
+            """UPDATE expansion_seeds SET status=CASE WHEN ? IS NULL THEN 'expanded'
+                WHEN attempts>=2 THEN 'failed' ELSE 'pending' END,
+                expanded_at=?, last_error=? WHERE platform=? AND video_id=?""",
+            (error, datetime.now(UTC).isoformat(),
              error[:500] if error else None, platform, video_id))
         self.connection.commit()
 
@@ -166,6 +178,7 @@ class CreatorFrontier:
             "creators_pending": "SELECT COUNT(*) FROM creator_frontier WHERE status='pending'",
             "creators_exhausted": "SELECT COUNT(*) FROM creator_frontier WHERE status='exhausted'",
             "creators_blocked": "SELECT COUNT(*) FROM creator_frontier WHERE status='blocked'",
+            "creators_failed": "SELECT COUNT(*) FROM creator_frontier WHERE status='failed'",
             "expansion_seeds_pending": "SELECT COUNT(*) FROM expansion_seeds WHERE status='pending'",
             "creator_edges": "SELECT COUNT(*) FROM creator_edges",
         }
