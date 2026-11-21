@@ -382,13 +382,21 @@ class InstagramSearchProvider:
                 or []
             )
 
-    def _search_urls(self, query: str, *, limit: int) -> list[str]:
+    def _search_urls(
+        self,
+        query: str,
+        *,
+        limit: int,
+        deadline: float | None = None,
+    ) -> list[str]:
         found: list[str] = []
         seen: set[str] = set()
         search_query = query if query.startswith("site:instagram.com/") else (
             f"site:instagram.com/reel/ {query}"
         )
         for page in range(1, self.pages + 1):
+            if deadline is not None and time.monotonic() + self.search_timeout >= deadline:
+                break
             try:
                 results = self._search_page(
                     search_query, limit=limit, page=page, backend=self.backend
@@ -402,7 +410,11 @@ class InstagramSearchProvider:
                     f"{type(exc).__name__}: {str(exc)[:200]}"
                 )
                 results = []
-                if self.fallback_backend and self.fallback_backend != self.backend:
+                if (
+                    self.fallback_backend
+                    and self.fallback_backend != self.backend
+                    and (deadline is None or time.monotonic() + self.search_timeout < deadline)
+                ):
                     try:
                         results = self._search_page(
                             search_query,
@@ -489,11 +501,21 @@ class InstagramSearchProvider:
             self.metadata_successes += 1
         return candidate
 
-    def search(self, query: str, *, limit: int = 30) -> Iterator[DiscoveredCandidate]:
-        """Search indexed Reel URLs and resolve at most the remaining lookup budget."""
-        if self.circuit_open or self.metadata_lookups >= self.max_lookups:
+    def search(
+        self,
+        query: str,
+        *,
+        limit: int = 30,
+        deadline: float | None = None,
+    ) -> Iterator[DiscoveredCandidate]:
+        """Search indexed Reel URLs within an optional monotonic run deadline."""
+        if (
+            self.circuit_open
+            or self.metadata_lookups >= self.max_lookups
+            or (deadline is not None and time.monotonic() >= deadline)
+        ):
             return
-        urls = self._search_urls(query, limit=limit)
+        urls = self._search_urls(query, limit=limit, deadline=deadline)
         if not urls:
             return
         try:
@@ -508,7 +530,11 @@ class InstagramSearchProvider:
         remaining = self.max_lookups - self.metadata_lookups
         self.lookup_backlog += max(0, len(urls) - remaining)
         for url in urls[:remaining]:
-            if self.circuit_open:
+            if (
+                self.circuit_open
+                or (deadline is not None and time.monotonic() >= deadline)
+            ):
+                self.lookup_backlog += 1
                 break
             shortcode = instagram_shortcode_from_url(url)
             if not shortcode:
@@ -516,16 +542,28 @@ class InstagramSearchProvider:
             candidate = self._resolve_shortcode(shortcode, loader)
             if candidate is not None:
                 yield candidate
-            if self.request_pause_seconds:
+            if self.request_pause_seconds and (
+                deadline is None or time.monotonic() + self.request_pause_seconds < deadline
+            ):
                 time.sleep(self.request_pause_seconds)
 
-    def search_hashtag(self, hashtag: str, *, limit: int = 50) -> Iterator[DiscoveredCandidate]:
+    def search_hashtag(
+        self,
+        hashtag: str,
+        *,
+        limit: int = 50,
+        deadline: float | None = None,
+    ) -> Iterator[DiscoveredCandidate]:
         """Optional authenticated hashtag search; obeys the same lookup cap."""
         if not self.session_username:
             raise ValueError(
                 "Instagram hashtag search requires --instagram-session-user and a valid local session."
             )
-        if self.circuit_open or self.metadata_lookups >= self.max_lookups:
+        if (
+            self.circuit_open
+            or self.metadata_lookups >= self.max_lookups
+            or (deadline is not None and time.monotonic() >= deadline)
+        ):
             return
         try:
             import instaloader
@@ -543,7 +581,11 @@ class InstagramSearchProvider:
         self.lookup_backlog += max(0, min(limit, self.max_lookups) - remaining)
         seen: set[str] = set()
         for post in iterator:
-            if self.circuit_open or len(seen) >= remaining:
+            if (
+                self.circuit_open
+                or len(seen) >= remaining
+                or (deadline is not None and time.monotonic() >= deadline)
+            ):
                 break
             try:
                 shortcode = str(getattr(post, "shortcode", "") or "")
@@ -562,7 +604,9 @@ class InstagramSearchProvider:
                 # Hashtag provenance is a candidate, not proof of Reel URL format.
                 candidate = candidate.model_copy(update={"short_format_status": "candidate"})
                 yield candidate
-            if self.request_pause_seconds:
+            if self.request_pause_seconds and (
+                deadline is None or time.monotonic() + self.request_pause_seconds < deadline
+            ):
                 time.sleep(self.request_pause_seconds)
 
     def close(self) -> None:
