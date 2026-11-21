@@ -18,13 +18,13 @@ from rich.console import Console
 from rich.table import Table
 
 from shorts_intelligence.discovery.downloader import download_candidate
-from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
 from shorts_intelligence.discovery.legacy_providers import (
     InstagramSearchProvider,
     ProviderUnavailable,
     YouTubeSearchProvider,
     YouTubeShortsSurfaceProvider,
 )
+from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
 from shorts_intelligence.discovery.query_planner import (
     SearchQuery,
     build_instagram_query_pool,
