@@ -38,7 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_expansion_seeds_due
 CREATE TABLE IF NOT EXISTS creator_edges (
  platform TEXT NOT NULL, source_creator_id TEXT NOT NULL,
  target_creator_id TEXT NOT NULL, edge_type TEXT NOT NULL,
- source_video_id TEXT, observed_at TEXT NOT NULL, metadata_json TEXT NOT NULL DEFAULT '{}',
+ source_video_id TEXT NOT NULL DEFAULT '', observed_at TEXT NOT NULL, metadata_json TEXT NOT NULL DEFAULT '{}',
  PRIMARY KEY(platform, source_creator_id, target_creator_id, edge_type, source_video_id)
 );
 """
@@ -113,7 +113,7 @@ class CreatorFrontier:
                        error: str | None = None) -> None:
         now = datetime.now(UTC)
         blocked = bool(error and any(t in error.casefold()
-                       for t in ("checkpoint", "challenge", "rate limit", "429", "403")))
+                       for t in ("checkpoint", "challenge", "rate limit", "rate-limit", "ratelimit", "botdetected", "captcha", "login", "429", "403")))
         attempts_row = self.connection.execute(
             "SELECT attempts FROM creator_frontier WHERE platform=? AND creator_id=?",
             (platform, creator_id),
@@ -170,7 +170,7 @@ class CreatorFrontier:
             """INSERT OR IGNORE INTO creator_edges(platform, source_creator_id,
             target_creator_id, edge_type, source_video_id, observed_at, metadata_json)
             VALUES(?,?,?,?,?,?,?)""",
-            (platform, source_creator_id, target_creator_id, edge_type, source_video_id,
+            (platform, source_creator_id, target_creator_id, edge_type, source_video_id or '',
              datetime.now(UTC).isoformat(), json.dumps(metadata or {}, ensure_ascii=False)))
         self.connection.commit()
 

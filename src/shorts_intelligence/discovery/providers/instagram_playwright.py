@@ -127,10 +127,15 @@ class InstagramPlaywrightProvider:
                     await page.mouse.wheel(0, 2200)
                     await page.wait_for_timeout(1800)
             except Exception as exc:
+                message = str(exc).casefold()
+                if any(token in message for token in ("checkpoint", "challenge", "login")):
+                    self.blocked = True
                 if len(self.errors) < 30:
                     self.errors.append(f"creator {username}: {type(exc).__name__}: {str(exc)[:180]}")
+                if not self.blocked:
+                    raise
             finally:
                 await context.close()
         if self.blocked:
-            raise RuntimeError("Instagram returned HTTP 401/403/429; backend stopped without retry or fallback.")
+            raise RuntimeError("Instagram login/checkpoint or HTTP 401/403/429 restriction; backend stopped without retry or fallback.")
         return list(candidates.values()), handles

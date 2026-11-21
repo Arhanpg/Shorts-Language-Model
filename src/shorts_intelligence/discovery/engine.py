@@ -55,7 +55,7 @@ async def run_creator_graph(
                 "education shorts", "technology shorts",
             ][:max_seed_queries]
             for query in queries:
-                if loop.time() >= deadline:
+                if loop.time() >= deadline or yt.blocked:
                     break
                 try:
                     listed = await within_budget(yt.search_seed_videos(query, limit=20))

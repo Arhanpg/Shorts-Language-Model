@@ -16,27 +16,42 @@ class TubeScrapeProvider:
         self.timeout = max(3.0, min(timeout, 15.0))
         self.concurrency = max(1, min(concurrency, 5))
         self.requests = 0
+        self.blocked = False
+
+    async def _bounded(self, awaitable: Any, timeout: float) -> Any:
+        if self.blocked:
+            raise RuntimeError("TubeScrape backend circuit is open after an access/rate-limit signal.")
+        try:
+            return await asyncio.wait_for(awaitable, timeout=timeout)
+        except Exception as exc:
+            message = f"{type(exc).__name__}: {exc}".casefold()
+            if any(token in message for token in (
+                "ratelimit", "rate limit", "http 429", "too many requests",
+                "botdetected", "captcha", "http 403", "forbidden",
+            )):
+                self.blocked = True
+            raise
 
     async def search_seed_videos(self, query: str, *, limit: int = 20) -> list[Any]:
         self.requests += 1
-        result = await asyncio.wait_for(
+        result = await self._bounded(
             self.client.asearch(query, max_results=limit, type="short", sort_by="view_count"),
-            timeout=self.timeout * 3)
+            self.timeout * 3)
         return list(result.videos)
 
     async def harvest_creator(self, creator_id: str, *, limit: int = 48) -> list[DiscoveredCandidate]:
         self.requests += 1
-        result = await asyncio.wait_for(
+        result = await self._bounded(
             self.client.aget_channel_shorts(creator_id, max_results=limit, sort_by="popular"),
-            timeout=self.timeout * 4)
+            self.timeout * 4)
         shorts = list(result.shorts)
         if not shorts:
             return []
         ids = [item.video_id for item in shorts]
         self.requests += 1
-        details = await asyncio.wait_for(
+        details = await self._bounded(
             self.client.aget_videos_info(ids, enrich=False, concurrency=self.concurrency),
-            timeout=self.timeout * max(2, (len(ids) + self.concurrency - 1) // self.concurrency + 1))
+            self.timeout * max(2, (len(ids) + self.concurrency - 1) // self.concurrency + 1))
         candidates = []
         for listed, info in zip(shorts, details, strict=False):
             if info is None:
@@ -52,9 +67,9 @@ class TubeScrapeProvider:
 
     async def expand_related(self, video_id: str, *, limit: int = 9) -> list[DiscoveredCandidate]:
         self.requests += 1
-        related = await asyncio.wait_for(
+        related = await self._bounded(
             self.client.aget_related_shorts(video_id, max_results=limit),
-            timeout=self.timeout * 3)
+            self.timeout * 3)
         return [self._candidate(item, evidence="related_shorts_sequence") for item in related]
 
     async def enrich_seed_videos(self, videos: list[Any]) -> list[DiscoveredCandidate]:
