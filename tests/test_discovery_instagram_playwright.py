@@ -110,3 +110,36 @@ def test_instagram_jsonld_ignores_non_numeric_and_like_only_metrics():
         {"interactionType": {"@type": "WatchAction"}, "userInteractionCount": "1.2M"},
     ]}
     assert _jsonld_video_metric(payload) is None
+
+
+def test_provider_close_is_idempotent_after_external_browser_shutdown():
+    import asyncio
+    from pathlib import Path
+
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        InstagramPlaywrightProvider,
+    )
+
+    class ClosedContext:
+        async def close(self):
+            raise RuntimeError("Target page, context or browser has been closed")
+
+    class StoppedPlaywright:
+        def __init__(self):
+            self.calls = 0
+
+        async def stop(self):
+            self.calls += 1
+            raise RuntimeError("I/O operation on closed pipe")
+
+    provider = InstagramPlaywrightProvider(profile_dir=Path("profile"))
+    playwright = StoppedPlaywright()
+    provider._context = ClosedContext()
+    provider._playwright = playwright
+
+    asyncio.run(provider.close())
+    asyncio.run(provider.close())
+
+    assert provider._context is None
+    assert provider._playwright is None
+    assert playwright.calls == 1
