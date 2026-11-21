@@ -280,6 +280,7 @@ def run_discovery(
                 for search_query in instagram_queries:
                     if instagram_provider.circuit_open:
                         break
+                    instagram_provider.region = search_query.region
                     before = instagram_provider.search_results_seen
                     query_candidates = list(
                         instagram_provider.search(
@@ -319,21 +320,6 @@ def run_discovery(
         except Exception as exc:
             stats["unexpected_errors"] += 1
             errors.append(f"Unexpected discovery error: {type(exc).__name__}: {str(exc)[:300]}")
-        finally:
-            if youtube_provider:
-                for message in youtube_provider.errors:
-                    errors.append(f"youtube: {message[:300]}")
-                provider_errors["youtube"] += len(youtube_provider.errors)
-                if youtube_provider.circuit_reason:
-                    errors.append(f"youtube circuit opened: {youtube_provider.circuit_reason}")
-                youtube_provider.close()
-            if instagram_provider:
-                for message in instagram_provider.errors:
-                    errors.append(f"instagram: {message[:300]}")
-                provider_errors["instagram"] += len(instagram_provider.errors)
-                if instagram_provider.circuit_reason:
-                    errors.append(f"instagram circuit opened: {instagram_provider.circuit_reason}")
-                instagram_provider.close()
 
         # Persist query history even when a query returned zero results. That
         # stops a failing phrase/backend from being retried 24 times next run.
@@ -458,6 +444,23 @@ def run_discovery(
 
             if stats["new_eligible"] >= target_new:
                 break
+
+        # Collect provider diagnostics after metadata enrichment so any detail
+        # lookup errors are included in the run totals. Close all network sessions.
+        if youtube_provider:
+            for message in youtube_provider.errors:
+                errors.append(f"youtube: {message[:300]}")
+            provider_errors["youtube"] += len(youtube_provider.errors)
+            if youtube_provider.circuit_reason:
+                errors.append(f"youtube circuit opened: {youtube_provider.circuit_reason}")
+            youtube_provider.close()
+        if instagram_provider:
+            for message in instagram_provider.errors:
+                errors.append(f"instagram: {message[:300]}")
+            provider_errors["instagram"] += len(instagram_provider.errors)
+            if instagram_provider.circuit_reason:
+                errors.append(f"instagram circuit opened: {instagram_provider.circuit_reason}")
+            instagram_provider.close()
 
         # Include exact provider totals in durable run history.
         total_provider_errors = sum(provider_errors.values()) + stats["unexpected_errors"]
