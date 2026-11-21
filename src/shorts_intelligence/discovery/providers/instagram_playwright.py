@@ -65,6 +65,7 @@ class InstagramPlaywrightProvider:
         self.responses_parsed = 0
         self.responses_unparsed = 0
         self.errors: list[str] = []
+        self.blocked = False
 
     async def harvest_creator(self, username: str, *, max_scrolls: int = 4
                               ) -> tuple[list[DiscoveredCandidate], set[str]]:
@@ -90,6 +91,7 @@ class InstagramPlaywrightProvider:
                     return
                 self.requests_observed += 1
                 if response.status in {401, 403, 429}:
+                    self.blocked = True
                     if len(self.errors) < 30:
                         self.errors.append(f"Instagram response blocked with HTTP {response.status}")
                     return
@@ -119,6 +121,8 @@ class InstagramPlaywrightProvider:
                         "Instagram login/checkpoint is required. Complete it manually in the browser profile."
                     )
                 for _ in range(max(0, min(max_scrolls, 10))):
+                    if self.blocked:
+                        break
                     await page.mouse.wheel(0, 2200)
                     await page.wait_for_timeout(1800)
             except Exception as exc:
@@ -126,4 +130,6 @@ class InstagramPlaywrightProvider:
                     self.errors.append(f"creator {username}: {type(exc).__name__}: {str(exc)[:180]}")
             finally:
                 await context.close()
+        if self.blocked:
+            raise RuntimeError("Instagram returned HTTP 401/403/429; backend stopped without retry or fallback.")
         return list(candidates.values()), handles

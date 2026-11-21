@@ -120,7 +120,7 @@ def instagram_login(
     try:
         import instaloader
     except ImportError as exc:
-        console.print('[red]Install discovery dependencies first: pip install -e ".[discovery]"[/red]')
+        console.print('[red]Install discovery dependencies first: pip install -e ".[legacy-discovery]"[/red]')
         raise typer.Exit(code=2) from exc
     session_path = session_file.expanduser().resolve()
     session_path.parent.mkdir(parents=True, exist_ok=True)

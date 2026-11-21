@@ -31,6 +31,13 @@ async def run_creator_graph(
     errors: list[str] = []
     providers: dict[str, Any] = {}
     new_eligible = 0
+
+    async def within_budget(awaitable: Any) -> Any:
+        remaining = deadline - loop.time()
+        if remaining <= 0:
+            raise TimeoutError("overall graph-discovery budget expired")
+        return await asyncio.wait_for(awaitable, timeout=remaining)
+
     try:
         if platform in {"youtube", "all"}:
             providers["youtube"] = TubeScrapeProvider(concurrency=youtube_concurrency)
@@ -50,10 +57,10 @@ async def run_creator_graph(
                 if loop.time() >= deadline:
                     break
                 try:
-                    listed = await yt.search_seed_videos(query, limit=20)
+                    listed = await within_budget(yt.search_seed_videos(query, limit=20))
                     stats["seed_search_requests"] += 1
                     stats["seed_search_results"] += len(listed)
-                    details = await yt.enrich_seed_videos(listed)
+                    details = await within_budget(yt.enrich_seed_videos(listed))
                     stats["seed_detail_batches"] += 1
                     for candidate in details:
                         stats["candidates_observed"] += 1
@@ -101,10 +108,10 @@ async def run_creator_graph(
                 creators_claimed[current_platform] += 1
                 try:
                     if current_platform == "youtube":
-                        candidates = await provider.harvest_creator(creator.creator_id, limit=48)
+                        candidates = await within_budget(provider.harvest_creator(creator.creator_id, limit=48))
                         stats["creator_harvest_batches"] += 1
                     else:
-                        candidates, coauthors = await provider.harvest_creator(creator.handle or creator.creator_id)
+                        candidates, coauthors = await within_budget(provider.harvest_creator(creator.handle or creator.creator_id))
                         stats["creator_harvest_batches"] += 1
                         for handle in coauthors:
                             frontier.enqueue_creator(
@@ -146,7 +153,7 @@ async def run_creator_graph(
                         frontier.finish_seed("youtube", str(seed["video_id"]))
                     else:
                         try:
-                            related = await providers["youtube"].expand_related(str(seed["video_id"]), limit=9)
+                            related = await within_budget(providers["youtube"].expand_related(str(seed["video_id"]), limit=9))
                             stats["related_sequence_requests"] += 1
                             for candidate in related:
                                 stats["related_candidates"] += 1
@@ -188,7 +195,12 @@ async def run_creator_graph(
         elapsed = round(loop.time() - started, 2)
         graph_summary = frontier.summary()
         request_counts = {
-            name: provider.requests_observed if name == "instagram" else provider.requests
+            name: (
+                {"json_responses_observed": provider.requests_observed,
+                 "responses_parsed": provider.responses_parsed,
+                 "responses_unparsed": provider.responses_unparsed}
+                if name == "instagram" else {"library_calls": provider.requests}
+            )
             for name, provider in providers.items()
         }
         summary = {
