@@ -343,3 +343,8 @@ A new `shorts-lm discover instagram-login --username YOUR_USERNAME` command uses
 **Strict eligibility:** a candidate is eligible only when its format is `confirmed` and its observed `view_count` is at least the configured threshold. A `candidate`/uncertain format can no longer qualify merely because its view count is high. On database open, legacy rows marked eligible without confirmed format are reclassified as `format_unknown`; metadata is preserved.
 
 The 1M rule is applied independently per platform. Instagram `play_count` remains distinct and is not accepted by default. Instagram play_count is retained separately and can never substitute for view_count eligibility.
+
+
+## 14. Query-performance storage API regression fix
+
+The adaptive query planner consumes `DiscoveryStore.query_performance(platform)`. This method returns per-query average raw-result and normalized-candidate counts from persisted cumulative totals, scoped to the requested platform. It is part of the storage/CLI contract and is covered by a regression test for average calculation and platform isolation.

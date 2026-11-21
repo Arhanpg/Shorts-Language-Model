@@ -177,6 +177,30 @@ class DiscoveryStore:
         )
         self.connection.commit()
 
+    def query_performance(self, platform: str) -> dict[str, dict[str, int]]:
+        """Return per-query average yield for the requested platform.
+
+        The query planner compares strategies using average raw search results
+        and average normalized candidates per execution. Totals are persisted
+        so this remains stable across process restarts and database migrations.
+        """
+        rows = self.connection.execute(
+            """SELECT query_key, run_count, total_raw_results, total_candidate_count
+            FROM discovery_queries
+            WHERE platform=?
+            ORDER BY query_key""",
+            (platform,),
+        ).fetchall()
+        performance: dict[str, dict[str, int]] = {}
+        for row in rows:
+            run_count = max(1, int(row["run_count"]))
+            performance[str(row["query_key"])] = {
+                "run_count": run_count,
+                "raw_results": max(0, int(row["total_raw_results"])) // run_count,
+                "candidate_count": max(0, int(row["total_candidate_count"])) // run_count,
+            }
+        return performance
+
     def query_summary(self, platform: str | None = None) -> dict[str, int]:
         """Summarize how many distinct search queries have been used."""
         if platform is None:
