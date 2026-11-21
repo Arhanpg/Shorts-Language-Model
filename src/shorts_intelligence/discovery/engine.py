@@ -12,6 +12,7 @@ from shorts_intelligence.discovery.providers.instagram_playwright import Instagr
 from shorts_intelligence.discovery.providers.youtube_tubescrape import TubeScrapeProvider
 from shorts_intelligence.discovery.storage import DiscoveryStore
 
+
 async def run_creator_graph(
     store: DiscoveryStore, *, platform: str = "youtube", target_new: int = 100,
     min_metric: int = 1_000_000, max_runtime_seconds: int = 240,

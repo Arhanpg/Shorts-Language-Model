@@ -6,6 +6,7 @@ from typing import Any
 
 from shorts_intelligence.discovery.models import DiscoveredCandidate
 
+
 class TubeScrapeProvider:
     """Use TubeScrape's public async client; no official API credentials."""
     def __init__(self, *, timeout: float = 10.0, concurrency: int = 5) -> None:
