@@ -94,7 +94,7 @@ For full YouTube video extraction and downloading, the environment also needs yt
 - YouTube detail enrichment is capped at 40 new incomplete candidates per run by default.
 - Instagram uses DDGS timeout=8 seconds, an explicit primary backend set and one fallback engine.
 - Instaloader per-request timeout is 12 seconds with one attempt by default. Repeated failures or block/rate-limit responses open a circuit for the remainder of that run.
-- Instagram metadata lookups are capped at 15 per run by default.
+- Instagram metadata lookups are capped at 40 per run by default.
 - The JSON report includes query rotation, provider errors, enrichment counts, lookup counts and circuit-breaker reason.
 
 See [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md) for detailed research, rationale, options and validation.
