@@ -195,8 +195,8 @@ class YouTubeSearchProvider:
         duration = candidate.duration_seconds
         if duration is None and isinstance(details.length_seconds, int) and details.length_seconds > 0:
             duration = float(details.length_seconds)
-        title = candidate.title or details.title
-        description = candidate.description or details.description
+        title = details.title or candidate.title
+        description = details.description or candidate.description
         creator = candidate.creator or details.channel
         upload_date = candidate.upload_date or details.upload_date
         hashtags = list(dict.fromkeys(candidate.hashtags + extract_hashtags(title, description)))
@@ -427,6 +427,7 @@ class InstagramSearchProvider:
                 "read timed out",
                 "timed out",
                 "remote disconnected",
+                "remote end closed connection",
                 "connection aborted",
                 "connection reset",
                 "connectionexception",
