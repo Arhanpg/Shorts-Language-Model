@@ -51,7 +51,9 @@ class YouTubeSearchProvider:
         self.enrichment_successes = 0
         self.circuit_open = False
         self.circuit_reason: str | None = None
-        self._clients: dict[tuple[str, str], Any] = {}
+        self.consecutive_failures = 0
+        self.failure_threshold = 3
+        self._clients: dict[tuple[str, str], Any] =
 
     def _client_for(self, language: str, region: str) -> Any:
         key = (language.casefold(), region.upper())
@@ -95,13 +97,17 @@ class YouTubeSearchProvider:
                 "confirm you're not a bot",
                 "consentrequired",
                 "request blocked",
+                "timed out",
+                "connectionerror",
+                "requesterror",
             )
         )
 
     def _record_error(self, platform: str, exc: Exception) -> None:
         if len(self.errors) < 100:
             self.errors.append(f"{platform}: {type(exc).__name__}: {str(exc)[:250]}")
-        if self._is_stop_error(exc):
+        self.consecutive_failures += 1
+        if self._is_stop_error(exc) or self.consecutive_failures >= self.failure_threshold:
             self.circuit_open = True
             self.circuit_reason = f"{type(exc).__name__}: {str(exc)[:180]}"
 
@@ -148,6 +154,7 @@ class YouTubeSearchProvider:
                     continue
                 seen.add(candidate.source_id)
                 yield candidate
+            self.consecutive_failures = 0
         except (RateLimited, BotDetected) as exc:
             self._record_error("youtube", exc)
         except ProviderUnavailable:
@@ -210,6 +217,7 @@ class YouTubeSearchProvider:
             "detail_category": details.category,
         }
         self.enrichment_successes += 1
+        self.consecutive_failures = 0
         return candidate.model_copy(
             update={
                 "view_count": views,
@@ -266,7 +274,7 @@ class InstagramSearchProvider:
         search_timeout: int = 8,
         request_timeout: float = 12.0,
         max_connection_attempts: int = 1,
-        max_lookups: int = 30,
+        max_lookups: int = 40,
         failure_threshold: int = 3,
     ) -> None:
         self.session_username = session_username
