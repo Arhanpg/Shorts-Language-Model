@@ -5,7 +5,9 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import os
 import random
+import subprocess
 import time
 import uuid
 from collections import Counter
@@ -33,6 +35,7 @@ from shorts_intelligence.discovery.query_planner import (
     select_due_queries,
 )
 from shorts_intelligence.discovery.storage import DiscoveryStore
+from shorts_intelligence.discovery.browser_session import find_chrome_executable
 from shorts_intelligence.media.probe import sha256_file
 
 discovery_app = typer.Typer(
@@ -1156,29 +1159,45 @@ def instagram_browser_login(
     profile_dir: Path = typer.Option(
         Path(".shortslm/browser/instagram"), "--profile-dir"
     ),
+    chrome_path: Path | None = typer.Option(
+        None, "--chrome-path", help="Optional path to chrome.exe / Google Chrome binary."
+    ),
 ) -> None:
-    """Open a persistent visible browser so you can log in manually to Instagram."""
-    async def open_profile() -> None:
-        try:
-            from playwright.async_api import async_playwright
-        except ImportError as exc:
-            raise RuntimeError(
-                'Install browser support: pip install -e ".[instagram-browser]" '
-                'then run playwright install chromium'
-            ) from exc
-        profile_dir.expanduser().resolve().mkdir(parents=True, exist_ok=True)
-        async with async_playwright() as playwright:
-            context = await playwright.chromium.launch_persistent_context(
-                user_data_dir=str(profile_dir.expanduser().resolve()), headless=False
-            )
-            page = await context.new_page()
-            await page.goto("https://www.instagram.com/", wait_until="domcontentloaded")
-            console.print("[yellow]Log in normally in the opened browser. Complete any verification yourself.[/yellow]")
-            await asyncio.to_thread(input, "When the account is ready, press Enter here to close the browser...")
-            await context.close()
+    """Open a normal system Google Chrome window for fully manual Instagram sign-in.
 
+    The login window is intentionally NOT controlled by Playwright. This lets the
+    user complete any platform verification in an ordinary browser session.
+    """
     try:
-        asyncio.run(open_profile())
+        executable = find_chrome_executable(chrome_path)
+        resolved_profile = profile_dir.expanduser().resolve()
+        resolved_profile.mkdir(parents=True, exist_ok=True)
+        command = [
+            str(executable),
+            f"--user-data-dir={resolved_profile}",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "https://www.instagram.com/",
+        ]
+        creationflags = 0
+        if os.name == "nt":
+            creationflags = (
+                getattr(subprocess, "DETACHED_PROCESS", 0)
+                | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+            )
+        subprocess.Popen(
+            command,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            close_fds=True,
+            creationflags=creationflags,
+            start_new_session=os.name != "nt",
+        )
+        console.print("[green]Opened regular Google Chrome (not Playwright Chromium).[/green]")
+        console.print("[yellow]Sign in and complete any CAPTCHA/verification manually. This tool does not solve or bypass verification.[/yellow]")
+        console.print(f"Profile: {resolved_profile}")
+        console.print("[bold]After sign-in, close every Chrome window using this profile before running graph discovery.[/bold]")
     except Exception as exc:
         console.print(f"[bold red]Instagram browser setup failed:[/bold red] {type(exc).__name__}: {exc}")
         raise typer.Exit(code=1) from exc

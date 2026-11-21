@@ -86,6 +86,7 @@ class InstagramPlaywrightProvider:
         async with async_playwright() as playwright:
             context = await playwright.chromium.launch_persistent_context(
                 user_data_dir=str(self.profile_dir), headless=False,
+                channel="chrome",
                 viewport={"width": 1365, "height": 900})
             page = await context.new_page()
             async def observe(response: Any) -> None:
