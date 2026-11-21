@@ -27,6 +27,7 @@ async def run_creator_graph(
     instagram_max_reel_details: int = 3,
     instagram_hashtag_max_reel_details: int = 8,
     max_instagram_hashtags: int = 20,
+    continue_graph_after_target: bool = False,
 ) -> dict[str, Any]:
     """Run bounded graph discovery. This function never downloads media."""
     if platform not in {"youtube", "instagram", "all"}:
@@ -63,6 +64,17 @@ async def run_creator_graph(
         if remaining <= 0:
             raise TimeoutError("provider stage budget expired")
         return await asyncio.wait_for(awaitable, timeout=remaining)
+
+    def record_candidate_metrics(candidate: Any, *, is_new: bool) -> None:
+        if is_new:
+            stats["new_inventory_candidates"] += 1
+        metric = candidate.qualifying_metric()
+        if metric is None:
+            stats["metric_unknown_candidates"] += 1
+        else:
+            stats["metric_observed_candidates"] += 1
+            if metric >= min_metric:
+                stats["metric_above_threshold_candidates"] += 1
 
     try:
         if platform in {"youtube", "all"}:
@@ -104,8 +116,9 @@ async def run_creator_graph(
                                 depth=0)
                             frontier.enqueue_seed("youtube", candidate.source_id,
                                                    creator_id=str(channel_id), depth=0)
-                        _, became = store.upsert_candidate(
+                        is_new, became = store.upsert_candidate(
                             candidate, min_views=min_metric, run_id=run_id)
+                        record_candidate_metrics(candidate, is_new=is_new)
                         frontier.record_candidate_observation(
                             candidate.platform, candidate.source_id, run_id=run_id,
                             metric_kind=candidate.qualifying_metric_kind(),
@@ -147,8 +160,9 @@ async def run_creator_graph(
                                 depth=0)
                             frontier.enqueue_seed(
                                 "youtube", candidate.source_id, creator_id=str(channel_id), depth=0)
-                        _, became = store.upsert_candidate(
+                        is_new, became = store.upsert_candidate(
                             candidate, min_views=min_metric, run_id=run_id)
+                        record_candidate_metrics(candidate, is_new=is_new)
                         frontier.record_candidate_observation(
                             candidate.platform, candidate.source_id, run_id=run_id,
                             metric_kind=candidate.qualifying_metric_kind(),
@@ -187,17 +201,10 @@ async def run_creator_graph(
                     hashtag_eligible = 0
                     for candidate in candidates:
                         stats["candidates_observed"] += 1
-                        if candidate.qualifying_metric() is None:
-                            stats["metric_unknown_candidates"] += 1
-                        else:
-                            stats["metric_observed_candidates"] += 1
-                            if candidate.qualifying_metric() >= min_metric:
-                                stats["metric_above_threshold_candidates"] += 1
                         is_new, became = store.upsert_candidate(
                             candidate, min_views=min_metric, run_id=run_id
                         )
-                        if is_new:
-                            stats["new_inventory_candidates"] += 1
+                        record_candidate_metrics(candidate, is_new=is_new)
                         frontier.record_candidate_observation(
                             candidate.platform, candidate.source_id, run_id=run_id,
                             metric_kind=candidate.qualifying_metric_kind(),
@@ -246,7 +253,9 @@ async def run_creator_graph(
 
         creators_claimed = {"youtube": 0, "instagram": 0}
         expansions_done = 0
-        while loop.time() < deadline and new_eligible < target_new:
+        while loop.time() < deadline and (
+            new_eligible < target_new or continue_graph_after_target
+        ):
             progressed = False
             for current_platform in (["youtube", "instagram"] if platform == "all" else [platform]):
                 provider = providers.get(current_platform)
@@ -284,16 +293,13 @@ async def run_creator_graph(
                     creator_yield = 0
                     for candidate in candidates:
                         stats["candidates_observed"] += 1
-                        if candidate.qualifying_metric() is None:
-                            stats["metric_unknown_candidates"] += 1
-                        else:
-                            stats["metric_observed_candidates"] += 1
-                            if candidate.qualifying_metric() >= min_metric:
-                                stats["metric_above_threshold_candidates"] += 1
                         is_new, became = store.upsert_candidate(
                             candidate, min_views=min_metric, run_id=run_id)
-                        if is_new:
-                            stats["new_inventory_candidates"] += 1
+                        record_candidate_metrics(candidate, is_new=is_new)
+                        if current_platform == "youtube":
+                            stats["youtube_creator_candidates"] += 1
+                        elif current_platform == "instagram":
+                            stats["instagram_creator_candidates"] += 1
                         frontier.record_candidate_observation(
                             candidate.platform, candidate.source_id, run_id=run_id,
                             metric_kind=candidate.qualifying_metric_kind(),
@@ -450,17 +456,15 @@ async def run_creator_graph(
                 "youtube_seed_detail_candidates": stats["seed_detail_candidates"],
                 "youtube_hashtag_search_results": stats["hashtag_search_results"],
                 "youtube_hashtag_detail_candidates": stats["hashtag_detail_candidates"],
-                "youtube_creator_candidates": sum(
-                    item.get("candidates_observed", 0) for item in creator_results
-                    if item.get("platform") == "youtube"
-                ),
+                "youtube_creator_candidates": stats["youtube_creator_candidates"],
                 "youtube_related_candidates": stats["related_candidates"],
                 "instagram_hashtag_candidates": stats["instagram_hashtag_candidates"],
-                "instagram_creator_candidates": sum(
-                    item.get("candidates_observed", 0) for item in creator_results
-                    if item.get("platform") == "instagram"
+                "instagram_creator_candidates": stats["instagram_creator_candidates"],
+                "all_candidates_observed": (
+                    stats["candidates_observed"] + stats["related_candidates"]
                 ),
-                "all_candidates_observed": stats["candidates_observed"],
+            },
+            "continue_graph_after_target": continue_graph_after_target,
             },
             "creator_results": creator_results,
             "hashtag_results": hashtag_results,
