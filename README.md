@@ -67,7 +67,7 @@ Useful controls:
 - `--instagram-max-search-queries 8`: DDGS query budget per run.
 - `--query-cooldown-days 7`: avoid repeating the same query/locale within seven days.
 - `--metadata-enrichment-limit 40`: cap detailed YouTube lookups for missing search metadata.
-- `--instagram-max-lookups 15`: cap individual Instaloader metadata fetches.
+- `--instagram-max-lookups 40`: cap individual Instaloader metadata fetches.
 - `--seed 42`: optional reproducible query ordering. Omit it for a fresh random ordering.
 
 YouTube only:
@@ -79,7 +79,7 @@ shorts-lm discover run --platform youtube --target-new 100 --min-views 1000000 -
 Instagram only:
 
 ```powershell
-shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000 --instagram-max-search-queries 8 --instagram-max-lookups 15 --instagram-timeout 8 --instagram-request-timeout 12
+shorts-lm discover run --platform instagram --target-new 100 --min-views 1000000 --instagram-max-search-queries 8 --instagram-max-lookups 40 --instagram-timeout 8 --instagram-request-timeout 12
 ```
 
 A result target is best-effort, not guaranteed. Search result ranking is biased, and only new unique IDs with a reported qualifying view metric count. Missing views remain unknown and never become zero or 1M+. The README and coverage guide distinguish this from platform-wide random sampling.
