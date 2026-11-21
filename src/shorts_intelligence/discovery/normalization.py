@@ -261,6 +261,7 @@ def candidate_from_ytscrape_video(
             "duration_text": duration_text,
             "views_text": getattr(video, "views_text", None),
             "published_text": getattr(video, "published_text", None),
+            "upload_date_accuracy": "approximate_from_search_relative_time",
             "published_at_estimate": (
                 published_at.isoformat()
                 if isinstance(published_at, datetime)
