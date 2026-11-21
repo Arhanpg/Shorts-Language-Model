@@ -177,11 +177,11 @@ def run_discovery(
         1,
         "--instagram-pages",
         min=1,
-        max=3,
-        help="Number of public indexed result pages to inspect per query.",
+        max=1,
+        help="Number of public indexed result pages to inspect per query (kept to one for bounded runs).",
     ),
     instagram_timeout: int = typer.Option(
-        8, "--instagram-timeout", min=3, max=15,
+        6, "--instagram-timeout", min=3, max=10,
         help="DDGS request timeout in seconds.",
     ),
     instagram_max_lookups: int = typer.Option(
@@ -189,8 +189,8 @@ def run_discovery(
         help="Maximum individual Instagram metadata lookups per run.",
     ),
     instagram_request_timeout: float = typer.Option(
-        12.0, "--instagram-request-timeout", min=5.0, max=30.0,
-        help="Instaloader per-request timeout in seconds (not its 300-second default).",
+        6.0, "--instagram-request-timeout", min=3.0, max=12.0,
+        help="Instaloader per-request timeout in seconds; the discovery run also has a global deadline.",
     ),
     instagram_use_play_count: bool = typer.Option(
         False,
@@ -199,12 +199,12 @@ def run_discovery(
     ),
     pause_seconds: float = typer.Option(1.0, "--pause-seconds", min=1.0, max=10.0),
 ) -> None:
-    """Discover new Shorts/Reels with rotating queries, local dedup and bounded metadata lookup.
+    """Discover new Shorts/Reels with a strict runtime budget and visible progress.
 
-    YouTube uses the dedicated Shorts result filter in ytscrape. Query/locale
-    history is persisted in SQLite, so repeated runs rotate into unused topics,
-    languages and regions before revisiting recently used searches. Instagram
-    web search and metadata lookups have explicit timeouts and a circuit breaker.
+    YouTube uses only the first Shorts-filtered search page per query; the lazy
+    ytscrape iterator is never consumed, so it cannot silently fetch continuation
+    pages. Requests have short timeouts and no retry. Optional detail enrichment
+    has its own wall-clock budget. Instagram loops share the same overall deadline.
     This command discovers metadata only; it does not download media.
     """
     run_id = uuid.uuid4().hex
@@ -474,7 +474,12 @@ def run_discovery(
         # Selectively hydrate new YouTube records whose search-page view count
         # or duration is missing. This is intentionally bounded and uses the
         # same client rate limiter; it never calls the downloader.
-        if youtube_provider and metadata_enrichment_limit > 0 and enrichment_budget_seconds > 0:
+        if (
+            youtube_provider
+            and metadata_enrichment_limit > 0
+            and enrichment_budget_seconds > 0
+            and stop_reason != "target_reached_during_search"
+        ):
             enriched: list[DiscoveredCandidate] = []
             remaining = metadata_enrichment_limit
             enrichment_deadline = min(
@@ -598,6 +603,8 @@ def run_discovery(
     ig_lookup_backlog = instagram_provider.lookup_backlog if instagram_provider else 0
     ig_ddgs_failures = instagram_provider.ddgs_failures if instagram_provider else 0
 
+    if time.monotonic() >= run_deadline and stop_reason == "completed":
+        stop_reason = "runtime_budget_reached"
     elapsed_seconds = round(time.monotonic() - run_started_monotonic, 2)
     payload: dict[str, object] = {
         "run_id": run_id,
