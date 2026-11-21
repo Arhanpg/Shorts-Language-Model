@@ -269,6 +269,17 @@ def run_discovery(
     run_started_at = datetime.now(UTC)
     run_started_monotonic = time.monotonic()
     run_deadline = run_started_monotonic + max_runtime_seconds
+    # In combined mode, reserve independent time for both sources. A slow
+    # YouTube endpoint must not starve Instagram, and optional enrichment must
+    # not consume the entire run. Single-platform runs retain the full budget.
+    youtube_deadline = (
+        run_deadline if platform == "youtube"
+        else run_started_monotonic + max_runtime_seconds * 0.62
+    )
+    instagram_deadline = (
+        run_deadline if platform == "instagram"
+        else run_started_monotonic + max_runtime_seconds * 0.95
+    )
     stop_reason = "completed"
     enrichment_budget_exhausted = False
     rng: random.Random | random.SystemRandom = (
@@ -339,7 +350,7 @@ def run_discovery(
                 youtube_provider = YouTubeSearchProvider(
                     request_timeout=youtube_request_timeout,
                     request_interval=youtube_request_interval,
-                    max_retries=0,
+                    max_retries=1,
                     detail_enrichment_limit=metadata_enrichment_limit,
                 )
                 console.print(
@@ -352,7 +363,7 @@ def run_discovery(
                     if youtube_provider.circuit_open:
                         stop_reason = "youtube_circuit_open"
                         break
-                    if time.monotonic() + (youtube_request_timeout * 2) + youtube_request_interval > run_deadline:
+                    if time.monotonic() + (youtube_request_timeout * 2) + youtube_request_interval > youtube_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     console.print(
@@ -398,13 +409,13 @@ def run_discovery(
                 platform in {"all", "youtube"}
                 and youtube_provider is not None
                 and not youtube_provider.circuit_open
-                and time.monotonic() < run_deadline
+                and time.monotonic() < youtube_deadline
             ):
                 youtube_surface_provider = YouTubeShortsSurfaceProvider(
                     request_timeout=youtube_request_timeout
                 )
                 for shelf_index, shelf_query in enumerate(youtube_hashtag_queries, start=1):
-                    if time.monotonic() + youtube_request_timeout > run_deadline:
+                    if time.monotonic() + youtube_request_timeout > youtube_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     before = youtube_surface_provider.search_results_seen
@@ -439,7 +450,7 @@ def run_discovery(
                 for channel_index, (channel_id, source_candidate) in enumerate(
                     expansion_targets, start=1
                 ):
-                    if time.monotonic() + youtube_request_timeout > run_deadline:
+                    if time.monotonic() + youtube_request_timeout > youtube_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     before = youtube_surface_provider.search_results_seen
@@ -467,7 +478,7 @@ def run_discovery(
             # In combined mode, one platform's provisional target must not
             # silently prevent the other selected platform from running.
             if _should_run_instagram_stage(
-                platform, now=time.monotonic(), deadline=run_deadline
+                platform, now=time.monotonic(), deadline=instagram_deadline
             ):
                 instagram_provider = InstagramSearchProvider(
                     session_username=instagram_session_user,
@@ -481,6 +492,12 @@ def run_discovery(
                     request_timeout=instagram_request_timeout,
                     max_lookups=instagram_max_lookups,
                 )
+                if instagram_session_user and not instagram_provider.preflight():
+                    errors.extend(instagram_provider.errors)
+                    console.print(
+                        f"[yellow]Instagram authentication preflight failed: "
+                        f"{instagram_provider.circuit_reason}[/yellow]"
+                    )
                 if not instagram_session_user:
                     console.print(
                         "[yellow]Instagram metadata mode: anonymous. A local user-owned session "
@@ -490,7 +507,7 @@ def run_discovery(
                     if instagram_provider.circuit_open:
                         stop_reason = "instagram_circuit_open"
                         break
-                    if time.monotonic() >= run_deadline:
+                    if time.monotonic() >= instagram_deadline:
                         stop_reason = "runtime_budget_reached"
                         break
                     console.print(
@@ -503,7 +520,7 @@ def run_discovery(
                         instagram_provider.search(
                             search_query.query,
                             limit=min(results_per_query, 30),
-                            deadline=run_deadline,
+                            deadline=instagram_deadline,
                         )
                     )
                     raw_count = instagram_provider.search_results_seen - before
@@ -516,14 +533,14 @@ def run_discovery(
 
                 for tag in instagram_hashtag:
                     if instagram_provider.circuit_open or time.monotonic() >= run_deadline:
-                        stop_reason = "runtime_budget_reached" if time.monotonic() >= run_deadline else "instagram_circuit_open"
+                        stop_reason = "runtime_budget_reached" if time.monotonic() >= instagram_deadline else "instagram_circuit_open"
                         break
                     before = instagram_provider.search_results_seen
                     query_candidates = list(
                         instagram_provider.search_hashtag(
                             tag,
                             limit=min(results_per_query, instagram_max_lookups),
-                            deadline=run_deadline,
+                            deadline=instagram_deadline,
                         )
                     )
                     raw_count = instagram_provider.search_results_seen - before
@@ -812,7 +829,8 @@ def run_discovery(
             "raw_surface_results": youtube_surface_provider.search_results_seen if youtube_surface_provider else 0,
         },
         "youtube_request_timeout_seconds": youtube_request_timeout,
-        "youtube_request_retries": 0,
+        "youtube_request_retries": 1,
+        "youtube_stage_deadline_seconds_from_start": round(youtube_deadline - run_started_monotonic, 2),
         "min_views": min_views,
         "raw_search_results": {
             "youtube": youtube_raw,
@@ -854,6 +872,8 @@ def run_discovery(
             "lookup_limit": instagram_max_lookups,
             "request_timeout_seconds": instagram_request_timeout,
             "ddgs_timeout_seconds": instagram_timeout,
+            "stage_deadline_seconds_from_start": round(instagram_deadline - run_started_monotonic, 2),
+            "stage_budget_policy": "reserved_stage_window",
             "auth_mode": instagram_provider.auth_mode if instagram_provider else (
                 "session_configured_not_started" if instagram_session_user else "anonymous"
             ),
