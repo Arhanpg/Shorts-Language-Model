@@ -282,6 +282,7 @@ class InstagramSearchProvider:
         self.errors: list[str] = []
         self.search_results_seen = 0
         self.metadata_lookups = 0
+        self.lookup_backlog = 0
         self.metadata_failures = 0
         self.metadata_successes = 0
         self.ddgs_failures = 0
@@ -393,6 +394,8 @@ class InstagramSearchProvider:
                             page=page,
                             backend=self.fallback_backend,
                         )
+                    except ProviderUnavailable:
+                        raise
                     except Exception as fallback_exc:
                         self.ddgs_failures += 1
                         self._record_error(
@@ -479,12 +482,15 @@ class InstagramSearchProvider:
             return
         try:
             loader = self._loader()
+        except ProviderUnavailable:
+            raise
         except Exception as exc:
             self._open_circuit(f"Could not initialize Instaloader: {type(exc).__name__}: {exc}")
             self._record_error(self.circuit_reason or str(exc))
             return
 
         remaining = self.max_lookups - self.metadata_lookups
+        self.lookup_backlog += max(0, len(urls) - remaining)
         for url in urls[:remaining]:
             if self.circuit_open:
                 break
@@ -516,6 +522,7 @@ class InstagramSearchProvider:
             return
 
         remaining = min(limit, self.max_lookups - self.metadata_lookups)
+        self.lookup_backlog += max(0, min(limit, self.max_lookups) - remaining)
         seen: set[str] = set()
         for post in iterator:
             if self.circuit_open or len(seen) >= remaining:
