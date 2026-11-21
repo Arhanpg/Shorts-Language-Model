@@ -208,7 +208,7 @@ def test_ytscrape_shorts_result_is_marked_as_confirmed_and_keeps_search_provenan
 
     assert candidate is not None
     assert candidate.short_format_status == "confirmed"
-    assert candidate.canonical_url == "https://www.youtube.com/shorts/AbCdEfGh123"
+    assert str(candidate.canonical_url) == "https://www.youtube.com/shorts/AbCdEfGh123"
     assert candidate.view_count == 1_450_000
     assert candidate.duration_seconds == 45
     assert candidate.metric_source == "ytscrape_shorts_search_views"
