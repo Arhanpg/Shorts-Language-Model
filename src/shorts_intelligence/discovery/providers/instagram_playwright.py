@@ -7,6 +7,7 @@ requests are constructed or replayed and no access-control challenge is bypassed
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import re
 from pathlib import Path
@@ -233,10 +234,8 @@ class InstagramPlaywrightProvider:
             self._context = None
             self._playwright = None
             if playwright is not None:
-                try:
+                with contextlib.suppress(Exception):
                     await playwright.stop()
-                except Exception:
-                    pass
             message = str(exc)
             if any(token in message.casefold() for token in (
                 "target.createtarget", "target page", "browser has been closed",
@@ -257,15 +256,11 @@ class InstagramPlaywrightProvider:
         self._context = None
         self._playwright = None
         if context is not None:
-            try:
+            with contextlib.suppress(Exception):
                 await context.close()
-            except Exception:
-                pass
         if playwright is not None:
-            try:
+            with contextlib.suppress(Exception):
                 await playwright.stop()
-            except Exception:
-                pass
 
     async def _collect_surface(
         self,
