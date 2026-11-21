@@ -184,13 +184,22 @@ def parse_duration_text(value: str | None) -> float | None:
     """Convert a YouTube duration display (MM:SS or HH:MM:SS) to seconds."""
     if not value:
         return None
-    match = _DURATION_RE.fullmatch(value.strip())
-    if not match:
+    parts = value.strip().split(":")
+    if len(parts) == 2:
+        hours = 0
+        minutes_text, seconds_text = parts
+    elif len(parts) == 3:
+        hours_text, minutes_text, seconds_text = parts
+        if not hours_text.isdigit():
+            return None
+        hours = int(hours_text)
+    else:
         return None
-    hours = int(match.group(1) or 0)
-    minutes = int(match.group(2))
-    seconds = int(match.group(3))
-    if seconds >= 60 or minutes >= 60 and match.group(1) is not None:
+    if not minutes_text.isdigit() or not seconds_text.isdigit():
+        return None
+    minutes = int(minutes_text)
+    seconds = int(seconds_text)
+    if seconds >= 60 or (len(parts) == 3 and minutes >= 60):
         return None
     return float(hours * 3600 + minutes * 60 + seconds)
 
