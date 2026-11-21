@@ -146,3 +146,12 @@ Inspect `outputs/discovery/graph-latest.json` and verify numeric YouTube views, 
 ## Security and rights
 
 Public visibility does not itself grant rights to download, retain, analyze or train on a Reel. Discovery is separate from acquisition. The existing item-specific rights manifest remains mandatory for downloading and training. Never commit browser profiles, cookies, sessions, SQLite databases, downloaded videos or private reports.
+
+
+## Windows browser lifecycle troubleshooting (November 2026)
+
+The browser collector now treats Chrome shutdown as a recoverable lifecycle event:
+- Provider shutdown is idempotent; context or Proactor pipe cleanup errors cannot replace the original collection result.
+- A page-creation failure caused by an already-closed target triggers one fresh context attempt with the same profile.
+- If Chrome's persistent profile is locked, an actionable message asks you to close every window using that profile and check for leftover `chrome.exe` processes. Never delete the profile or session files.
+- YouTube reports include `discovery_stage_counts` to separate seed-search results, detail-enriched candidates, creator-tab candidates and related-Shorts candidates.
