@@ -40,7 +40,7 @@ def test_missing_instagram_views_do_not_become_zero():
     assert candidate.qualifying_metric() is None
 
 
-def test_instagram_play_count_is_opt_in_metric():
+def test_instagram_play_count_never_qualifies_as_views():
     candidate = DiscoveredCandidate(
         platform="instagram",
         source_id="ABCxyz_123",
@@ -50,7 +50,6 @@ def test_instagram_play_count_is_opt_in_metric():
         short_format_status="confirmed",
     )
     assert candidate.qualifying_metric() is None
-    assert candidate.qualifying_metric(accept_instagram_play_count=True) == 1_200_000
 
 
 def test_training_rights_require_all_separate_scopes():

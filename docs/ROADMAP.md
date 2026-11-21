@@ -96,3 +96,17 @@ Expand 1K → 5K → 20K → 50K+ only when discovery yield, upstream reliabilit
 - Existing Phase 1 single-video telemetry remains the downstream analyzer.
 - Old manual-manifest pilot code is retained as validation/processing support, not the automatic discovery layer.
 - PR #5's API-first planning direction is superseded by the user's selected open-source non-API toolchain; this branch updates docs and adds the implementation.
+
+
+### Phase 1.5 — Multi-source discovery recall and strict eligibility
+
+- Replace private ytscrape buffer access with bounded public pagination.
+- Add yt-dlp metadata-only hashtag Shorts shelf discovery.
+- Expand only channels discovered from Shorts surfaces into their Shorts tabs.
+- Prioritize historical productive query/locale strategies after cooldown while preserving exploration.
+- Add optional local Instaloader interactive-login/session validation.
+- Add yt-dlp metadata-only fallback after non-access-related Instaloader parsing failures.
+- Reclassify legacy eligible rows whose format was not confirmed.
+- Enforce the hard eligibility invariant: confirmed Shorts/Reel format and numeric view_count >= 1,000,000 by default.
+
+**Exit:** deterministic tests pass; GitHub Actions passes; Windows run shows per-surface yields, confirmed-format counts, metric coverage and separate Instagram session/fallback diagnostics.

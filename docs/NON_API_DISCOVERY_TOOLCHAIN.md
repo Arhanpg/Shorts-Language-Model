@@ -62,7 +62,7 @@ The inspected Instaloader v4.16 constructor defaults were a 300-second request t
 Instagram metric handling remains explicit:
 - `video_view_count` is stored as `view_count`;
 - `video_play_count` is stored separately as `play_count`;
-- play_count is only eligible when the explicit `--instagram-use-play-count` option is supplied;
+- `play_count` is retained separately for descriptive analysis and never qualifies a Reel as 1M+ views;
 - missing counts remain unknown and never pass the 1M threshold.
 
 A public search index entry does not guarantee that Instaloader can read its metadata. A page may be deleted, restricted, login-gated, rate-limited or unavailable to the current network. The provider now stops after repeated failures instead of spending five minutes per attempt or flooding output.
@@ -131,3 +131,22 @@ A target of 100 is best-effort. It is not a promise that 100 new videos above 1M
 The `discover run` command does not download media. The separate `discover download` command still requires a private item-specific rights-manifest entry. A publicly accessible link or an open-source downloader does not grant permission for media retrieval, persistent storage, analysis, derived-artifact retention or model training. No private media, cookies, credentials, session files, raw videos or non-redistributable artifacts may be committed to this repository.
 
 See [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md) for the detailed architecture, research notes, limits, test coverage and troubleshooting guide.
+
+
+## 9. Multi-source recall upgrade
+
+The current implementation uses bounded public pagination for ytscrape Shorts-filtered search, rather than accessing the library's private first-page buffer. It also adds two independent yt-dlp metadata-only surfaces: YouTube hashtag Shorts shelves and Shorts tabs for a bounded number of channels already discovered from Shorts search. Channel expansion is seeded only by channels found through Shorts-specific sources; it is not a general channel crawler.
+
+Query history tracks text and shelf strategies independently. After the cooldown, historically productive queries are prioritized while never-used queries remain available for exploration. This is a yield heuristic, not a platform-wide popularity estimate.
+
+Instagram metadata resolution now tries yt-dlp's Instagram extractor with `download=False` after non-access-related Instaloader parser failures. Explicit login walls, challenges, blocks and rate limits do not trigger repeated fallback attempts. The fallback may still fail or omit view_count.
+
+Create a user-owned local Instaloader session, if desired, with:
+
+```powershell
+shorts-lm discover instagram-login --username YOUR_USERNAME
+```
+
+The session is saved under the gitignored `.shortslm/` directory. Use it with `--instagram-session-user` and `--instagram-session-file`. Session files are credentials: never commit, share or paste them.
+
+**Strict eligibility:** only a confirmed Shorts/Reel format and numeric `view_count >= 1,000,000` qualifies by default. Uncertain format and missing metrics remain ineligible. Instagram `play_count` remains a separate metric and can never substitute for views.

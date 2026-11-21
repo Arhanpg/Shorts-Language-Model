@@ -159,3 +159,74 @@ def test_query_history_is_persisted_and_updated_by_query_key(tmp_path: Path):
         refreshed = store.query_history("youtube")
         assert refreshed["query-abc"] != first_run
         assert store.query_summary() == {"youtube": 1}
+        performance = store.query_performance("youtube")
+        assert performance["query-abc"]["run_count"] == 2
+        assert performance["query-abc"]["raw_results"] == 50
+        assert performance["query-abc"]["candidate_count"] == 38
+
+
+def test_candidate_format_is_not_eligible_until_confirmed(tmp_path: Path):
+    uncertain = DiscoveredCandidate(
+        platform="youtube",
+        source_id="Uncertain123",
+        canonical_url="https://www.youtube.com/watch?v=Uncertain123",
+        view_count=2_500_000,
+        short_format_status="candidate",
+    )
+    with DiscoveryStore(tmp_path / "strict-format.sqlite3") as store:
+        store.start_run("run-format", 10, 1_000_000)
+        store.upsert_candidate(
+            uncertain, min_views=1_000_000, run_id="run-format"
+        )
+        saved = store.get_candidate("youtube", "Uncertain123")
+        assert saved is not None
+        assert saved.status == "format_unknown"
+        assert store.eligible_candidates() == []
+
+
+def test_legacy_eligible_uncertain_format_is_migrated(tmp_path: Path):
+    path = tmp_path / "legacy.sqlite3"
+    with DiscoveryStore(path) as store:
+        store.start_run("run-legacy", 10, 1_000_000)
+        candidate = DiscoveredCandidate(
+            platform="youtube",
+            source_id="Legacy12345",
+            canonical_url="https://www.youtube.com/watch?v=Legacy12345",
+            view_count=2_000_000,
+            short_format_status="candidate",
+        )
+        store.upsert_candidate(
+            candidate, min_views=1_000_000, run_id="run-legacy"
+        )
+        store.connection.execute(
+            "UPDATE candidates SET status='eligible' WHERE source_id='Legacy12345'"
+        )
+        store.connection.commit()
+    with DiscoveryStore(path) as migrated:
+        saved = migrated.get_candidate("youtube", "Legacy12345")
+        assert saved is not None
+        assert saved.status == "format_unknown"
+        assert migrated.eligible_candidates() == []
+
+
+def test_instagram_play_count_never_substitutes_for_view_count(tmp_path: Path):
+    instagram = DiscoveredCandidate(
+        platform="instagram",
+        source_id="PlayCount123",
+        canonical_url="https://www.instagram.com/reel/PlayCount123/",
+        view_count=None,
+        play_count=3_000_000,
+        metric_source="instaloader_video_play_count",
+        short_format_status="confirmed",
+    )
+    with DiscoveryStore(tmp_path / "play-count-is-not-views.sqlite3") as store:
+        store.start_run("run-play-count", 10, 1_000_000)
+        store.upsert_candidate(
+            instagram, min_views=1_000_000, run_id="run-play-count"
+        )
+        saved = store.get_candidate("instagram", "PlayCount123")
+        assert saved is not None
+        assert saved.play_count == 3_000_000
+        assert saved.view_count is None
+        assert saved.status == "metric_unknown"
+        assert store.eligible_candidates() == []

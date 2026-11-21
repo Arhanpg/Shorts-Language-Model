@@ -15,11 +15,15 @@ from __future__ import annotations
 import contextlib
 import time
 from collections.abc import Iterator
+from datetime import UTC, datetime
+from itertools import islice
 from typing import Any
+from urllib.parse import quote
 
 from shorts_intelligence.discovery.models import DiscoveredCandidate
 from shorts_intelligence.discovery.normalization import (
     candidate_from_instagram_post,
+    candidate_from_ytdlp,
     candidate_from_ytscrape_video,
     extract_hashtags,
     instagram_shortcode_from_url,
@@ -125,9 +129,8 @@ class YouTubeSearchProvider:
         """Use YouTube's Shorts-only filter and preserve typed metrics.
 
         The ytscrape SearchFilter.SHORTS option applies the website's dedicated
-        Shorts search filter. Only the initial page is consumed: SearchResults
-        is lazy and iterating it can perform unbounded continuation requests.
-        The pinned ytscrape 2.2 API exposes parsed first-page items in _buffer.
+        Shorts search filter. Its public SearchResults iterator supports a
+        max_results cap, so pagination is bounded without private internals.
         """
         if self.circuit_open:
             return
@@ -144,19 +147,13 @@ class YouTubeSearchProvider:
             page = client.search(
                 query,
                 filter=SearchFilter.SHORTS,
-                max_results=max(1, min(limit, 30)),
+                max_results=max(1, min(limit, 50)),
             )
-            # Do not iterate SearchResults: its public iterator transparently
-            # fetches continuation pages. Read exactly the initial parsed page.
-            first_page = getattr(page, "_buffer", None)
-            if not isinstance(first_page, list):
-                raise ProviderUnavailable(
-                    "Unsupported ytscrape SearchResults layout; expected the 2.2.x "
-                    "first-page buffer. Reinstall the pinned discovery extra."
-                )
+            # Public iteration performs bounded continuation paging because
+            # max_results is always set above.
+            items = list(page)
             self.search_pages_fetched += 1
             self.search_queries_completed += 1
-            items = first_page[: max(1, min(limit, 30))]
             self.search_results_seen += len(items)
             seen: set[str] = set()
             for video in items:
@@ -265,6 +262,105 @@ class YouTubeSearchProvider:
         self.close()
 
 
+class YouTubeShortsSurfaceProvider:
+    """Discover Shorts from hashtag shelves and channel Shorts tabs with yt-dlp."""
+
+    def __init__(self, *, request_timeout: float = 8.0) -> None:
+        self.request_timeout = max(3.0, min(request_timeout, 20.0))
+        self.errors: list[str] = []
+        self.search_results_seen = 0
+        self.hashtag_shelves_completed = 0
+        self.channel_tabs_completed = 0
+
+    def _extract_surface(
+        self, url: str, *, limit: int, surface: str
+    ) -> list[DiscoveredCandidate]:
+        try:
+            from yt_dlp import YoutubeDL
+        except ImportError as exc:
+            raise ProviderUnavailable(
+                'YouTube Shorts surface discovery requires yt-dlp: '
+                'pip install -e ".[discovery]" --upgrade'
+            ) from exc
+        options: dict[str, object] = {
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,
+            "extract_flat": "in_playlist",
+            "playlistend": max(1, min(limit, 50)),
+            "socket_timeout": self.request_timeout,
+            "extractor_retries": 0,
+            "ignoreerrors": True,
+        }
+        try:
+            with YoutubeDL(options) as downloader:
+                result = downloader.extract_info(url, download=False) or {}
+        except Exception as exc:
+            if len(self.errors) < 100:
+                self.errors.append(
+                    f"{surface} {url}: {type(exc).__name__}: {str(exc)[:200]}"
+                )
+            return []
+        entries = result.get("entries") if isinstance(result, dict) else None
+        if isinstance(entries, dict):
+            entries = [entries]
+        elif entries is not None:
+            try:
+                entries = list(islice(iter(entries), max(1, min(limit, 50))))
+            except TypeError:
+                entries = []
+        else:
+            entries = [result] if isinstance(result, dict) else []
+        candidates: list[DiscoveredCandidate] = []
+        seen: set[str] = set()
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            video_id = str(entry.get("id") or "")
+            if len(video_id) != 11 or video_id in seen:
+                continue
+            seen.add(video_id)
+            shorts_url = f"https://www.youtube.com/shorts/{video_id}"
+            candidate = candidate_from_ytdlp({
+                **entry,
+                "id": video_id,
+                "webpage_url": shorts_url,
+            })
+            if candidate is None:
+                continue
+            candidates.append(candidate.model_copy(update={
+                "canonical_url": shorts_url,
+                "short_format_status": "confirmed",
+                "metadata": {
+                    **candidate.metadata,
+                    "discovery_engine": "yt-dlp",
+                    "discovery_surface": surface,
+                    "discovery_source_url": url,
+                    "format_evidence": "youtube_shorts_surface",
+                },
+            }))
+        self.search_results_seen += len(entries)
+        return candidates
+
+    def search_hashtag(self, hashtag: str, *, limit: int = 30) -> list[DiscoveredCandidate]:
+        tag = hashtag.strip().lstrip("#")
+        if not tag:
+            return []
+        self.hashtag_shelves_completed += 1
+        url = f"https://www.youtube.com/hashtag/{quote(tag, safe='')}/shorts"
+        return self._extract_surface(url, limit=limit, surface="hashtag_shorts_shelf")
+
+    def search_channel_shorts(
+        self, channel_id: str, *, limit: int = 20
+    ) -> list[DiscoveredCandidate]:
+        channel = channel_id.strip()
+        if not channel.startswith("UC") or len(channel) != 24:
+            return []
+        self.channel_tabs_completed += 1
+        url = f"https://www.youtube.com/channel/{channel}/shorts"
+        return self._extract_surface(url, limit=limit, surface="channel_shorts_tab")
+
+
 class InstagramSearchProvider:
     """Search indexed public Reels and resolve metadata with bounded retries.
 
@@ -293,6 +389,8 @@ class InstagramSearchProvider:
     ) -> None:
         self.session_username = session_username
         self.session_file = session_file
+        self.session_authenticated = False
+        self.auth_mode = "session" if session_username else "anonymous"
         self.errors: list[str] = []
         self.search_results_seen = 0
         self.metadata_lookups = 0
@@ -353,6 +451,17 @@ class InstagramSearchProvider:
                 self.session_username,
                 filename=self.session_file,
             )
+            authenticated_as = loader.test_login()
+            if not authenticated_as:
+                raise ProviderUnavailable(
+                    "The configured Instaloader session did not authenticate. "
+                    "Create a fresh local session with 'shorts-lm discover instagram-login'."
+                )
+            if authenticated_as.casefold() != self.session_username.casefold():
+                raise ProviderUnavailable(
+                    "The Instaloader session belongs to a different username."
+                )
+            self.session_authenticated = True
         self._loader_instance = loader
         return loader
 
@@ -480,6 +589,55 @@ class InstagramSearchProvider:
             )
         )
 
+    def _resolve_with_ytdlp(self, url: str, shortcode: str) -> DiscoveredCandidate | None:
+        """Try a second public metadata extractor; never download media or bypass access."""
+        try:
+            from yt_dlp import YoutubeDL
+        except ImportError:
+            return None
+        options: dict[str, object] = {
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,
+            "socket_timeout": self.request_timeout,
+            "extractor_retries": 0,
+            "ignoreerrors": True,
+        }
+        try:
+            with YoutubeDL(options) as downloader:
+                info = downloader.extract_info(url, download=False)
+        except Exception as exc:
+            self._record_error(
+                f"yt-dlp Instagram fallback {shortcode}: {type(exc).__name__}: {str(exc)[:160]}"
+            )
+            return None
+        if not isinstance(info, dict):
+            return None
+        raw_views = info.get("view_count")
+        views = int(raw_views) if isinstance(raw_views, (int, float)) and raw_views >= 0 else None
+        raw_duration = info.get("duration")
+        duration = float(raw_duration) if isinstance(raw_duration, (int, float)) and raw_duration > 0 else None
+        if views is None:
+            return None
+        return DiscoveredCandidate(
+            platform="instagram",
+            source_id=shortcode,
+            canonical_url=f"https://www.instagram.com/reel/{shortcode}/",
+            title=str(info.get("title") or "") or None,
+            description=str(info.get("description") or "") or None,
+            creator=str(info.get("uploader") or info.get("channel") or "") or None,
+            view_count=views,
+            metric_source="yt_dlp_instagram_view_count",
+            duration_seconds=duration,
+            short_format_status="confirmed",
+            metadata={
+                "metadata_provider": "yt-dlp",
+                "metadata_fallback": True,
+                "extractor_key": info.get("extractor_key"),
+                "view_count_observed_at": datetime.now(UTC).isoformat(),
+            },
+        )
+
     def _resolve_shortcode(self, shortcode: str, loader: Any) -> DiscoveredCandidate | None:
         import instaloader
 
@@ -489,17 +647,31 @@ class InstagramSearchProvider:
             candidate = candidate_from_instagram_post(post, from_reel_search=True)
         except Exception as exc:
             self.metadata_failures += 1
-            self.consecutive_failures += 1
             self._record_error(
-                f"Instagram Reel {shortcode}: {type(exc).__name__}: {str(exc)[:220]}"
+                f"Instaloader Reel {shortcode}: {type(exc).__name__}: {str(exc)[:160]}"
             )
+            # Try a second independent extractor only for parser/metadata errors,
+            # never after a clear login wall, block or rate-limit response.
+            if not self._should_open_circuit(exc):
+                fallback = self._resolve_with_ytdlp(
+                    f"https://www.instagram.com/reel/{shortcode}/", shortcode
+                )
+                if fallback is not None:
+                    self.metadata_successes += 1
+                    self.consecutive_failures = 0
+                    return fallback
+            self.consecutive_failures += 1
             if (
                 self._should_open_circuit(exc)
                 or self.consecutive_failures >= self.failure_threshold
             ):
+                auth_hint = (
+                    " Anonymous mode was used; a user-owned local session may improve access."
+                    if not self.session_authenticated else ""
+                )
                 self._open_circuit(
-                    f"Stopped after {self.metadata_failures} metadata failures; "
-                    f"last error: {type(exc).__name__}: {str(exc)[:160]}"
+                    f"Stopped after {self.metadata_failures} Instaloader failures; "
+                    f"last error: {type(exc).__name__}: {str(exc)[:100]}.{auth_hint}"
                 )
             return None
 
