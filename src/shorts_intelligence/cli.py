@@ -199,7 +199,7 @@ def doctor(
     if not checks["ffmpeg"] or not checks["ffprobe"]:
         console.print("[red]FFmpeg and ffprobe are required for media processing.[/red]")
     if not checks["ytscrape"]:
-        console.print("[yellow]YouTube Shorts discovery needs ytscrape >=2.2; install with pip install -e \\".[discovery]\\".[/yellow]")
+        console.print('[yellow]YouTube Shorts discovery needs ytscrape >=2.2; install with pip install -e ".[discovery]".[/yellow]')
     if checks["yt_dlp"] and not checks["yt_dlp_ejs"]:
         console.print("[yellow]YouTube extraction: install matching EJS scripts with pip install -U 'yt-dlp[default]'.[/yellow]")
     if checks["yt_dlp"] and not (deno_ok or node_ok):
