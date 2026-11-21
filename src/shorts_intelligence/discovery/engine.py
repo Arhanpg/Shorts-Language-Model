@@ -16,7 +16,8 @@ from shorts_intelligence.discovery.storage import DiscoveryStore
 async def run_creator_graph(
     store: DiscoveryStore, *, platform: str = "youtube", target_new: int = 100,
     min_metric: int = 1_000_000, max_runtime_seconds: int = 240,
-    max_seed_queries: int = 8, max_creators: int = 40, max_expansions: int = 80,
+    max_seed_queries: int = 8, max_hashtag_queries: int = 4,
+    max_creators: int = 40, max_expansions: int = 80,
     max_depth: int = 3, youtube_concurrency: int = 5,
     instagram_profile_dir: Path | None = None,
     instagram_creators: list[str] | None = None,
@@ -29,16 +30,28 @@ async def run_creator_graph(
     frontier = CreatorFrontier(store.connection)
     loop = asyncio.get_running_loop()
     started = loop.time()
-    deadline = started + max(30, min(max_runtime_seconds, 900))
+    bounded_runtime = max(30, min(max_runtime_seconds, 900))
+    deadline = started + bounded_runtime
+    combined_with_instagram = platform == "all" and bool(instagram_creators)
+    youtube_deadline = (
+        started + bounded_runtime * 0.62 if combined_with_instagram else deadline
+    )
+    instagram_deadline = (
+        started + bounded_runtime * 0.95 if platform == "all" else deadline
+    )
+    youtube_seed_deadline = (
+        min(youtube_deadline, started + bounded_runtime * 0.35)
+        if combined_with_instagram else youtube_deadline
+    )
     stats: Counter[str] = Counter()
     errors: list[str] = []
     providers: dict[str, Any] = {}
     new_eligible = 0
 
-    async def within_budget(awaitable: Any) -> Any:
-        remaining = deadline - loop.time()
+    async def within_budget(awaitable: Any, stage_deadline: float = deadline) -> Any:
+        remaining = min(deadline, stage_deadline) - loop.time()
         if remaining <= 0:
-            raise TimeoutError("overall graph-discovery budget expired")
+            raise TimeoutError("provider stage budget expired")
         return await asyncio.wait_for(awaitable, timeout=remaining)
 
     try:
@@ -57,13 +70,13 @@ async def run_creator_graph(
                 "education shorts", "technology shorts",
             ][:max_seed_queries]
             for query in queries:
-                if loop.time() >= deadline or yt.blocked:
+                if loop.time() >= youtube_seed_deadline or getattr(yt, "blocked", False):
                     break
                 try:
-                    listed = await within_budget(yt.search_seed_videos(query, limit=20))
+                    listed = await within_budget(yt.search_seed_videos(query, limit=20), youtube_seed_deadline)
                     stats["seed_search_requests"] += 1
                     stats["seed_search_results"] += len(listed)
-                    details = await within_budget(yt.enrich_seed_videos(listed))
+                    details = await within_budget(yt.enrich_seed_videos(listed), youtube_seed_deadline)
                     stats["seed_detail_batches"] += 1
                     for candidate in details:
                         stats["candidates_observed"] += 1
@@ -97,6 +110,48 @@ async def run_creator_graph(
                     stats["seed_search_failures"] += 1
                     errors.append(f"seed search {query!r}: {type(exc).__name__}: {str(exc)[:180]}")
 
+            hashtags = ["shorts", "viralshorts", "comedyshorts", "cricketshorts",
+                        "cooking", "education", "travel", "technology"][:max_hashtag_queries]
+            for hashtag in hashtags:
+                if loop.time() >= youtube_seed_deadline or getattr(yt, "blocked", False):
+                    break
+                try:
+                    listed = await within_budget(yt.search_hashtag_videos(hashtag, limit=20), youtube_seed_deadline)
+                    details = await within_budget(yt.enrich_seed_videos(listed))
+                    stats["hashtag_search_requests"] += 1
+                    stats["hashtag_search_results"] += len(listed)
+                    for candidate in details:
+                        stats["candidates_observed"] += 1
+                        channel_id = candidate.metadata.get("channel_id")
+                        metric = candidate.qualifying_metric()
+                        qualifies = (
+                            metric is not None and metric >= min_metric
+                            and candidate.short_format_status == "confirmed"
+                        )
+                        if qualifies and channel_id:
+                            frontier.enqueue_creator(
+                                "youtube", str(channel_id), handle=candidate.creator,
+                                discovered_via="hashtag_seed", priority_score=float(metric or 1),
+                                depth=0)
+                            frontier.enqueue_seed(
+                                "youtube", candidate.source_id, creator_id=str(channel_id), depth=0)
+                        _, became = store.upsert_candidate(
+                            candidate, min_views=min_metric, run_id=run_id)
+                        frontier.record_candidate_observation(
+                            candidate.platform, candidate.source_id, run_id=run_id,
+                            metric_kind=candidate.qualifying_metric_kind(),
+                            metric_value=candidate.qualifying_metric(),
+                            metric_source=candidate.metric_source,
+                            format_status=candidate.short_format_status,
+                            evidence=candidate.metadata,
+                        )
+                        if became:
+                            new_eligible += 1
+                            stats["eligible_new"] += 1
+                except Exception as exc:
+                    stats["hashtag_search_failures"] += 1
+                    errors.append(f"hashtag search #{hashtag}: {type(exc).__name__}: {str(exc)[:180]}")
+
         if "instagram" in providers:
             for username in instagram_creators or []:
                 frontier.enqueue_creator(
@@ -109,6 +164,9 @@ async def run_creator_graph(
             progressed = False
             for current_platform in (["youtube", "instagram"] if platform == "all" else [platform]):
                 provider = providers.get(current_platform)
+                stage_deadline = youtube_deadline if current_platform == "youtube" else instagram_deadline
+                if loop.time() >= stage_deadline:
+                    continue
                 if provider is None or creators_claimed[current_platform] >= max_creators:
                     continue
                 batch = frontier.claim_creators(current_platform, limit=1)
@@ -119,10 +177,10 @@ async def run_creator_graph(
                 creators_claimed[current_platform] += 1
                 try:
                     if current_platform == "youtube":
-                        candidates = await within_budget(provider.harvest_creator(creator.creator_id, limit=48))
+                        candidates = await within_budget(provider.harvest_creator(creator.creator_id, limit=48), stage_deadline)
                         stats["creator_harvest_batches"] += 1
                     else:
-                        candidates, coauthors = await within_budget(provider.harvest_creator(creator.handle or creator.creator_id))
+                        candidates, coauthors = await within_budget(provider.harvest_creator(creator.handle or creator.creator_id), stage_deadline)
                         stats["creator_harvest_batches"] += 1
                         for handle in coauthors:
                             frontier.enqueue_creator(
@@ -163,7 +221,8 @@ async def run_creator_graph(
                     stats["creator_failures"] += 1
                     frontier.finish_creator(current_platform, creator.creator_id, error=message)
 
-            if "youtube" in providers and expansions_done < max_expansions and loop.time() < deadline:
+            if ("youtube" in providers and expansions_done < max_expansions
+                    and loop.time() < youtube_deadline):
                 seeds = frontier.claim_seeds("youtube", limit=1)
                 if seeds:
                     progressed = True
@@ -172,7 +231,7 @@ async def run_creator_graph(
                         frontier.finish_seed("youtube", str(seed["video_id"]))
                     else:
                         try:
-                            related = await within_budget(providers["youtube"].expand_related(str(seed["video_id"]), limit=9))
+                            related = await within_budget(providers["youtube"].expand_related(str(seed["video_id"]), limit=9), youtube_deadline)
                             stats["related_sequence_requests"] += 1
                             for candidate in related:
                                 stats["related_candidates"] += 1
@@ -234,11 +293,18 @@ async def run_creator_graph(
             **dict(stats), **graph_summary, "run_id": run_id, "platform": platform,
             "elapsed_seconds": elapsed, "new_eligible": new_eligible,
             "min_metric": min_metric, "max_depth": max_depth,
+            "stage_deadlines_seconds_from_start": {
+                "youtube": round(youtube_deadline - started, 2),
+                "youtube_seed": round(youtube_seed_deadline - started, 2),
+                "instagram": round(instagram_deadline - started, 2),
+            },
             "metric_policy": {
                 "youtube": "numeric views",
                 "instagram": "numeric plays; retained separately from views",
             },
-            "provider_requests": request_counts, "errors": errors[:100],
+            "provider_requests": request_counts,
+            "errors": len(errors),
+            "error_details": errors[:100],
         }
         store.finish_run(run_id, {
             "scanned": stats["candidates_observed"] + stats["related_candidates"],

@@ -25,7 +25,7 @@ The inspected TubeScrape repository is [misterzaidxpy/tubescrape](https://github
 - `aget_videos_info(..., concurrency=5)`
 - `aget_channel_about(...)`
 
-It exposes async methods on `YouTube`; it does not export an `AsyncYouTube` class. TubeScrape uses YouTube web/InnerTube endpoints, not the official YouTube Data API. The package is alpha and pinned exactly so interface changes are visible in CI.
+It exposes async methods on `YouTube`; it does not export an `AsyncYouTube` class. TubeScrape uses YouTube web/InnerTube endpoints, not the official YouTube Data API. The old ytscrape adapter remains isolated in `legacy_providers.py` and is not a graph-engine fallback. The package is alpha and pinned exactly so interface changes are visible in CI.
 
 ## Important correction to the proposal
 
