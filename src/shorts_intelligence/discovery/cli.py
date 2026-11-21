@@ -16,7 +16,13 @@ from rich.table import Table
 
 from shorts_intelligence.discovery.downloader import download_candidate
 from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
-from shorts_intelligence.discovery.query_planner import (\n    SearchQuery,\n    build_instagram_query_pool,\n    build_youtube_query_pool,\n    select_due_queries,\n)\nfrom shorts_intelligence.discovery.providers import (
+from shorts_intelligence.discovery.query_planner import (
+    SearchQuery,
+    build_instagram_query_pool,
+    build_youtube_query_pool,
+    select_due_queries,
+)
+from shorts_intelligence.discovery.providers import (
     InstagramSearchProvider,
     ProviderUnavailable,
     YouTubeSearchProvider,
