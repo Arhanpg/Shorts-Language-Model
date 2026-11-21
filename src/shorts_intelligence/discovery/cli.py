@@ -19,6 +19,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from shorts_intelligence.discovery.browser_session import find_chrome_executable
 from shorts_intelligence.discovery.downloader import download_candidate
 from shorts_intelligence.discovery.legacy_providers import (
     InstagramSearchProvider,
@@ -35,7 +36,6 @@ from shorts_intelligence.discovery.query_planner import (
     select_due_queries,
 )
 from shorts_intelligence.discovery.storage import DiscoveryStore
-from shorts_intelligence.discovery.browser_session import find_chrome_executable
 from shorts_intelligence.media.probe import sha256_file
 
 discovery_app = typer.Typer(
@@ -1181,10 +1181,7 @@ def instagram_browser_login(
         ]
         creationflags = 0
         if os.name == "nt":
-            creationflags = (
-                getattr(subprocess, "DETACHED_PROCESS", 0)
-                | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-            )
+            creationflags = getattr(subprocess, "DETACHED_PROCESS", 0)
         subprocess.Popen(
             command,
             stdin=subprocess.DEVNULL,
