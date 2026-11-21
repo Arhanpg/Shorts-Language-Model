@@ -55,6 +55,21 @@ CREATE TABLE IF NOT EXISTS candidates (
 );
 CREATE INDEX IF NOT EXISTS idx_candidates_status ON candidates(status, download_status);
 CREATE INDEX IF NOT EXISTS idx_candidates_views ON candidates(view_count DESC);
+CREATE TABLE IF NOT EXISTS discovery_queries (
+    platform TEXT NOT NULL,
+    query_key TEXT NOT NULL,
+    query TEXT NOT NULL,
+    language TEXT NOT NULL,
+    region TEXT NOT NULL,
+    strategy TEXT NOT NULL,
+    last_run_at TEXT NOT NULL,
+    run_count INTEGER NOT NULL DEFAULT 1,
+    last_raw_results INTEGER NOT NULL DEFAULT 0,
+    last_candidate_count INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (platform, query_key)
+);
+CREATE INDEX IF NOT EXISTS idx_discovery_queries_last_run
+    ON discovery_queries(platform, last_run_at);
 """
 
 
@@ -81,6 +96,71 @@ class DiscoveryStore:
 
     def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
         self.close()
+
+    def has_candidate(self, platform: str, source_id: str) -> bool:
+        """Return whether the platform/source identity already exists locally."""
+        row = self.connection.execute(
+            "SELECT 1 FROM candidates WHERE platform=? AND source_id=? LIMIT 1",
+            (platform, source_id),
+        ).fetchone()
+        return row is not None
+
+    def query_history(self, platform: str) -> dict[str, str]:
+        """Return last-use timestamps for exact platform query keys."""
+        rows = self.connection.execute(
+            "SELECT query_key, last_run_at FROM discovery_queries WHERE platform=?",
+            (platform,),
+        ).fetchall()
+        return {str(row["query_key"]): str(row["last_run_at"]) for row in rows}
+
+    def record_query(
+        self,
+        *,
+        platform: str,
+        query_key: str,
+        query: str,
+        language: str,
+        region: str,
+        strategy: str,
+        raw_results: int,
+        candidate_count: int,
+        run_at: datetime | None = None,
+    ) -> None:
+        """Persist query rotation state and yield observations."""
+        timestamp = (run_at or datetime.now(UTC)).isoformat()
+        self.connection.execute(
+            """INSERT INTO discovery_queries(
+                platform, query_key, query, language, region, strategy,
+                last_run_at, run_count, last_raw_results, last_candidate_count
+            ) VALUES(?,?,?,?,?,?,?,1,?,?)
+            ON CONFLICT(platform, query_key) DO UPDATE SET
+                query=excluded.query,
+                language=excluded.language,
+                region=excluded.region,
+                strategy=excluded.strategy,
+                last_run_at=excluded.last_run_at,
+                run_count=discovery_queries.run_count+1,
+                last_raw_results=excluded.last_raw_results,
+                last_candidate_count=excluded.last_candidate_count""",
+            (
+                platform, query_key, query, language, region, strategy,
+                timestamp, raw_results, candidate_count,
+            ),
+        )
+        self.connection.commit()
+
+    def query_summary(self, platform: str | None = None) -> dict[str, int]:
+        """Summarize how many distinct search queries have been used."""
+        if platform is None:
+            rows = self.connection.execute(
+                "SELECT platform, COUNT(*) AS n FROM discovery_queries GROUP BY platform"
+            ).fetchall()
+        else:
+            rows = self.connection.execute(
+                "SELECT platform, COUNT(*) AS n FROM discovery_queries WHERE platform=? GROUP BY platform",
+                (platform,),
+            ).fetchall()
+        return {str(row["platform"]): int(row["n"]) for row in rows}
 
     def start_run(
         self,
