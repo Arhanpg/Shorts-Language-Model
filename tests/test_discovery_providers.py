@@ -392,3 +392,23 @@ def test_instagram_provider_respects_three_second_request_timeout():
     assert provider.request_timeout == 3
     assert provider.search_timeout == 3
     provider.close()
+
+
+def test_instagram_empty_successful_searches_do_not_open_circuit(monkeypatch):
+    FakeDDGS = _fake_ddgs(monkeypatch, [])
+    provider = InstagramSearchProvider(
+        backend="bing",
+        fallback_backend="",
+        failure_threshold=2,
+        request_pause_seconds=1,
+    )
+
+    for query in ("obscure topic one", "obscure topic two", "obscure topic three"):
+        assert list(provider.search(query, limit=10)) == []
+
+    assert len(FakeDDGS.instances) == 3
+    assert provider.search_results_seen == 0
+    assert provider.ddgs_failures == 0
+    assert provider.consecutive_search_failures == 0
+    assert provider.circuit_open is False
+    provider.close()

@@ -398,6 +398,7 @@ class InstagramSearchProvider:
         for page in range(1, self.pages + 1):
             if deadline is not None and time.monotonic() + self.search_timeout > deadline:
                 break
+            request_failed = False
             try:
                 results = self._search_page(
                     search_query, limit=limit, page=page, backend=self.backend
@@ -405,6 +406,7 @@ class InstagramSearchProvider:
             except ProviderUnavailable:
                 raise
             except Exception as exc:
+                request_failed = True
                 self.ddgs_failures += 1
                 self._record_error(
                     f"DDGS {self.backend} page {page} for '{query}': "
@@ -423,6 +425,7 @@ class InstagramSearchProvider:
                             page=page,
                             backend=self.fallback_backend,
                         )
+                        request_failed = False
                     except ProviderUnavailable:
                         raise
                     except Exception as fallback_exc:
@@ -431,15 +434,18 @@ class InstagramSearchProvider:
                             f"DDGS fallback {self.fallback_backend}: "
                             f"{type(fallback_exc).__name__}: {str(fallback_exc)[:180]}"
                         )
-            if results:
-                self.consecutive_search_failures = 0
-            else:
+            # A successful search with zero matching URLs is not a provider
+            # failure. Only consecutive request exceptions should open the
+            # circuit; empty searches are valid coverage observations.
+            if request_failed:
                 self.consecutive_search_failures += 1
                 if self.consecutive_search_failures >= self.failure_threshold:
                     self._open_circuit(
-                        f"DDGS returned no results after {self.consecutive_search_failures} "
-                        "consecutive failed searches"
+                        f"DDGS requests failed after {self.consecutive_search_failures} "
+                        "consecutive search attempts"
                     )
+            else:
+                self.consecutive_search_failures = 0
             for result in results:
                 if not isinstance(result, dict):
                     continue
