@@ -40,7 +40,7 @@ A session may improve metadata access, but does not guarantee every Reel is acce
 - YouTube view_count is stored as the view metric where ytscrape returns it; capped detail enrichment uses ytscrape player metadata when search results omit the metric.
 - Instagram video_view_count and video_play_count are stored as separate platform-native metrics. A play count is never relabeled as a view count.
 - The graph discovery inventory can use a conservative lower bound from a rounded Instagram display label (for example, 1.2M); the record remains explicitly marked as an estimate.
-- The processing queue defaults to exact numeric metrics only. Rounded estimates are excluded unless `--allow-estimated-metrics` is explicitly supplied for transcript/OCR research; estimated records remain review-required and are never marked training-ready.
+- Rounded Instagram display values are kept as estimates with a conservative lower bound for threshold filtering. Their metric is still labeled estimated in the saved metadata and JSONL index.
 - Missing metrics are unknown, not zero, and never pass the processing threshold.
 - YouTube candidates come from ytscrape's dedicated Shorts search filter, plus bounded yt-dlp hashtag Shorts shelves and Shorts tabs for channels found through those surfaces.
 - Query selection learns from prior query yield after cooldown; never-used queries remain an exploration pool.
@@ -155,12 +155,12 @@ Public indexed Reel links are attempted without a session first. Some Instagram 
 
 ## Existing local video analyzer
 
-The Phase 1 analyzer remains the downstream processor for a permitted local MP4:
+The Phase 1 analyzer remains the downstream processor for a local MP4:
 
     shorts-lm doctor
     shorts-lm analyze --input data/private/acquired/VIDEO.mp4 --output outputs/analysis.json
 
-The 4 GB RTX 3050 is not required for discovery, SQLite or download. The local laptop is appropriate for discovery and CPU media preprocessing. Use a rented GPU for substantial multimodal fine-tuning after the dataset and rights gates pass.
+The 4 GB RTX 3050 is not required for discovery, SQLite or download. The local laptop is appropriate for discovery and CPU media preprocessing. Use a rented GPU for substantial multimodal fine-tuning after the dataset quality and cost checks pass.
 
 ## Revised phases
 
