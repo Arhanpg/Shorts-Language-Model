@@ -1197,7 +1197,8 @@ def graph_run(
     table.add_column("Value", justify="right")
     for key in (
         "eligible_new", "candidates_observed", "new_inventory_candidates",
-        "metric_observed_candidates", "metric_unknown_candidates",
+        "metric_observed_candidates", "metric_exact_candidates",
+        "metric_estimated_candidates", "metric_unknown_candidates",
         "metric_above_threshold_candidates", "youtube_creator_candidates",
         "youtube_related_candidates", "instagram_hashtag_requests",
         "hashtags_with_candidates", "creators_with_candidates", "creators_empty",
@@ -1239,7 +1240,7 @@ def graph_run(
             "Instagram surfaces: "
             f"{len(hashtag_diags)} hashtag pages, {len(creator_diags)} creator pages; "
             f"{sum(int(d.get('candidate_count', 0)) for d in all_diags)} Reel links; "
-            f"{sum(int(d.get('metric_count', 0)) for d in all_diags)} with numeric metrics; "
+            f"{sum(int(d.get('metric_count', 0)) for d in all_diags)} with numeric/estimated metrics; "
             f"{sum(int(d.get('dom_metric_count', 0)) for d in all_diags)} from Reel cards; "
             f"{sum(int(d.get('visible_detail_metrics', 0)) for d in all_diags)} from visible detail text; "
             f"{sum(int(d.get('detail_pages_with_metrics', 0)) for d in all_diags)} detail pages enriched."
