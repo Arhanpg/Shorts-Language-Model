@@ -695,7 +695,7 @@ class InstagramPlaywrightProvider:
                         (
                             parsed for text in text_fields
                             if (parsed := _visible_metric_from_text(
-                                text, allow_bare_count=True
+                                text, allow_bare_count=True, bare_kind="plays"
                             )) is not None
                         ),
                         None,
