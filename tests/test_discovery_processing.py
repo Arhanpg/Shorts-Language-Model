@@ -5,10 +5,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-from shorts_intelligence.discovery.models import (
-    AcquisitionAuthorization,
-    DiscoveredCandidate,
-)
+from shorts_intelligence.discovery.models import DiscoveredCandidate
 from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.schemas import OCRSpan, StageStatus, TranscriptSegment, VideoMetadata
 
@@ -22,20 +19,6 @@ def _candidate() -> DiscoveredCandidate:
         view_count=1_500_000,
         metric_source="test_fixture",
         short_format_status="confirmed",
-    )
-
-
-def _rights(candidate: DiscoveredCandidate) -> AcquisitionAuthorization:
-    return AcquisitionAuthorization(
-        platform=candidate.platform,
-        source_id=candidate.source_id,
-        basis="creator_permission",
-        evidence_ref="private-test-consent:batch-video-01",
-        media_retrieval=True,
-        media_analysis=True,
-        temporary_processing=True,
-        derived_artifact_retention=True,
-        model_training=True,
     )
 
 
@@ -105,11 +88,6 @@ def _fake_probe(path: Path, _config) -> VideoMetadata:
     )
 
 
-def _write_private_rights(path: Path, authorization: AcquisitionAuthorization) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(authorization.model_dump_json() + "\n", encoding="utf-8")
-
-
 def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
     tmp_path: Path,
     monkeypatch,
@@ -117,12 +95,10 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
     from shorts_intelligence.discovery import processing
 
     candidate = _candidate()
-    authorization = _rights(candidate)
     database = tmp_path / ".shortslm" / "discovery.sqlite3"
-    rights_manifest = tmp_path / "private" / "rights.jsonl"
-    download_dir = tmp_path / "private" / "acquired"
-    artifact_dir = tmp_path / "private" / "processed"
-    dataset_manifest = tmp_path / "outputs" / "dataset.jsonl"
+    download_dir = tmp_path / "acquired"
+    artifact_dir = tmp_path / "processed"
+    dataset_manifest = tmp_path / "outputs" / "processed-videos.jsonl"
 
     with DiscoveryStore(database) as store:
         store.start_run("processing-batch", 10, 1_000_000)
@@ -130,10 +106,9 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
             candidate, min_views=1_000_000, run_id="processing-batch"
         )
 
-    _write_private_rights(rights_manifest, authorization)
     calls = {"download": 0, "analyze": 0}
 
-    def fake_download(candidate, authorization, output_dir, **_kwargs):
+    def fake_download(candidate, output_dir, **_kwargs):
         calls["download"] += 1
         output_dir.mkdir(parents=True, exist_ok=True)
         media_path = output_dir / f"{candidate.source_id}.mp4"
@@ -153,7 +128,6 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
 
     first = processing.run_processing_batch(
         database=database,
-        rights_manifest=rights_manifest,
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
@@ -165,7 +139,9 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
 
     item_dir = artifact_dir / "youtube" / candidate.source_id
     assert (item_dir / "analysis.json").is_file()
-    transcript_payload = json.loads((item_dir / "transcript.json").read_text(encoding="utf-8"))
+    transcript_payload = json.loads(
+        (item_dir / "transcript.json").read_text(encoding="utf-8")
+    )
     ocr_payload = json.loads((item_dir / "ocr.json").read_text(encoding="utf-8"))
     assert transcript_payload["segment_count"] == 1
     assert ocr_payload["span_count"] == 1
@@ -176,18 +152,18 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
         if line.strip()
     ]
     assert len(records) == 1
-    assert records[0]["training_ready"] is False
-    assert records[0]["review"]["status"] == "review_required"
+    assert records[0]["platform"] == "youtube"
+    assert records[0]["telemetry"]["transcript_segments"] == 1
+    assert "rights" not in records[0]
 
     second = processing.run_processing_batch(
         database=database,
-        rights_manifest=rights_manifest,
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
         limit=10,
     )
-    assert second["authorized_candidates_selected"] == 0
+    assert second["candidates_selected"] == 0
     assert second["manifest_records"] == 1
     assert calls == {"download": 1, "analyze": 1}
 
@@ -199,23 +175,20 @@ def test_analysis_failure_keeps_downloaded_media_and_retry_skips_download(
     from shorts_intelligence.discovery import processing
 
     candidate = _candidate()
-    authorization = _rights(candidate)
     database = tmp_path / ".shortslm" / "discovery.sqlite3"
-    rights_manifest = tmp_path / "private" / "rights.jsonl"
-    download_dir = tmp_path / "private" / "acquired"
-    artifact_dir = tmp_path / "private" / "processed"
-    dataset_manifest = tmp_path / "outputs" / "dataset.jsonl"
+    download_dir = tmp_path / "acquired"
+    artifact_dir = tmp_path / "processed"
+    dataset_manifest = tmp_path / "outputs" / "processed-videos.jsonl"
 
     with DiscoveryStore(database) as store:
         store.start_run("processing-retry", 10, 1_000_000)
         store.upsert_candidate(
             candidate, min_views=1_000_000, run_id="processing-retry"
         )
-    _write_private_rights(rights_manifest, authorization)
 
     calls = {"download": 0, "analyze": 0}
 
-    def fake_download(candidate, authorization, output_dir, **_kwargs):
+    def fake_download(candidate, output_dir, **_kwargs):
         calls["download"] += 1
         output_dir.mkdir(parents=True, exist_ok=True)
         media_path = output_dir / f"{candidate.source_id}.mp4"
@@ -236,7 +209,6 @@ def test_analysis_failure_keeps_downloaded_media_and_retry_skips_download(
 
     first = processing.run_processing_batch(
         database=database,
-        rights_manifest=rights_manifest,
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
@@ -244,15 +216,17 @@ def test_analysis_failure_keeps_downloaded_media_and_retry_skips_download(
     )
     assert first["failed"] == 1
     with DiscoveryStore(database) as store:
-        assert store.connection.execute(
-            "SELECT download_status FROM candidates WHERE platform='youtube' AND source_id=?",
+        row = store.connection.execute(
+            "SELECT download_status, download_path FROM candidates "
+            "WHERE platform='youtube' AND source_id=?",
             (candidate.source_id,),
-        ).fetchone()["download_status"] == "downloaded"
+        ).fetchone()
+        assert row["download_status"] == "downloaded"
+        assert Path(row["download_path"]).is_file()
         assert store.processing_summary()["failed"] == 1
 
     second = processing.run_processing_batch(
         database=database,
-        rights_manifest=rights_manifest,
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
