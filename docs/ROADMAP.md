@@ -46,13 +46,18 @@ See [PHASE_1_DISCOVERY_COVERAGE.md](PHASE_1_DISCOVERY_COVERAGE.md) for detailed 
 
 ## Phase 3 — Automated batch video processing
 
-- Feed downloaded permitted MP4 files into the existing Phase 1 analyzer.
-- Add sequential batch worker with resumability and per-stage status.
-- Run ASR, OCR, frame/shot/motion and audio measurements.
-- Produce a manifest and metrics for each asset.
-- Validate on 10 assets before 100 and 300.
+**Implementation added in PR: phase3/batch-acquisition-vidtrace-dataset. Real Windows media validation remains an acceptance gate.**
 
-**Exit:** all stages have explicit complete/partial/failed states and a manual sample audit.
+- Add a resumable, bounded batch worker over confirmed, eligible Shorts/Reels in the discovery SQLite inventory.
+- Refresh and enforce item-specific retrieval, analysis, temporary-processing, derived-artifact-retention and model-training grants from the current private rights manifest.
+- Reuse the existing downloader and Phase 1 analyzer; prefer the pinned VidTrace WhisperTranscriber and PaddleOCREngine through the existing ASR/OCR adapters.
+- Write per-video analysis JSON, timestamped transcript JSON/Markdown, OCR JSON/Markdown, asset provenance and a JSONL processing manifest.
+- Preserve native YouTube views and Instagram views/plays metric type/source. Exclude rounded UI estimates by default; an explicit research-only option keeps estimates marked and review-required.
+- Preserve a successful MP4 and its SHA-256 after analysis failure so the next run retries ASR/OCR without downloading again.
+- Stream the output manifest, keep the worker sequential and bounded, and recheck current rights before export.
+- Validate on 10 assets before 100 and 300; manually audit transcript/OCR quality before increasing the batch size.
+
+**Exit:** rights expiry/revocation tests pass; download failures and analysis retries behave independently; exact duplicates are not processed twice; artifact timestamps and media hashes validate; JSONL records remain review-required; a manual sample audit passes; CI passes.
 
 ## Phase 4 — Dataset QA and annotation
 
@@ -89,7 +94,7 @@ Compare small pretrained multimodal models using the same permitted data, frame/
 
 ## Phase 8 — Controlled expansion
 
-Expand 1K → 5K → 20K → 50K+ only when discovery yield, upstream reliability, media permissions, deduplication, unit costs and model improvements support it.
+The long-term research objective is 5–10 million YouTube Shorts plus 5–10 million Instagram Reels at the 1M+ platform-native metric threshold. Expand through measured gates (300 → 1K → 5K → 20K → 50K → 100K → larger batches) only when unique discovery yield, explicit media/training permissions, provider access, processing quality, duplicate control, retention constraints, storage and unit costs support the next scale step. This target is aspirational, not a promise that public discovery or rights availability can supply that many items.
 
 ## Existing work mapping
 
@@ -107,6 +112,6 @@ Expand 1K → 5K → 20K → 50K+ only when discovery yield, upstream reliabilit
 - Add optional local Instaloader interactive-login/session validation.
 - Add yt-dlp metadata-only fallback after non-access-related Instaloader parsing failures.
 - Reclassify legacy eligible rows whose format was not confirmed.
-- Enforce the hard eligibility invariant: confirmed Shorts/Reel format and numeric view_count >= 1,000,000 by default.
+- Enforce confirmed Shorts/Reel format and preserve platform-native metric definitions. Exact numeric metrics are required by default for the processing/training-candidate queue; rounded Instagram display counts remain explicit estimates and are excluded unless exploratory processing is opted into.
 
 **Exit:** deterministic tests pass; GitHub Actions passes; Windows run shows per-surface yields, confirmed-format counts, metric coverage and separate Instagram session/fallback diagnostics.
