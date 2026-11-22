@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -86,6 +87,24 @@ def _fake_report() -> SimpleNamespace:
     )
 
 
+def _fake_probe(path: Path, _config) -> VideoMetadata:
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    return VideoMetadata(
+        file_name=path.name,
+        sha256=digest,
+        file_size_bytes=path.stat().st_size,
+        duration_seconds=12.0,
+        width=1080,
+        height=1920,
+        fps=30.0,
+        frame_count=360,
+        video_codec="h264",
+        audio_present=True,
+        audio_codec="aac",
+        aspect_ratio="9:16",
+    )
+
+
 def _write_private_rights(path: Path, authorization: AcquisitionAuthorization) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(authorization.model_dump_json() + "\n", encoding="utf-8")
@@ -129,6 +148,7 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
         return _fake_report()
 
     monkeypatch.setattr(processing, "download_candidate", fake_download)
+    monkeypatch.setattr(processing, "probe_video", _fake_probe)
     monkeypatch.setattr(processing, "analyze_video", fake_analyze)
 
     first = processing.run_processing_batch(
@@ -211,6 +231,7 @@ def test_analysis_failure_keeps_downloaded_media_and_retry_skips_download(
         return _fake_report()
 
     monkeypatch.setattr(processing, "download_candidate", fake_download)
+    monkeypatch.setattr(processing, "probe_video", _fake_probe)
     monkeypatch.setattr(processing, "analyze_video", flaky_analyze)
 
     first = processing.run_processing_batch(
