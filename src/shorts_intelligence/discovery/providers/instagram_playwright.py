@@ -194,6 +194,7 @@ class InstagramPlaywrightProvider:
         self.hashtag_diagnostics: list[dict[str, Any]] = []
         self._playwright: Any = None
         self._context: Any = None
+        self._page: Any = None
 
     async def _ensure_context(self) -> Any:
         if self._context is not None:
@@ -225,13 +226,17 @@ class InstagramPlaywrightProvider:
                 channel="chrome",
                 viewport={"width": 1365, "height": 900},
             )
-            # Persistent contexts may create an initial blank tab; surfaces
-            # below own their pages explicitly and close them after each visit.
-            for initial_page in list(self._context.pages):
-                await initial_page.close()
+            # Keep the persistent context's initial tab alive. Closing the
+            # only tab and recreating one for each surface is unreliable with
+            # installed Chrome on Windows (Target.createTarget failures).
+            self._page = next(
+                (page for page in self._context.pages if not page.is_closed()),
+                None,
+            )
         except Exception as exc:
             playwright = self._playwright
             self._context = None
+            self._page = None
             self._playwright = None
             if playwright is not None:
                 with contextlib.suppress(Exception):
@@ -254,6 +259,7 @@ class InstagramPlaywrightProvider:
         # when the user closes Chrome or Windows tears down its pipe transport.
         context, playwright = self._context, self._playwright
         self._context = None
+        self._page = None
         self._playwright = None
         if context is not None:
             with contextlib.suppress(Exception):
@@ -261,6 +267,66 @@ class InstagramPlaywrightProvider:
         if playwright is not None:
             with contextlib.suppress(Exception):
                 await playwright.stop()
+
+    async def _ensure_page(self) -> Any:
+        """Return a live tab, preferring the persistent context's existing tab."""
+        context = await self._ensure_context()
+        if self._page is not None:
+            try:
+                if not self._page.is_closed():
+                    return self._page
+            except Exception:
+                self._page = None
+
+        try:
+            open_pages = [
+                page for page in context.pages
+                if not page.is_closed()
+            ]
+        except Exception:
+            open_pages = []
+        if open_pages:
+            self._page = open_pages[0]
+            return self._page
+
+        # Only create a tab when the persistent context genuinely has none.
+        try:
+            self._page = await context.new_page()
+            return self._page
+        except Exception as exc:
+            message = str(exc).casefold()
+            if any(token in message for token in (
+                "targetclosederror",
+                "target.createtarget",
+                "target page, context or browser has been closed",
+                "browser has been closed",
+            )):
+                await self.close()
+                context = await self._ensure_context()
+                try:
+                    open_pages = [
+                        page for page in context.pages
+                        if not page.is_closed()
+                    ]
+                except Exception:
+                    open_pages = []
+                if open_pages:
+                    self._page = open_pages[0]
+                    return self._page
+                try:
+                    self._page = await context.new_page()
+                    return self._page
+                except Exception as retry_exc:
+                    raise RuntimeError(
+                        "Instagram Chrome started without an available tab. Close all "
+                        "Chrome windows using the dedicated Instagram profile, check "
+                        "Task Manager for leftover chrome.exe processes, and retry. "
+                        "The collector will reuse the profile and will not delete it."
+                    ) from retry_exc
+            raise RuntimeError(
+                "Could not obtain an Instagram browser tab. Close Chrome windows using "
+                "the dedicated Instagram profile and retry."
+            ) from exc
 
     async def _collect_surface(
         self,
@@ -272,23 +338,7 @@ class InstagramPlaywrightProvider:
         max_scrolls: int,
         max_reel_details: int,
     ) -> tuple[list[DiscoveredCandidate], set[str], dict[str, Any]]:
-        context = await self._ensure_context()
-        try:
-            page = await context.new_page()
-        except Exception as exc:
-            # Recover once from an externally closed target/context. The
-            # persistent profile is reused; no second profile is created.
-            self._context = None
-            message = str(exc).casefold()
-            if any(token in message for token in (
-                "targetclosederror", "target page, context or browser has been closed",
-                "target.createtarget", "browser has been closed"
-            )):
-                await self.close()
-                context = await self._ensure_context()
-                page = await context.new_page()
-            else:
-                raise
+        page = await self._ensure_page()
         candidates: dict[str, DiscoveredCandidate] = {}
         coauthors: set[str] = set()
         tasks: set[asyncio.Task[Any]] = set()
@@ -535,6 +585,11 @@ class InstagramPlaywrightProvider:
             if not self.blocked:
                 raise
         finally:
+            # Detach this surface's response handler before the shared tab is
+            # navigated for the next hashtag/profile. Keep the tab open for the
+            # full run; the provider closes it with the persistent context.
+            with contextlib.suppress(Exception):
+                page.remove_listener("response", on_response)
             if tasks:
                 await asyncio.gather(*tuple(tasks), return_exceptions=True)
             diagnostic["candidate_count"] = len(candidates)
@@ -542,16 +597,10 @@ class InstagramPlaywrightProvider:
                 item.qualifying_metric() is not None for item in candidates.values()
             )
             try:
-                if not page.is_closed():
-                    await page.close()
-            except Exception as exc:
-                # The browser may have exited between the is_closed check and
-                # close(). Keep harvested candidates and retain a diagnostic.
-                if len(self.errors) < 50:
-                    self.errors.append(
-                        f"{surface} {creator_handle}: page cleanup: "
-                        f"{type(exc).__name__}: {str(exc)[:100]}"
-                    )
+                if page.is_closed():
+                    self._page = None
+            except Exception:
+                self._page = None
 
         return list(candidates.values()), coauthors, diagnostic
 
