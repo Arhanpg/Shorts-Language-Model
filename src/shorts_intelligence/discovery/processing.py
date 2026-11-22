@@ -11,7 +11,7 @@ from typing import Any
 from shorts_intelligence.analyzer import analyze_video
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.discovery.downloader import download_candidate
-from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
+from shorts_intelligence.discovery.models import DiscoveredCandidate
 from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.media.probe import MediaError, probe_video
 
