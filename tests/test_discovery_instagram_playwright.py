@@ -330,6 +330,7 @@ def test_instagram_reuses_the_persistent_startup_tab_across_surfaces(monkeypatch
         assert coauthors == set()
         assert page.goto_urls == [
             "https://www.instagram.com/explore/search/keyword/?q=%23getreadywithme",
+            "https://www.instagram.com/explore/tags/getreadywithme/",
             "https://www.instagram.com/example_creator/reels/",
         ]
         assert context.new_page_calls == 0
@@ -586,8 +587,15 @@ def test_hover_metric_parser_rejects_plain_caption_numbers_and_likes():
 def test_hashtag_uses_instagram_keyword_search_route_seen_in_current_ui():
     from shorts_intelligence.discovery.providers.instagram_playwright import (
         instagram_hashtag_keyword_search_url,
+        instagram_hashtag_page_url,
     )
 
+    assert instagram_hashtag_page_url("getreadywithme") == (
+        "https://www.instagram.com/explore/tags/getreadywithme/"
+    )
+    assert instagram_hashtag_page_url("#ViratKohli") == (
+        "https://www.instagram.com/explore/tags/viratkohli/"
+    )
     assert instagram_hashtag_keyword_search_url("getreadywithme") == (
         "https://www.instagram.com/explore/search/keyword/?q=%23getreadywithme"
     )
