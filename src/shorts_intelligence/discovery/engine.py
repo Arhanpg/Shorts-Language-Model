@@ -376,6 +376,7 @@ async def run_creator_graph(
                             stats["related_sequence_requests"] += 1
                             for candidate in related:
                                 stats["related_candidates"] += 1
+                                stats["candidates_observed"] += 1
                                 channel_id = candidate.metadata.get("channel_id")
                                 metric = candidate.qualifying_metric()
                                 qualifies = (
@@ -434,7 +435,7 @@ async def run_creator_graph(
                  "creator_diagnostics": provider.creator_diagnostics,
                  "hashtag_diagnostics": provider.hashtag_diagnostics,
                  "provider_errors": provider.errors}
-                if name == "instagram" else {"library_calls": provider.requests}
+                if name == "instagram" else {"library_calls": getattr(provider, "requests", 0)}
             )
             for name, provider in providers.items()
         }
@@ -442,6 +443,12 @@ async def run_creator_graph(
             **dict(stats), **graph_summary, "run_id": run_id, "platform": platform,
             "elapsed_seconds": elapsed, "new_eligible": new_eligible,
             "target_new": target_new,
+            # Counter omits untouched keys; the JSON API must expose stable
+            # zero-valued metrics so CLI/report consumers need no key checks.
+            "new_inventory_candidates": stats["new_inventory_candidates"],
+            "metric_observed_candidates": stats["metric_observed_candidates"],
+            "metric_unknown_candidates": stats["metric_unknown_candidates"],
+            "metric_above_threshold_candidates": stats["metric_above_threshold_candidates"],
             "youtube_creator_candidates": stats["youtube_creator_candidates"],
             "youtube_related_candidates": stats["related_candidates"],
             "min_metric": min_metric, "max_depth": max_depth,
@@ -464,9 +471,7 @@ async def run_creator_graph(
                 "youtube_related_candidates": stats["related_candidates"],
                 "instagram_hashtag_candidates": stats["instagram_hashtag_candidates"],
                 "instagram_creator_candidates": stats["instagram_creator_candidates"],
-                "all_candidates_observed": (
-                    stats["candidates_observed"] + stats["related_candidates"]
-                ),
+                "all_candidates_observed": stats["candidates_observed"],
             },
             "continue_graph_after_target": continue_graph_after_target,
             "creator_results": creator_results,
@@ -484,7 +489,7 @@ async def run_creator_graph(
             "error_details": errors[:100],
         }
         store.finish_run(run_id, {
-            "scanned": stats["candidates_observed"] + stats["related_candidates"],
+            "scanned": stats["candidates_observed"],
             "new_eligible": new_eligible, "duplicates": 0,
             "errors": (
                 stats["creator_failures"] + stats["seed_search_failures"]
