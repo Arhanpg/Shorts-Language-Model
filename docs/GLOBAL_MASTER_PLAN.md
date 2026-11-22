@@ -12,11 +12,11 @@ The intended cycle is:
 1. Generate/search topic and language phrases automatically.
 2. Find YouTube Shorts and public Instagram Reel links using open-source discovery tools.
 3. Extract available metadata: title/caption, description, hashtags, creator, duration, upload date and current view/play metric.
-4. Keep only new candidates that meet the configurable 1,000,000 metric threshold and have adequate short-form evidence.
+4. Keep confirmed Shorts/Reels candidates whose platform-native discovery metric meets the configurable 1,000,000 threshold; preserve exact-versus-estimated provenance and platform-specific metric kind.
 5. Store candidate identity, metadata snapshots and state in a local SQLite database.
 6. Avoid reselecting an already stored platform item; after media delivery, compare SHA-256 to catch byte-identical cross-posts.
 7. Download media automatically using open-source extractors only for items with the required item-specific permission.
-8. Send authorized MP4s through the existing local Phase 1 telemetry pipeline.
+8. Send authorized MP4s through the existing local Phase 1 telemetry pipeline, reusing the pinned VidTrace Whisper ASR and PaddleOCR wrappers.
 9. Build reviewed, deduplicated training shards and fine-tune a pretrained multimodal model in batches.
 10. Evaluate, quantize and deploy a compact model for local analysis.
 
@@ -73,7 +73,7 @@ YouTube candidates are returned by the dedicated ytscrape Shorts search filter a
 
 ### Instagram metrics
 
-Store Instaloader's video_view_count as view_count and video_play_count as play_count, separately. The default threshold uses view_count only. A CLI option can explicitly use play_count when view_count is absent, and the source metric name remains attached. Missing counts remain unknown. Do not combine views and plays across services in an unlabeled common measure.
+Store video_view_count as view_count and video_play_count as play_count, separately. Keep the platform-native metric kind and source; never relabel plays as views. The creator-graph browser may also capture rounded public UI labels. Such labels are stored as conservative lower-bound estimates in metadata, not exact count columns. The processing queue defaults to exact numeric metrics; estimate-backed items require the explicit exploratory option and remain ineligible for an exact-metric training corpus. Missing counts remain unknown. Do not combine views and plays across services in an unlabeled common measure.
 
 ### Phase 1 reliability implementation
 
@@ -133,7 +133,7 @@ Do not use browser-cookie scraping, password command-line flags, CAPTCHA/challen
 
 ## 6. Media processing and model
 
-The existing local Phase 1 analyzer remains the telemetry engine. Each authorized downloaded clip can be analyzed for:
+The existing local Phase 1 analyzer remains the telemetry engine. ShortsLM's ASR/OCR adapters prefer the pinned VidTrace WhisperTranscriber and PaddleOCREngine implementations, while preserving direct faster-whisper/PaddleOCR fallback paths. Each authorized downloaded clip can be analyzed for:
 - frame sampling and keyframe evidence;
 - cut/shot candidates and motion;
 - ASR transcript and language;
@@ -152,12 +152,16 @@ Compact VLM candidates remain Qwen3-VL-2B, Qwen3.5-2B, SmolVLM2-500M and VideoLL
 | 0 | Provider setup, local config and permission manifest | Optional tools installed; secrets/data locations private |
 | **1** | **Non-API discovery + SQLite** | Search, filter, metrics, source-ID dedup, partial-yield report and repeat-run validation |
 | **2** | **Open-source media acquisition** | Permission-gated MP4 download, FFprobe, SHA-256, retries and exact duplicate handling |
-| 3 | Batch telemetry | 10 → 100 → 300 authorized clips with extractor QA |
-| 4 | Dataset QA and annotation | Gold examples, creator/time split and review |
+| 3 | Resumable VidTrace batch telemetry | Bounded 10 → 100 → 300 authorized clips; per-item media, transcript, OCR, report and provenance artifacts; explicit retries |
+| 4 | Dataset QA and annotation | Gold examples, rights review, near-duplicate checks, creator/time split and review |
 | 5 | Model bake-off | Frozen baseline and chosen compact model |
 | 6 | Cloud fine-tuning | Repeatable checkpointed SFT and held-out improvements |
 | 7 | Local deployment | Quantized inference resource/quality matrix |
 | 8 | Controlled scale | Expand only when data rights, yield, quality and cost are measured |
+
+## 7.1 Long-term corpus objective
+
+The research target is 5–10 million YouTube Shorts plus 5–10 million Instagram Reels at the 1M+ platform-native discovery metric threshold. This is an aspirational corpus target, not a claim that public discovery is exhaustive or that every item can be lawfully retrieved, retained and used for model training. Scale must be justified by observed unique yield, item-specific rights, quality, retention, storage and processing cost. The exact-metric processing queue is the default; estimate-backed Instagram counts must remain labeled and segregated.
 
 ## 8. Success reporting
 
