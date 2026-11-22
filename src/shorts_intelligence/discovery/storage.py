@@ -496,6 +496,8 @@ class DiscoveryStore:
     def processing_candidates(
         self,
         *,
+        min_metric: int = 1_000_000,
+        allow_estimated_metrics: bool = False,
         limit: int = 25,
     ) -> list[
         tuple[
@@ -506,9 +508,14 @@ class DiscoveryStore:
             str | None,
         ]
     ]:
-        """Return eligible, confirmed candidates with a current complete training grant."""
+        """Return eligible, confirmed candidates with a current complete training grant.
+
+        Exact YouTube views and exact Instagram-native metrics are preferred.
+        Rounded Instagram display metrics can be included only with an explicit
+        opt-in; the caller still marks those records as review-required.
+        """
         now = datetime.now(UTC).isoformat()
-        rows = self.connection.execute(
+        cursor = self.connection.execute(
             """SELECT
                 c.*,
                 r.basis AS auth_basis,
@@ -528,7 +535,16 @@ class DiscoveryStore:
             WHERE c.status='eligible'
               AND c.short_format_status='confirmed'
               AND c.download_status IN ('not_downloaded','download_failed','downloaded')
-              AND COALESCE(p.status, '')!='complete'
+              AND COALESCE(p.status, '') NOT IN ('complete','duplicate_media')
+              AND CASE
+                    WHEN c.platform='youtube' THEN COALESCE(c.view_count, 0)
+                    ELSE COALESCE(
+                        c.play_count,
+                        c.view_count,
+                        CAST(json_extract(c.metadata_json, '$.metric_conservative_lower_bound') AS INTEGER),
+                        0
+                    )
+                  END >= ?
               AND r.media_retrieval=1
               AND r.media_analysis=1
               AND r.temporary_processing=1
@@ -539,15 +555,25 @@ class DiscoveryStore:
             ORDER BY
               CASE WHEN c.platform='youtube'
                    THEN COALESCE(c.view_count, 0)
-                   ELSE COALESCE(c.play_count, c.view_count, 0)
+                   ELSE COALESCE(
+                       c.play_count,
+                       c.view_count,
+                       CAST(json_extract(c.metadata_json, '$.metric_conservative_lower_bound') AS INTEGER),
+                       0
+                   )
               END DESC,
-              c.discovered_at ASC
-            LIMIT ?""",
-            (now, max(0, int(limit))),
-        ).fetchall()
+              c.discovered_at ASC""",
+            (int(min_metric), now),
+        )
         output = []
-        for row in rows:
+        maximum = max(0, int(limit))
+        for row in cursor:
             candidate = self._candidate_from_row(row)
+            if (
+                candidate.metadata.get("metric_is_estimate") is True
+                and not allow_estimated_metrics
+            ):
+                continue
             authorization = AcquisitionAuthorization(
                 platform=row["platform"],
                 source_id=row["source_id"],
@@ -571,6 +597,8 @@ class DiscoveryStore:
                 str(row["download_status"]),
                 row["media_sha256"],
             ))
+            if len(output) >= maximum:
+                break
         return output
 
     def count_processing_blocked(self) -> int:
@@ -713,6 +741,7 @@ class DiscoveryStore:
                 c.platform, c.source_id, c.canonical_url, c.title, c.description,
                 c.creator, c.view_count, c.play_count, c.metric_source,
                 c.duration_seconds, c.upload_date, c.hashtags_json, c.discovered_at,
+                c.short_format_status, c.status AS candidate_status,
                 c.metadata_json,
                 p.status AS processing_status, p.media_path, p.media_sha256,
                 p.analysis_path, p.transcript_path, p.ocr_path,
@@ -728,6 +757,7 @@ class DiscoveryStore:
             JOIN rights_authorizations AS r
               ON r.platform=p.platform AND r.source_id=p.source_id
             WHERE p.status='complete'
+              AND c.status='eligible' AND c.short_format_status='confirmed'
               AND r.media_retrieval=1 AND r.media_analysis=1
               AND r.temporary_processing=1 AND r.derived_artifact_retention=1
               AND r.model_training=1 AND r.revoked=0
