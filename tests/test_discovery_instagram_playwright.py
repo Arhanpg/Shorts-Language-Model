@@ -602,3 +602,61 @@ def test_hashtag_uses_instagram_keyword_search_route_seen_in_current_ui():
     assert instagram_hashtag_keyword_search_url("#ViratKohli") == (
         "https://www.instagram.com/explore/search/keyword/?q=%23viratkohli"
     )
+
+
+def test_hashtag_falls_back_to_public_tag_grid_when_keyword_search_is_empty(tmp_path):
+    import asyncio
+
+    from shorts_intelligence.discovery.models import DiscoveredCandidate
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        InstagramPlaywrightProvider,
+    )
+
+    provider = InstagramPlaywrightProvider(profile_dir=tmp_path / "profile")
+    calls = []
+
+    async def fake_collect_surface(**kwargs):
+        calls.append(kwargs)
+        if kwargs["surface"] == "hashtag_keyword_search":
+            return [], set(), {
+                "surface": kwargs["surface"],
+                "requested_url": kwargs["url"],
+                "candidate_count": 0,
+                "metric_count": 0,
+                "reason": "no recognized Reel records",
+            }
+        candidate = DiscoveredCandidate(
+            platform="instagram",
+            source_id="GridFallback123",
+            canonical_url="https://www.instagram.com/reel/GridFallback123/",
+            play_count=1_500_000,
+            short_format_status="confirmed",
+            metadata={"discovery_surface": kwargs["surface"]},
+        )
+        return [candidate], set(), {
+            "surface": kwargs["surface"],
+            "requested_url": kwargs["url"],
+            "candidate_count": 1,
+            "metric_count": 1,
+        }
+
+    provider._collect_surface = fake_collect_surface
+
+    records = asyncio.run(
+        provider.harvest_hashtag(
+            "getreadywithme",
+            max_scrolls=2,
+            max_reel_details=1,
+        )
+    )
+    assert [item.source_id for item in records] == ["GridFallback123"]
+    assert [call["surface"] for call in calls] == [
+        "hashtag_keyword_search",
+        "hashtag_grid_fallback",
+    ]
+    assert provider.hashtag_diagnostics[1]["attempt"] == (
+        "legacy_public_hashtag_grid_fallback"
+    )
+    assert provider.hashtag_diagnostics[1]["fallback_from"].endswith(
+        "q=%23getreadywithme"
+    )
