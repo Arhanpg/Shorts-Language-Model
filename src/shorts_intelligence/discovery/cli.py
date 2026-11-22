@@ -13,7 +13,7 @@ import uuid
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Iterator, Literal
 
 import typer
 from rich.console import Console
@@ -996,21 +996,29 @@ def run_discovery(
         )
 
 
-def _load_rights_manifest(path: Path) -> dict[tuple[str, str], AcquisitionAuthorization]:
-    rights: dict[tuple[str, str], AcquisitionAuthorization] = {}
+def _iter_rights_manifest(
+    path: Path,
+) -> Iterator[AcquisitionAuthorization]:
+    """Stream and validate private item-specific rights records from JSONL."""
     with path.expanduser().resolve(strict=True).open("r", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
             text = line.strip()
             if not text or text.startswith("#"):
                 continue
             try:
-                item = AcquisitionAuthorization.model_validate_json(text)
+                yield AcquisitionAuthorization.model_validate_json(text)
             except Exception as exc:
                 raise ValueError(f"Invalid rights row {line_number}: {exc}") from exc
-            key = (item.platform, item.source_id)
-            if key in rights:
-                raise ValueError(f"Duplicate rights entry at row {line_number}: {key}")
-            rights[key] = item
+
+
+def _load_rights_manifest(path: Path) -> dict[tuple[str, str], AcquisitionAuthorization]:
+    """Load a small rights manifest for the single-command downloader."""
+    rights: dict[tuple[str, str], AcquisitionAuthorization] = {}
+    for item in _iter_rights_manifest(path):
+        key = (item.platform, item.source_id)
+        if key in rights:
+            raise ValueError(f"Duplicate rights entry: {key}")
+        rights[key] = item
     return rights
 
 
@@ -1098,6 +1106,106 @@ def download_eligible(
             "[yellow]Blocked items remain queued. Add a matching private rights-manifest row "
             "only after the required rights have actually been obtained.[/yellow]"
         )
+
+
+@discovery_app.command("process")
+def process_eligible_media(
+    rights_manifest: Path = typer.Option(
+        ..., "--rights-manifest", exists=True, readable=True,
+        help="Private item-specific JSONL grants for retrieval, analysis, retention and training.",
+    ),
+    limit: int = typer.Option(25, "--limit", min=1, max=500),
+    min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
+    database: Path = typer.Option(Path(".shortslm/discovery.sqlite3"), "--database"),
+    download_dir: Path = typer.Option(Path("data/private/acquired"), "--download-dir"),
+    artifact_dir: Path = typer.Option(Path("data/private/processed"), "--artifact-dir"),
+    dataset_manifest: Path = typer.Option(
+        Path("outputs/dataset/training-candidates.jsonl"), "--dataset-manifest"
+    ),
+    allow_estimated_metrics: bool = typer.Option(
+        False, "--allow-estimated-metrics",
+        help=(
+            "Also process rounded Instagram UI counts for transcript/OCR research. "
+            "Those records remain estimate-backed and are never training-ready."
+        ),
+    ),
+    instagram_session_user: str | None = typer.Option(None, "--instagram-session-user"),
+    instagram_session_file: Path | None = typer.Option(
+        None, "--instagram-session-file", exists=True, readable=True
+    ),
+    asr_model: str = typer.Option("small", "--asr-model"),
+    asr_device: Literal["cpu", "cuda", "auto"] = typer.Option(
+        "cpu", "--asr-device", help="CPU is the safe 4 GB GPU default; cuda enables VidTrace GPU fallback."
+    ),
+    language: str | None = typer.Option(None, "--language"),
+    max_duration: float = typer.Option(180.0, "--max-duration", min=1.0, max=1800.0),
+    max_file_size_mb: int = typer.Option(1000, "--max-file-size-mb", min=1, max=10000),
+    max_keyframes: int = typer.Option(24, "--max-keyframes", min=4, max=96),
+    max_ocr_frames: int = typer.Option(12, "--max-ocr-frames", min=1, max=64),
+    keep_frame_artifacts: bool = typer.Option(
+        False, "--keep-frame-artifacts", help="Retain selected JPEG frames beside the report."
+    ),
+) -> None:
+    """Download authorized 1M+ Shorts/Reels and generate VidTrace ASR/OCR artifacts."""
+    from shorts_intelligence.discovery.processing import run_processing_batch
+
+    try:
+        summary = run_processing_batch(
+            database=database,
+            rights_manifest=rights_manifest,
+            download_dir=download_dir,
+            artifact_dir=artifact_dir,
+            dataset_manifest=dataset_manifest,
+            limit=limit,
+            min_metric=min_metric,
+            allow_estimated_metrics=allow_estimated_metrics,
+            instagram_session_username=instagram_session_user,
+            instagram_session_file=instagram_session_file,
+            asr_model=asr_model,
+            asr_device=asr_device,
+            language=language,
+            max_duration_seconds=max_duration,
+            max_file_size_mb=max_file_size_mb,
+            max_keyframes=max_keyframes,
+            max_ocr_frames=max_ocr_frames,
+            keep_frame_artifacts=keep_frame_artifacts,
+        )
+    except Exception as exc:
+        console.print(
+            f"[bold red]Authorized processing batch failed:[/bold red] "
+            f"{type(exc).__name__}: {exc}"
+        )
+        raise typer.Exit(code=2) from exc
+
+    table = Table(title="ShortsLM authorized multimodal processing")
+    table.add_column("Result")
+    table.add_column("Count", justify="right")
+    for label, key in [
+        ("Rights records indexed", "rights_records_indexed"),
+        ("Authorized candidates selected", "authorized_candidates_selected"),
+        ("Blocked (no current complete grant)", "blocked_without_current_rights"),
+        ("Media downloaded this run", "media_downloaded_this_run"),
+        ("Processed this run", "processed_this_run"),
+        ("Exact duplicates", "duplicates"),
+        ("Failed / retryable", "failed"),
+        ("Completed processing total", "processing_complete_total"),
+        ("Manifest records", "manifest_records"),
+    ]:
+        table.add_row(label, str(summary.get(key, 0)))
+    console.print(table)
+    console.print(f"Dataset manifest: [cyan]{summary['manifest_path']}[/cyan]")
+    console.print(f"Downloads: {download_dir.expanduser().resolve()}")
+    console.print(f"Artifacts: {artifact_dir.expanduser().resolve()}")
+    if not allow_estimated_metrics:
+        console.print(
+            "[yellow]Rounded Instagram display metrics are excluded by default. "
+            "Use --allow-estimated-metrics only to process them for research; "
+            "their outputs remain review-required and cannot become exact metric labels.[/yellow]"
+        )
+    console.print(
+        "[yellow]Processed records are not training-ready until rights, transcript, "
+        "OCR and content QA are reviewed and explicitly approved.[/yellow]"
+    )
 
 
 @discovery_app.command("graph-run")

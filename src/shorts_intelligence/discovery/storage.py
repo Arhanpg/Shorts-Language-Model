@@ -6,9 +6,12 @@ import json
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable, Iterator
 
-from shorts_intelligence.discovery.models import DiscoveredCandidate
+from shorts_intelligence.discovery.models import (
+    AcquisitionAuthorization,
+    DiscoveredCandidate,
+)
 
 _SCHEMA = """
 PRAGMA foreign_keys = ON;
@@ -72,6 +75,53 @@ CREATE TABLE IF NOT EXISTS discovery_queries (
 );
 CREATE INDEX IF NOT EXISTS idx_discovery_queries_last_run
     ON discovery_queries(platform, last_run_at);
+CREATE TABLE IF NOT EXISTS rights_authorizations (
+    platform TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    basis TEXT NOT NULL,
+    evidence_ref TEXT NOT NULL,
+    media_retrieval INTEGER NOT NULL DEFAULT 0,
+    media_analysis INTEGER NOT NULL DEFAULT 0,
+    temporary_processing INTEGER NOT NULL DEFAULT 0,
+    derived_artifact_retention INTEGER NOT NULL DEFAULT 0,
+    model_training INTEGER NOT NULL DEFAULT 0,
+    revoked INTEGER NOT NULL DEFAULT 0,
+    expires_at TEXT,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (platform, source_id)
+);
+CREATE TABLE IF NOT EXISTS media_processing (
+    platform TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    media_path TEXT,
+    media_sha256 TEXT,
+    analysis_path TEXT,
+    transcript_path TEXT,
+    ocr_path TEXT,
+    transcript_segments INTEGER NOT NULL DEFAULT 0,
+    ocr_spans INTEGER NOT NULL DEFAULT 0,
+    detected_language TEXT,
+    asr_engine TEXT,
+    ocr_engine TEXT,
+    metric_value INTEGER,
+    metric_kind TEXT,
+    metric_is_estimate INTEGER NOT NULL DEFAULT 0,
+    metric_display_value TEXT,
+    rights_basis TEXT,
+    evidence_ref TEXT,
+    quality_flags_json TEXT NOT NULL DEFAULT '[]',
+    started_at TEXT,
+    completed_at TEXT,
+    last_error TEXT,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (platform, source_id),
+    FOREIGN KEY (platform, source_id)
+        REFERENCES candidates(platform, source_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_media_processing_status
+    ON media_processing(status, updated_at);
 """
 
 
@@ -283,6 +333,20 @@ class DiscoveryStore:
         )
         effective_metadata = {**previous_metadata, **candidate.metadata}
 
+        # A newer exact observation supersedes an earlier rounded UI estimate.
+        # Do not let stale estimate provenance keep an exact-count item out of
+        # the default processing queue.
+        has_exact_metric = (
+            effective_view_count is not None
+            if candidate.platform == "youtube"
+            else effective_play_count is not None or effective_view_count is not None
+        )
+        if has_exact_metric:
+            effective_metadata["metric_is_estimate"] = False
+            effective_metadata["metric_precision"] = "exact_numeric"
+            effective_metadata["metric_usage"] = "exact_platform_native_metric"
+            effective_metadata.pop("metric_conservative_lower_bound", None)
+
         # Compare platform-native metrics without relabeling Instagram plays
         # as views. Reports must retain the metric kind and source.
         exact_metric = (
@@ -391,7 +455,8 @@ class DiscoveryStore:
 
     def mark_download_failure(self, platform: str, source_id: str, *, error: str) -> None:
         self.connection.execute(
-            "UPDATE candidates SET download_status='download_failed', last_error=?, updated_at=? "
+            "UPDATE candidates SET download_status='download_failed', download_path=NULL, "
+            "media_sha256=NULL, downloaded_at=NULL, last_error=?, updated_at=? "
             "WHERE platform=? AND source_id=?",
             (error[:500], datetime.now(UTC).isoformat(), platform, source_id),
         )
@@ -407,6 +472,337 @@ class DiscoveryStore:
              datetime.now(UTC).isoformat(), platform, source_id),
         )
         self.connection.commit()
+
+    def replace_rights_authorizations(
+        self,
+        authorizations: Iterable[AcquisitionAuthorization],
+    ) -> int:
+        """Atomically replace the private per-item rights index from a JSONL manifest."""
+        timestamp = datetime.now(UTC).isoformat()
+        count = 0
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            self.connection.execute("DELETE FROM rights_authorizations")
+            for item in authorizations:
+                expires_at = (
+                    item.expires_at.isoformat()
+                    if item.expires_at is not None else None
+                )
+                self.connection.execute(
+                    """INSERT INTO rights_authorizations(
+                        platform, source_id, basis, evidence_ref, media_retrieval,
+                        media_analysis, temporary_processing, derived_artifact_retention,
+                        model_training, revoked, expires_at, updated_at
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (
+                        item.platform, item.source_id, item.basis, item.evidence_ref,
+                        int(item.media_retrieval), int(item.media_analysis),
+                        int(item.temporary_processing), int(item.derived_artifact_retention),
+                        int(item.model_training), int(item.revoked), expires_at, timestamp,
+                    ),
+                )
+                count += 1
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+        return count
+
+    def processing_candidates(
+        self,
+        *,
+        min_metric: int = 1_000_000,
+        allow_estimated_metrics: bool = False,
+        limit: int = 25,
+    ) -> list[
+        tuple[
+            DiscoveredCandidate,
+            AcquisitionAuthorization,
+            str | None,
+            str,
+            str | None,
+        ]
+    ]:
+        """Return eligible, confirmed candidates with a current complete training grant.
+
+        Exact YouTube views and exact Instagram-native metrics are preferred.
+        Rounded Instagram display metrics can be included only with an explicit
+        opt-in; the caller still marks those records as review-required.
+        """
+        maximum = max(0, int(limit))
+        if maximum == 0:
+            return []
+        now = datetime.now(UTC).isoformat()
+        cursor = self.connection.execute(
+            """SELECT
+                c.*,
+                r.basis AS auth_basis,
+                r.evidence_ref AS auth_evidence_ref,
+                r.media_retrieval AS auth_media_retrieval,
+                r.media_analysis AS auth_media_analysis,
+                r.temporary_processing AS auth_temporary_processing,
+                r.derived_artifact_retention AS auth_derived_artifact_retention,
+                r.model_training AS auth_model_training,
+                r.revoked AS auth_revoked,
+                r.expires_at AS auth_expires_at
+            FROM candidates AS c
+            JOIN rights_authorizations AS r
+              ON r.platform=c.platform AND r.source_id=c.source_id
+            LEFT JOIN media_processing AS p
+              ON p.platform=c.platform AND p.source_id=c.source_id
+            WHERE c.status='eligible'
+              AND c.short_format_status='confirmed'
+              AND c.download_status IN ('not_downloaded','download_failed','downloaded')
+              AND COALESCE(p.status, '') NOT IN ('complete','duplicate_media')
+              AND CASE
+                    WHEN c.platform='youtube' THEN COALESCE(c.view_count, 0)
+                    ELSE COALESCE(
+                        c.play_count,
+                        c.view_count,
+                        CAST(json_extract(c.metadata_json, '$.metric_conservative_lower_bound') AS INTEGER),
+                        0
+                    )
+                  END >= ?
+              AND r.media_retrieval=1
+              AND r.media_analysis=1
+              AND r.temporary_processing=1
+              AND r.derived_artifact_retention=1
+              AND r.model_training=1
+              AND r.revoked=0
+              AND (r.expires_at IS NULL OR r.expires_at > ?)
+            ORDER BY
+              CASE WHEN c.platform='youtube'
+                   THEN COALESCE(c.view_count, 0)
+                   ELSE COALESCE(
+                       c.play_count,
+                       c.view_count,
+                       CAST(json_extract(c.metadata_json, '$.metric_conservative_lower_bound') AS INTEGER),
+                       0
+                   )
+              END DESC,
+              c.discovered_at ASC""",
+            (int(min_metric), now),
+        )
+        output = []
+        for row in cursor:
+            candidate = self._candidate_from_row(row)
+            if (
+                candidate.metadata.get("metric_is_estimate") is True
+                and not allow_estimated_metrics
+            ):
+                continue
+            authorization = AcquisitionAuthorization(
+                platform=row["platform"],
+                source_id=row["source_id"],
+                basis=row["auth_basis"],
+                evidence_ref=row["auth_evidence_ref"],
+                media_retrieval=bool(row["auth_media_retrieval"]),
+                media_analysis=bool(row["auth_media_analysis"]),
+                temporary_processing=bool(row["auth_temporary_processing"]),
+                derived_artifact_retention=bool(row["auth_derived_artifact_retention"]),
+                model_training=bool(row["auth_model_training"]),
+                revoked=bool(row["auth_revoked"]),
+                expires_at=(
+                    datetime.fromisoformat(row["auth_expires_at"])
+                    if row["auth_expires_at"] else None
+                ),
+            )
+            output.append((
+                candidate,
+                authorization,
+                row["download_path"],
+                str(row["download_status"]),
+                row["media_sha256"],
+            ))
+            if len(output) >= maximum:
+                break
+        return output
+
+    def count_processing_blocked(self, *, min_metric: int = 1_000_000) -> int:
+        """Count above-threshold, confirmed candidates lacking a current complete grant."""
+        now = datetime.now(UTC).isoformat()
+        row = self.connection.execute(
+            """SELECT COUNT(*) AS n
+            FROM candidates AS c
+            LEFT JOIN media_processing AS p
+              ON p.platform=c.platform AND p.source_id=c.source_id
+            WHERE c.status='eligible'
+              AND c.short_format_status='confirmed'
+              AND c.download_status IN ('not_downloaded','download_failed','downloaded')
+              AND COALESCE(p.status, '') NOT IN ('complete','duplicate_media')
+              AND CASE
+                    WHEN c.platform='youtube' THEN COALESCE(c.view_count, 0)
+                    ELSE COALESCE(
+                        c.play_count,
+                        c.view_count,
+                        CAST(json_extract(c.metadata_json, '$.metric_conservative_lower_bound') AS INTEGER),
+                        0
+                    )
+                  END >= ?
+              AND NOT EXISTS (
+                SELECT 1 FROM rights_authorizations AS r
+                WHERE r.platform=c.platform AND r.source_id=c.source_id
+                  AND r.media_retrieval=1 AND r.media_analysis=1
+                  AND r.temporary_processing=1 AND r.derived_artifact_retention=1
+                  AND r.model_training=1 AND r.revoked=0
+                  AND (r.expires_at IS NULL OR r.expires_at > ?)
+              )""",
+            (int(min_metric), now),
+        ).fetchone()
+        return int(row["n"]) if row else 0
+
+    def mark_processing_started(
+        self,
+        candidate: DiscoveredCandidate,
+        authorization: AcquisitionAuthorization,
+    ) -> None:
+        now = datetime.now(UTC).isoformat()
+        metric = candidate.qualifying_metric()
+        is_estimate = candidate.metadata.get("metric_is_estimate") is True
+        display_value = candidate.metadata.get("metric_display_value")
+        self.connection.execute(
+            """INSERT INTO media_processing(
+                platform, source_id, status, attempts, metric_value, metric_kind,
+                metric_is_estimate, metric_display_value, rights_basis, evidence_ref,
+                started_at, last_error, updated_at
+            ) VALUES(?,?,'processing',1,?,?,?,?,?,?,?,NULL,?)
+            ON CONFLICT(platform, source_id) DO UPDATE SET
+                status='processing',
+                attempts=media_processing.attempts+1,
+                metric_value=excluded.metric_value,
+                metric_kind=excluded.metric_kind,
+                metric_is_estimate=excluded.metric_is_estimate,
+                metric_display_value=excluded.metric_display_value,
+                rights_basis=excluded.rights_basis,
+                evidence_ref=excluded.evidence_ref,
+                started_at=excluded.started_at,
+                completed_at=NULL,
+                last_error=NULL,
+                updated_at=excluded.updated_at""",
+            (
+                candidate.platform, candidate.source_id, metric,
+                candidate.qualifying_metric_kind(), int(is_estimate),
+                str(display_value) if display_value is not None else None,
+                authorization.basis, authorization.evidence_ref, now, now,
+            ),
+        )
+        self.connection.commit()
+
+    def mark_processing_complete(
+        self,
+        platform: str,
+        source_id: str,
+        *,
+        media_path: str,
+        media_sha256: str,
+        analysis_path: str,
+        transcript_path: str,
+        ocr_path: str,
+        transcript_segments: int,
+        ocr_spans: int,
+        detected_language: str | None,
+        asr_engine: str | None,
+        ocr_engine: str | None,
+        quality_flags: list[str],
+    ) -> None:
+        now = datetime.now(UTC).isoformat()
+        self.connection.execute(
+            """UPDATE media_processing SET
+                status='complete',
+                media_path=?, media_sha256=?, analysis_path=?,
+                transcript_path=?, ocr_path=?,
+                transcript_segments=?, ocr_spans=?, detected_language=?,
+                asr_engine=?, ocr_engine=?, quality_flags_json=?,
+                completed_at=?, last_error=NULL, updated_at=?
+            WHERE platform=? AND source_id=?""",
+            (
+                media_path, media_sha256, analysis_path, transcript_path, ocr_path,
+                transcript_segments, ocr_spans, detected_language, asr_engine, ocr_engine,
+                json.dumps(quality_flags, ensure_ascii=False), now, now, platform, source_id,
+            ),
+        )
+        self.connection.commit()
+
+    def mark_processing_failure(
+        self,
+        platform: str,
+        source_id: str,
+        *,
+        error: str,
+    ) -> None:
+        now = datetime.now(UTC).isoformat()
+        self.connection.execute(
+            """UPDATE media_processing
+            SET status='failed', last_error=?, updated_at=?
+            WHERE platform=? AND source_id=?""",
+            (error[:1000], now, platform, source_id),
+        )
+        self.connection.commit()
+
+    def mark_processing_duplicate(
+        self,
+        platform: str,
+        source_id: str,
+        *,
+        duplicate_of: str,
+        media_sha256: str,
+    ) -> None:
+        now = datetime.now(UTC).isoformat()
+        self.connection.execute(
+            """UPDATE media_processing SET status='duplicate_media',
+                media_sha256=?, last_error=?, completed_at=?, updated_at=?
+            WHERE platform=? AND source_id=?""",
+            (
+                media_sha256, f"Identical media already acquired as {duplicate_of}",
+                now, now, platform, source_id,
+            ),
+        )
+        self.connection.commit()
+
+    def iter_processing_records(self) -> Iterator[dict[str, Any]]:
+        """Stream completed records whose current grant still permits training."""
+        now = datetime.now(UTC).isoformat()
+        rows = self.connection.execute(
+            """SELECT
+                c.platform, c.source_id, c.canonical_url, c.title, c.description,
+                c.creator, c.view_count, c.play_count, c.metric_source,
+                c.duration_seconds, c.upload_date, c.hashtags_json, c.discovered_at,
+                c.short_format_status, c.status AS candidate_status,
+                c.metadata_json,
+                p.status AS processing_status, p.media_path, p.media_sha256,
+                p.analysis_path, p.transcript_path, p.ocr_path,
+                p.transcript_segments, p.ocr_spans, p.detected_language,
+                p.asr_engine, p.ocr_engine, p.metric_value, p.metric_kind,
+                p.metric_is_estimate, p.metric_display_value, p.rights_basis,
+                p.evidence_ref, p.quality_flags_json, p.completed_at,
+                r.media_retrieval, r.media_analysis, r.temporary_processing,
+                r.derived_artifact_retention, r.model_training
+            FROM media_processing AS p
+            JOIN candidates AS c
+              ON c.platform=p.platform AND c.source_id=p.source_id
+            JOIN rights_authorizations AS r
+              ON r.platform=p.platform AND r.source_id=p.source_id
+            WHERE p.status='complete'
+              AND c.status='eligible' AND c.short_format_status='confirmed'
+              AND r.media_retrieval=1 AND r.media_analysis=1
+              AND r.temporary_processing=1 AND r.derived_artifact_retention=1
+              AND r.model_training=1 AND r.revoked=0
+              AND (r.expires_at IS NULL OR r.expires_at > ?)
+            ORDER BY p.completed_at ASC""",
+            (now,),
+        )
+        for row in rows:
+            yield dict(row)
+
+    def processing_records(self) -> list[dict[str, Any]]:
+        """Return a materialized view for small inspection/test workloads."""
+        return list(self.iter_processing_records())
+
+    def processing_summary(self) -> dict[str, int]:
+        rows = self.connection.execute(
+            "SELECT status, COUNT(*) AS n FROM media_processing GROUP BY status"
+        ).fetchall()
+        return {str(row["status"]): int(row["n"]) for row in rows}
 
     def summary(self) -> dict[str, int]:
         rows = self.connection.execute(

@@ -38,12 +38,13 @@ A session may improve metadata access, but does not guarantee every Reel is acce
 ## Important metric handling
 
 - YouTube view_count is stored as the view metric where ytscrape returns it; capped detail enrichment uses ytscrape player metadata when search results omit the metric.
-- Instagram video_view_count is stored separately from video_play_count.
-- Eligibility on both platforms uses numeric view_count only. Instagram video_play_count is retained as separate descriptive metadata and can never substitute for views.
-- Missing metrics are unknown, not zero, and never pass the default 1M threshold.
+- Instagram video_view_count and video_play_count are stored as separate platform-native metrics. A play count is never relabeled as a view count.
+- The graph discovery inventory can use a conservative lower bound from a rounded Instagram display label (for example, 1.2M); the record remains explicitly marked as an estimate.
+- The processing queue defaults to exact numeric metrics only. Rounded estimates are excluded unless `--allow-estimated-metrics` is explicitly supplied for transcript/OCR research; estimated records remain review-required and are never marked training-ready.
+- Missing metrics are unknown, not zero, and never pass the processing threshold.
 - YouTube candidates come from ytscrape's dedicated Shorts search filter, plus bounded yt-dlp hashtag Shorts shelves and Shorts tabs for channels found through those surfaces.
 - Query selection learns from prior query yield after cooldown; never-used queries remain an exploration pool.
-- Only candidates with confirmed Shorts/Reels format and an observed view_count of at least 1,000,000 become eligible. A merely short-duration or format-uncertain video does not qualify.
+- Only candidates with confirmed Shorts/Reels format and a platform-native qualifying discovery metric at or above 1,000,000 enter the eligible inventory. Processing applies its own exact-metric threshold by default; a merely short-duration or format-uncertain video does not qualify.
 - Instagram search results are confirmed Reels when they came from a /reel/ search result and the resolved media is video. Profile/hashtag discoveries are candidates unless more source evidence is available.
 
 ## Current commands
@@ -53,7 +54,7 @@ Install on Windows PowerShell:
     py -3.11 -m venv .venv
     .venv/Scripts/Activate.ps1
     python -m pip install --upgrade pip
-    pip install -e ".[dev,discovery,legacy-discovery,audio]" --upgrade
+    pip install -e ".[dev,discovery,legacy-discovery,audio,vidtrace]" --upgrade
 
 Install FFmpeg and ffprobe and ensure both are on PATH. The gallery-dl Instagram fallback is optional:
 
@@ -117,7 +118,29 @@ The example manifest at examples/rights_manifest.example.jsonl is deliberately n
 
     shorts-lm discover download --rights-manifest data/private/rights.jsonl --limit 25 --output-dir data/private/acquired
 
-The downloader rejects missing, expired, revoked or incomplete permission records. It writes a local MP4 and a private metadata/rights sidecar.
+The downloader rejects missing, expired, revoked or incomplete permission records. It writes a local MP4 and a private metadata/rights sidecar. Installing the `vidtrace` extra pins your VidTrace repository revision so the existing Whisper and PaddleOCR wrappers are reused by the analyzer.
+
+### Batch-process authorized media with VidTrace
+
+The batch command downloads eligible 1M+ Shorts/Reels, validates the media with FFprobe, deduplicates by SHA-256, and runs the existing analyzer. ASR and OCR use the ShortsLM adapters that prefer your pinned VidTrace WhisperTranscriber and PaddleOCREngine implementations. Transcript and OCR artifacts are saved separately as JSON and Markdown, alongside the full analysis report.
+
+Create a private JSONL rights manifest containing one matching, current grant for each item. Every row must grant media retrieval, media analysis, temporary processing, derived-artifact retention and model training. The checked-in example is intentionally non-authorizing and must not be used as a real grant.
+
+```powershell
+shorts-lm discover process --rights-manifest data/private/rights.jsonl --limit 10 --min-metric 1000000 --asr-model small --asr-device cpu
+```
+
+Useful controls:
+- `--limit 10`: begin with a small validation batch; increase only after reviewing results.
+- `--min-metric 1000000`: require at least one million on the stored platform-native metric.
+- `--asr-device cpu`: conservative default for a 4 GB GPU; `cuda` lets VidTrace try the GPU and fall back to CPU.
+- `--language hi`: optionally pin a language; omit it for automatic language detection.
+- `--allow-estimated-metrics`: opt in to processing rounded Instagram UI counts for research. Their metric provenance remains estimated and the manifest still marks them review-required.
+- `--dataset-manifest outputs/dataset/training-candidates.jsonl`: choose the JSONL manifest output path.
+
+The command is resumable. If ASR/OCR fails after a video downloads successfully, the MP4 remains recorded as downloaded and a later run retries processing without downloading it again. The local SQLite database retains per-item attempts, state, hashes, artifact paths and errors. The JSONL output is a **processing manifest, not an automatically approved training set**: every record stays `training_ready: false` and requires manual rights/content/transcript QA.
+
+Validate progressively: 10 assets, then 100, then 300. Do not start a multi-million-asset run until source permissions, download success rate, transcript/OCR quality, storage requirements and per-item processing cost have been measured.
 
 ## Local persistence and deduplication
 
@@ -146,9 +169,9 @@ The 4 GB RTX 3050 is not required for discovery, SQLite or download. The local l
 
 ## Revised phases
 
-1. Non-API discovery + SQLite — current implementation.
-2. Authorized media acquisition + robust metadata/asset validation.
-3. Batch multimodal processing using the existing analyzer.
+1. Non-API discovery + SQLite — implemented.
+2. Authorized media acquisition + robust metadata/asset validation — implemented.
+3. Batch multimodal processing using the existing analyzer and VidTrace ASR/OCR adapters — implementation added in the current PR; validate locally on 10 → 100 → 300 authorized assets.
 4. Dataset QA, duplicate control and annotation.
 5. Model bake-off and frozen baselines.
 6. Cloud fine-tuning.

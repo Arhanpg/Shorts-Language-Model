@@ -23,8 +23,13 @@ def _write_metadata(candidate: DiscoveredCandidate, authorization: AcquisitionAu
         "candidate": candidate.model_dump(mode="json"),
         "rights": authorization.model_dump(mode="json"),
         "downloaded_at": datetime.now(UTC).isoformat(),
-        "training_ready": True,
-        "note": "Private provenance sidecar. Do not publish or commit without reviewing rights.",
+        "rights_grant_validated": True,
+        "training_ready": False,
+        "review_status": "review_required",
+        "note": (
+            "Private provenance sidecar. A valid rights grant permits processing; "
+            "transcript/OCR quality review and dataset approval are still required."
+        ),
     }
     temporary = metadata_path.with_suffix(".json.tmp")
     temporary.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
