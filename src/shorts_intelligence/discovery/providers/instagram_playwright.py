@@ -139,8 +139,9 @@ def _response_shape(payload: object) -> dict[str, object]:
         top_level = [type(payload).__name__]
     media_shapes: list[dict[str, object]] = []
     interesting = {
-        "code", "shortcode", "media_code", "media_type", "product_type",
-        "is_reel", "is_video", "is_unified_video", "__typename",
+        "code", "shortcode", "media_code", "permalink", "url",
+        "media_type", "product_type", "is_reel", "is_video",
+        "is_unified_video", "__typename",
         "video_versions", "clips_metadata", "media_or_ad", "pk", "id",
         "view_count", "video_view_count", "play_count", "video_play_count",
     }
@@ -210,6 +211,13 @@ def extract_reel_records(
     def walk(value: object) -> None:
         if isinstance(value, dict):
             code = value.get("code") or value.get("shortcode") or value.get("media_code")
+            if not isinstance(code, str):
+                permalink = (
+                    value.get("permalink") or value.get("url")
+                    or value.get("canonical_url")
+                )
+                link_match = _REEL_PATH.search(permalink) if isinstance(permalink, str) else None
+                code = link_match.group(1) if link_match else None
             product_type = str(value.get("product_type") or "").casefold()
             media_type = value.get("media_type")
             media_type_text = str(media_type or "").casefold()
