@@ -1044,7 +1044,7 @@ class InstagramPlaywrightProvider:
         if self.blocked:
             raise RuntimeError("Instagram backend is blocked; stopping without further requests.")
         tag = hashtag.strip().lstrip("#").casefold()
-        if not tag or not re.fullmatch(r"[\\w.]{1,64}", tag, flags=re.UNICODE):
+        if not tag or not re.fullmatch(r"[\w.]{1,64}", tag, flags=re.UNICODE):
             raise ValueError(f"Invalid Instagram hashtag: {hashtag!r}")
 
         primary_url = instagram_hashtag_keyword_search_url(tag)
