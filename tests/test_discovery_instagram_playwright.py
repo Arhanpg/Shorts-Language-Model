@@ -329,7 +329,7 @@ def test_instagram_reuses_the_persistent_startup_tab_across_surfaces(monkeypatch
         assert creator_records == []
         assert coauthors == set()
         assert page.goto_urls == [
-            "https://www.instagram.com/explore/tags/getreadywithme/",
+            "https://www.instagram.com/explore/search/keyword/?q=%23getreadywithme",
             "https://www.instagram.com/example_creator/reels/",
         ]
         assert context.new_page_calls == 0
@@ -553,3 +553,44 @@ def test_estimated_visible_metric_never_populates_exact_count_fields():
     assert candidate.qualifying_metric() == 1_150_000
     assert candidate.qualifying_metric_kind() == "views"
     assert candidate.metadata["metric_is_estimate"] is True
+
+
+def test_hover_metric_parser_reads_count_only_reel_overlay_values_as_plays():
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _visible_hover_metric_from_texts,
+    )
+
+    abbreviated = _visible_hover_metric_from_texts(["1.2M"])
+    assert abbreviated is not None
+    assert abbreviated["kind"] == "plays"
+    assert abbreviated["lower_bound"] == 1_150_000
+    assert abbreviated["is_estimate"] is True
+
+    exact = _visible_hover_metric_from_texts(["1,234,567"])
+    assert exact is not None
+    assert exact["kind"] == "plays"
+    assert exact["lower_bound"] == 1_234_567
+    assert exact["is_estimate"] is False
+
+
+def test_hover_metric_parser_rejects_plain_caption_numbers_and_likes():
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _visible_hover_metric_from_texts,
+    )
+
+    assert _visible_hover_metric_from_texts(["2026"]) is None
+    assert _visible_hover_metric_from_texts(["1.2M likes"]) is None
+    assert _visible_hover_metric_from_texts(["A caption", "2026", "3 friends"]) is None
+
+
+def test_hashtag_uses_instagram_keyword_search_route_seen_in_current_ui():
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        instagram_hashtag_keyword_search_url,
+    )
+
+    assert instagram_hashtag_keyword_search_url("getreadywithme") == (
+        "https://www.instagram.com/explore/search/keyword/?q=%23getreadywithme"
+    )
+    assert instagram_hashtag_keyword_search_url("#ViratKohli") == (
+        "https://www.instagram.com/explore/search/keyword/?q=%23viratkohli"
+    )

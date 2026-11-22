@@ -1242,6 +1242,8 @@ def graph_run(
             f"{sum(int(d.get('candidate_count', 0)) for d in all_diags)} Reel links; "
             f"{sum(int(d.get('metric_count', 0)) for d in all_diags)} with numeric/estimated metrics; "
             f"{sum(int(d.get('dom_metric_count', 0)) for d in all_diags)} from Reel cards; "
+            f"{sum(int(d.get('hovered_metric_cards', 0)) for d in all_diags)} from hovered Reel cards "
+            f"({sum(int(d.get('hovered_reel_cards', 0)) for d in all_diags)} hovered); "
             f"{sum(int(d.get('visible_detail_metrics', 0)) for d in all_diags)} from visible detail text; "
             f"{sum(int(d.get('detail_pages_with_metrics', 0)) for d in all_diags)} detail pages enriched."
         )
@@ -1270,13 +1272,13 @@ def graph_run(
                     keys = shape.get("top_level_keys", [])
                     media = shape.get("media_like_objects", [])
                     media_keys = [
-                        "/".join(item.get("signals", []))
+                        "/".join(item.get("keys", [])[:24])
                         for item in media[:2]
                     ]
                     console.print(
                         f"[dim]Instagram {label} response shape "
                         f"{diagnostic.get('hashtag') or diagnostic.get('handle')}: "
-                        f"path={shape.get('path')}; top-level={keys}; media-signals={media_keys}[/dim]"
+                        f"path={shape.get('path')}; top-level={keys}; media-object-keys={media_keys}[/dim]"
                     )
     console.print(f"Creator seed file: {instagram_seeds_file.expanduser().resolve()}")
     console.print(f"Hashtag seed file: {instagram_hashtags_file.expanduser().resolve()}")

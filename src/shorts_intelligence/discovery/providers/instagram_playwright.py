@@ -13,7 +13,7 @@ import re
 from decimal import ROUND_FLOOR, Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urlencode, urlparse
 
 from shorts_intelligence.discovery.models import DiscoveredCandidate
 
@@ -38,6 +38,7 @@ def _visible_metric_from_text(
     text: str,
     *,
     allow_bare_count: bool = False,
+    bare_kind: str = "views",
 ) -> dict[str, object] | None:
     """Read a public UI views/plays label; abbreviations remain estimates."""
     cleaned = " ".join(text.split())
@@ -62,7 +63,7 @@ def _visible_metric_from_text(
 
         token = match.group(0).strip()
         if kind is None and allow_bare_count and _DISPLAY_COUNT.fullmatch(cleaned):
-            kind = "views"
+            kind = bare_kind if bare_kind in {"plays", "views"} else "views"
         if kind is None:
             continue
 
@@ -103,6 +104,42 @@ def _visible_metric_from_text(
             "is_estimate": approximate,
         }
     return None
+
+
+def _visible_hover_metric_from_texts(texts: list[str]) -> dict[str, object] | None:
+    """Extract labeled counts first, then count-only tokens from a hovered Reel tile.
+
+    Bare values are accepted only as abbreviated K/M/B counts or comma-grouped
+    integers. Plain years, caption numbers and likes are not treated as plays.
+    """
+    for text in texts:
+        metric = _visible_metric_from_text(text)
+        if metric is not None:
+            return metric
+
+    for text in texts:
+        for line in text.splitlines():
+            token = " ".join(line.split())
+            match = _DISPLAY_COUNT.fullmatch(token)
+            if match is None:
+                continue
+            if not match.group("suffix") and "," not in match.group("number"):
+                continue
+            metric = _visible_metric_from_text(
+                token,
+                allow_bare_count=True,
+                bare_kind="plays",
+            )
+            if metric is not None:
+                return metric
+    return None
+
+
+def instagram_hashtag_keyword_search_url(hashtag: str) -> str:
+    """Build the current Instagram keyword-search URL for a hashtag."""
+    tag = hashtag.strip().lstrip("#").casefold()
+    return "https://www.instagram.com/explore/search/keyword/?" + urlencode({"q": f"#{tag}"})
+
 
 def _apply_visible_metric(
     candidate: DiscoveredCandidate,
@@ -538,6 +575,8 @@ class InstagramPlaywrightProvider:
             "reason": None,
             "response_shapes": [],
             "dom_metric_count": 0,
+            "hovered_reel_cards": 0,
+            "hovered_metric_cards": 0,
             "visible_detail_metrics": 0,
         }
 
@@ -641,6 +680,8 @@ class InstagramPlaywrightProvider:
                     str(item.get("title") or ""),
                     str(item.get("label_text") or ""),
                     str(item.get("card_text") or ""),
+                    *[str(value) for value in item.get("ancestor_texts", [])],
+                    *[str(value) for value in item.get("leaf_texts", [])],
                 ]
                 metric = next(
                     (
@@ -654,7 +695,7 @@ class InstagramPlaywrightProvider:
                         (
                             parsed for text in text_fields
                             if (parsed := _visible_metric_from_text(
-                                text, allow_bare_count=True
+                                text, allow_bare_count=True, bare_kind="plays"
                             )) is not None
                         ),
                         None,
@@ -669,21 +710,101 @@ class InstagramPlaywrightProvider:
 
         async def capture_rendered_links() -> None:
             links = await page.locator('a[href*="/reel/"]').evaluate_all(
-                "(els) => els.map((el) => ({"
+                "(els) => els.map((el) => {"
+                "const ancestorTexts = [];"
+                "let node = el;"
+                "for (let i = 0; node && i < 5; i += 1, node = node.parentElement) {"
+                "const value = (node.innerText || node.textContent || '').trim();"
+                "if (value && value.length <= 700) ancestorTexts.push(value);"
+                "}"
+                "const leafTexts = Array.from(el.querySelectorAll('*'))"
+                ".filter((node) => node.children.length === 0 && node.getClientRects().length)"
+                ".map((node) => (node.innerText || node.textContent || '').trim())"
+                ".filter((value) => value && value.length <= 80);"
+                "return {"
                 "href: el.getAttribute('href') || '',"
                 "text: el.innerText || el.textContent || '',"
                 "aria_label: el.getAttribute('aria-label') || '',"
                 "title: el.getAttribute('title') || '',"
                 "label_text: Array.from(el.querySelectorAll('[aria-label]'))"
                 ".map((node) => node.getAttribute('aria-label') || '').join(' '),"
-                "card_text: (el.closest('article') || el.parentElement?.parentElement)?.innerText || ''"
-                "}))"
+                "card_text: (el.closest('article') || el.parentElement?.parentElement)?.innerText || '',"
+                "ancestor_texts: ancestorTexts,"
+                "leaf_texts: leafTexts"
+                "};"
+                "})"
             )
             collect_rendered_links(links)
             diagnostic["dom_reel_links"] = sum(
                 item.metadata.get("provider") == "playwright_rendered_reel_link"
                 for item in candidates.values()
             )
+
+        hovered_codes: set[str] = set()
+        hover_budget = min(max(0, max_reel_details) * 3, 30)
+
+        async def hover_visible_reel_cards() -> None:
+            """Hover Reel tiles so Instagram can render its view-count overlay."""
+            if hover_budget <= 0:
+                return
+            for code, candidate in list(candidates.items()):
+                if diagnostic["hovered_reel_cards"] >= hover_budget:
+                    break
+                if code in hovered_codes or candidate.qualifying_metric() is not None:
+                    continue
+                if candidate.metadata.get("provider") != "playwright_rendered_reel_link":
+                    continue
+                hovered_codes.add(code)
+                anchor = page.locator(f'a[href*="/reel/{code}/"]').first
+                try:
+                    await anchor.hover(timeout=1200)
+                    await page.wait_for_timeout(300)
+                    hovered = await anchor.evaluate(
+                        "(el) => {"
+                        "const ancestorTexts = [];"
+                        "let node = el;"
+                        "for (let i = 0; node && i < 5; i += 1, node = node.parentElement) {"
+                        "const value = (node.innerText || node.textContent || '').trim();"
+                        "if (value && value.length <= 700) ancestorTexts.push(value);"
+                        "}"
+                        "const leafTexts = Array.from(el.querySelectorAll('*'))"
+                        ".filter((node) => node.children.length === 0 && node.getClientRects().length)"
+                        ".map((node) => (node.innerText || node.textContent || '').trim())"
+                        ".filter((value) => value && value.length <= 80);"
+                        "return {"
+                        "text: el.innerText || el.textContent || '',"
+                        "aria_label: el.getAttribute('aria-label') || '',"
+                        "title: el.getAttribute('title') || '',"
+                        "label_text: Array.from(el.querySelectorAll('[aria-label]'))"
+                        ".map((node) => node.getAttribute('aria-label') || '').join(' '),"
+                        "ancestor_texts: ancestorTexts,"
+                        "leaf_texts: leafTexts"
+                        "};"
+                        "}"
+                    )
+                    diagnostic["hovered_reel_cards"] += 1
+                    values = [
+                        str(hovered.get("text") or ""),
+                        str(hovered.get("aria_label") or ""),
+                        str(hovered.get("title") or ""),
+                        str(hovered.get("label_text") or ""),
+                        *[str(value) for value in hovered.get("ancestor_texts", [])],
+                        *[str(value) for value in hovered.get("leaf_texts", [])],
+                    ]
+                    metric = _visible_hover_metric_from_texts(values)
+                    if metric is not None and candidate.qualifying_metric() is None:
+                        _apply_visible_metric(
+                            candidate,
+                            metric,
+                            source="instagram_reel_hover_overlay." + str(metric["kind"]),
+                        )
+                        candidate.metadata["metric_hovered"] = True
+                        diagnostic["hovered_metric_cards"] += 1
+                except Exception as exc:
+                    if len(self.errors) < 50:
+                        self.errors.append(
+                            f"hover reel {code}: {type(exc).__name__}: {str(exc)[:100]}"
+                        )
 
         page.on("response", on_response)
         try:
@@ -710,16 +831,18 @@ class InstagramPlaywrightProvider:
                 # scroll batches; hashtag pages often load a useful first row
                 # before the first wheel event.
                 await capture_rendered_links()
+                await hover_visible_reel_cards()
                 previous_count = -1
                 stable_rounds = 0
                 for _ in range(max(0, min(max_scrolls, 20))):
                     await page.mouse.wheel(0, 1750)
-                    await page.wait_for_timeout(850)
+                    await page.wait_for_timeout(1100)
                     await capture_rendered_links()
+                    await hover_visible_reel_cards()
                     current_count = len(candidates)
                     stable_rounds = stable_rounds + 1 if current_count == previous_count else 0
                     previous_count = current_count
-                    if stable_rounds >= 2:
+                    if stable_rounds >= 3:
                         break
 
                 # Reel grid cards often expose only a permalink. Resolve a small,
@@ -919,7 +1042,7 @@ class InstagramPlaywrightProvider:
             raise ValueError(f"Invalid Instagram hashtag: {hashtag!r}")
         try:
             records, _, diagnostic = await self._collect_surface(
-                url=f"https://www.instagram.com/explore/tags/{quote(tag, safe='.')}/",
+                url=instagram_hashtag_keyword_search_url(tag),
                 creator_handle=f"hashtag:{tag}",
                 surface="hashtag_page",
                 hashtag=tag,
@@ -930,7 +1053,7 @@ class InstagramPlaywrightProvider:
             self.hashtag_diagnostics.append({
                 "surface": "hashtag_page",
                 "hashtag": tag,
-                "requested_url": f"https://www.instagram.com/explore/tags/{quote(tag, safe='.')}/",
+                "requested_url": instagram_hashtag_keyword_search_url(tag),
                 "candidate_count": 0,
                 "metric_count": 0,
                 "reason": f"{type(exc).__name__}: {str(exc)[:180]}",

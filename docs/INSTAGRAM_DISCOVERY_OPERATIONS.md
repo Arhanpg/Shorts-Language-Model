@@ -171,7 +171,7 @@ The run remains bounded by `--max-runtime-seconds`, `--max-creators`, and `--max
 
 ## Persistent Instagram tab lifecycle (Windows)
 
-The collector keeps the blank tab created by `launch_persistent_context` alive and reuses it sequentially for hashtag pages, creator Reels tabs and sampled Reel detail pages. It does not close the only startup tab and then ask installed Chrome to create a replacement for every surface. This addresses the Windows Chrome `Target.createTarget: Failed to open a new tab` error that appeared before Instagram navigation or response capture.
+The collector keeps the blank tab created by `launch_persistent_context` alive and reuses it sequentially for hashtag keyword-search pages, creator Reels tabs and sampled Reel detail pages. It does not close the only startup tab and then ask installed Chrome to create a replacement for every surface. This addresses the Windows Chrome `Target.createTarget: Failed to open a new tab` error that appeared before Instagram navigation or response capture.
 
 Each surface attaches its own response listener and detaches it before the shared tab is reused. This prevents events from one hashtag or profile from leaking into another surface's diagnostics. The tab remains open until the provider closes the persistent context at the end of the run.
 
@@ -189,3 +189,16 @@ The provider now supplements response JSON and Reel-detail JSON-LD with public r
 - For hashtag JSON responses that still contain no recognized media, the report stores only bounded schema diagnostics (top-level keys and media-like object key names), not response payload values. The CLI prints a small sample so parser changes can be based on actual observed schemas.
 
 Estimated UI metrics are for conservative discovery filtering only. They are stored in metadata as `metric_conservative_lower_bound`, while exact `view_count` / `play_count` columns remain null. They must not be used as exact labels for view-count regression or other numerical training targets. JSON reports and CLI output distinguish exact metrics from estimates.
+
+
+## Current Instagram hashtag keyword-search grid (November 22, 2026)
+
+The browser navigates directly to the hashtag keyword-search route observed in the user's current Instagram UI:
+
+`/explore/search/keyword/?q=%23{hashtag}`
+
+After each rendered Reel-link capture, the collector hovers over a bounded sample of Reel tiles. Instagram can render a play/view overlay only on hover, so reading link text before hover can return Reel links with zero metric coverage. The collector reads the hovered tile's visible text, accessibility labels, leaf text and surrounding card text before falling back to public Reel-detail pages.
+
+A count-only overlay is accepted only when it is an abbreviated K/M/B value or a comma-grouped integer from a hovered Reel tile. It is stored as Instagram plays. Plain years, caption numbers and like counts are not treated as plays. Abbreviated counts use conservative lower bounds in metadata and are not written to exact numeric training-label columns.
+
+The keyword-search page's observed GraphQL response diagnostics print bounded nested media-object field names (not private response values) so any remaining schema mismatch can be investigated without saving session data or replaying requests.
