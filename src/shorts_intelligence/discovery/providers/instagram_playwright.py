@@ -832,6 +832,15 @@ class InstagramPlaywrightProvider:
                 self.blocked = True
                 diagnostic["reason"] = f"Surface page returned HTTP {response.status}"
 
+            if not self.blocked and surface == "hashtag_keyword_search":
+                # Instagram's keyword page commonly opens on "For you" and
+                # returns account suggestions instead of hashtag posts.
+                # Select the visible Tags filter through the normal page UI.
+                with contextlib.suppress(Exception):
+                    await page.get_by_text("Tags", exact=True).first.click(timeout=1400)
+                    await page.wait_for_timeout(650)
+                    diagnostic["hashtag_tag_filter_clicked"] = True
+
             if not self.blocked:
                 # Capture the initially rendered cards as well as subsequent
                 # scroll batches; hashtag pages often load a useful first row
@@ -1072,7 +1081,10 @@ class InstagramPlaywrightProvider:
         self.hashtag_diagnostics.append(diagnostic)
         if self.blocked:
             raise RuntimeError(diagnostic.get("reason") or "Instagram access restriction")
-        if records:
+        # An ID-only card is not a useful hashtag result for a 1M+ dataset.
+        # Continue to the public tag grid when the keyword route did not expose
+        # a metric, even if it returned one or two Reel links.
+        if records and all(item.qualifying_metric() is not None for item in records):
             return records
 
         # The keyword-search route can return only suggested accounts/stories,
@@ -1122,5 +1134,11 @@ class InstagramPlaywrightProvider:
                     previous.metric_source = candidate.metric_source
                 if candidate.description and not previous.description:
                     previous.description = candidate.description
-                previous.metadata.update(candidate.metadata)
+                if candidate.qualifying_metric() is not None:
+                    previous.metadata.update(candidate.metadata)
+                else:
+                    previous.metadata.update({
+                        key: value for key, value in candidate.metadata.items()
+                        if key not in {"metric_kind", "metric_is_estimate", "metric_conservative_lower_bound"}
+                    })
         return list(merged.values())
