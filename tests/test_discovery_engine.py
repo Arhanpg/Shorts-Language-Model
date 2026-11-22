@@ -343,3 +343,35 @@ def test_related_video_candidates_are_included_in_total_observed_count(monkeypat
     assert summary["related_candidates"] == 1
     assert summary["candidates_observed"] == 2
     assert summary["discovery_stage_counts"]["all_candidates_observed"] == 2
+
+
+def test_estimated_metric_can_filter_discovery_without_becoming_exact_view_count(tmp_path):
+    from shorts_intelligence.discovery.models import DiscoveredCandidate
+
+    candidate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="EstimatedStore123",
+        canonical_url="https://www.instagram.com/reel/EstimatedStore123/",
+        creator="creator",
+        short_format_status="confirmed",
+        metadata={
+            "metric_kind": "views",
+            "metric_is_estimate": True,
+            "metric_conservative_lower_bound": 1_150_000,
+            "metric_display_value": "1.2M",
+        },
+    )
+    with DiscoveryStore(tmp_path / "estimated-count.sqlite3") as store:
+        store.start_run("estimated-run", 1, 1_000_000)
+        is_new, became_eligible = store.upsert_candidate(
+            candidate, min_views=1_000_000, run_id="estimated-run"
+        )
+        saved = store.get_candidate("instagram", "EstimatedStore123")
+
+    assert is_new is True
+    assert became_eligible is True
+    assert saved is not None
+    assert saved.status == "eligible"
+    assert saved.view_count is None
+    assert saved.qualifying_metric() == 1_150_000
+    assert saved.metadata["metric_is_estimate"] is True
