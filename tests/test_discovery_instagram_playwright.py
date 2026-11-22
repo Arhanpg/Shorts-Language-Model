@@ -604,7 +604,7 @@ def test_hashtag_uses_instagram_keyword_search_route_seen_in_current_ui():
     )
 
 
-def test_hashtag_falls_back_to_public_tag_grid_when_keyword_search_is_empty(tmp_path):
+def test_hashtag_falls_back_when_keyword_route_only_has_metricless_reel_links(tmp_path):
     import asyncio
 
     from shorts_intelligence.discovery.models import DiscoveredCandidate
@@ -618,13 +618,21 @@ def test_hashtag_falls_back_to_public_tag_grid_when_keyword_search_is_empty(tmp_
     async def fake_collect_surface(**kwargs):
         calls.append(kwargs)
         if kwargs["surface"] == "hashtag_keyword_search":
-            return [], set(), {
+            candidate = DiscoveredCandidate(
+                platform="instagram",
+                source_id="Metricless123",
+                canonical_url="https://www.instagram.com/reel/Metricless123/",
+                short_format_status="confirmed",
+                metadata={"metric_kind": "unknown"},
+            )
+            return [candidate], set(), {
                 "surface": kwargs["surface"],
                 "requested_url": kwargs["url"],
-                "candidate_count": 0,
+                "candidate_count": 1,
                 "metric_count": 0,
-                "reason": "no recognized Reel records",
+                "reason": "Reel link has no visible count",
             }
+
         candidate = DiscoveredCandidate(
             platform="instagram",
             source_id="GridFallback123",
@@ -649,7 +657,10 @@ def test_hashtag_falls_back_to_public_tag_grid_when_keyword_search_is_empty(tmp_
             max_reel_details=1,
         )
     )
-    assert [item.source_id for item in records] == ["GridFallback123"]
+    assert {item.source_id for item in records} == {
+        "Metricless123",
+        "GridFallback123",
+    }
     assert [call["surface"] for call in calls] == [
         "hashtag_keyword_search",
         "hashtag_grid_fallback",
