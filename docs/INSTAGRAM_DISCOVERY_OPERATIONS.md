@@ -167,3 +167,12 @@ shorts-lm discover graph-run --platform youtube --target-new 20 --max-creators 1
 ```
 
 The run remains bounded by `--max-runtime-seconds`, `--max-creators`, and `--max-expansions`; target overshoot is expected when this option is enabled.
+
+
+## Persistent Instagram tab lifecycle (Windows)
+
+The collector keeps the blank tab created by `launch_persistent_context` alive and reuses it sequentially for hashtag pages, creator Reels tabs and sampled Reel detail pages. It does not close the only startup tab and then ask installed Chrome to create a replacement for every surface. This addresses the Windows Chrome `Target.createTarget: Failed to open a new tab` error that appeared before Instagram navigation or response capture.
+
+Each surface attaches its own response listener and detaches it before the shared tab is reused. This prevents events from one hashtag or profile from leaking into another surface's diagnostics. The tab remains open until the provider closes the persistent context at the end of the run.
+
+The regression tests assert that sequential hashtag and creator harvesting use the same page and do not call `BrowserContext.new_page()` when the persistent context already has an open tab.
