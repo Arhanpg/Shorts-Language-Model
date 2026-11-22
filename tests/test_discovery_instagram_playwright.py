@@ -526,3 +526,28 @@ def test_instagram_parser_extracts_shortcode_from_observed_public_permalink():
     assert len(records) == 1
     assert records[0].source_id == "PublicLink123"
     assert records[0].view_count == 1_700_000
+
+
+def test_estimated_visible_metric_never_populates_exact_count_fields():
+    from shorts_intelligence.discovery.models import DiscoveredCandidate
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _apply_visible_metric,
+        _visible_metric_from_text,
+    )
+
+    metric = _visible_metric_from_text("1.2M views")
+    assert metric is not None
+    candidate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="EstimateOnly123",
+        canonical_url="https://www.instagram.com/reel/EstimateOnly123/",
+        creator="creator",
+        short_format_status="confirmed",
+    )
+    _apply_visible_metric(candidate, metric, source="instagram_rendered_reel_card.views")
+
+    assert candidate.view_count is None
+    assert candidate.play_count is None
+    assert candidate.qualifying_metric() == 1_150_000
+    assert candidate.qualifying_metric_kind() == "views"
+    assert candidate.metadata["metric_is_estimate"] is True
