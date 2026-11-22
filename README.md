@@ -2,7 +2,7 @@
 
 Shorts Language Model is an automated short-form video discovery, telemetry and intelligence pipeline. The current acquisition implementation uses **open-source public-web search and downloader repositories**, not the YouTube Data API, Instagram Graph API or Meta Content Library.
 
-The objective is to search for YouTube Shorts and Instagram Reels, filter current view-count observations at 1M+, save unique candidates to a local SQLite database, and download media to the laptop through open-source extractors when a valid item-specific rights record permits it. The existing multimodal analyzer then extracts transcript, OCR, scene, motion, audio and editing evidence.
+The objective is to discover YouTube Shorts and Instagram Reels with 1M+ views/plays, save unique candidates in a local SQLite database, download selected videos through open-source extractors, and run the multimodal analyzer for transcripts, OCR, scenes, motion, audio and editing evidence.
 
 ## Non-API toolchain
 
@@ -10,7 +10,7 @@ The objective is to search for YouTube Shorts and Instagram Reels, filter curren
 |---|---|---|
 | YouTube Shorts search + metadata | ytscrape (MIT) | Shorts-only InnerTube search with bounded public pagination and typed views/duration |
 | YouTube Shorts discovery surfaces | yt-dlp | Flat metadata-only hashtag Shorts shelves and discovered-channel Shorts tabs |
-| YouTube media download | yt-dlp + FFmpeg | Authorized MP4 acquisition, remuxing and download retry |
+| YouTube media download | yt-dlp + FFmpeg | MP4 download, remuxing and retry |
 | Instagram public-link discovery | DDGS | Search indexed public Reel URLs without an Instagram developer token |
 | Instagram Reel metadata + primary download | Instaloader | Resolve shortcode; view/play count, caption/hashtags, duration and Post download |
 | Instagram metadata fallback | yt-dlp Instagram extractor | Independent metadata-only fallback after non-access-related Instaloader parser failures |
@@ -112,35 +112,30 @@ A result target is best-effort, not guaranteed. Search result ranking is biased,
 
 ### Download candidates
 
-Discovery does not automatically equate a public URL with training permission. Downloading requires a private JSONL rights manifest with an item-specific, current grant for media retrieval, analysis, temporary processing, derived-artifact retention and model training.
-
-The example manifest at examples/rights_manifest.example.jsonl is deliberately non-authorizing. Replace it only with real permission evidence and keep the actual manifest under data/private/.
-
-    shorts-lm discover download --rights-manifest data/private/rights.jsonl --limit 25 --output-dir data/private/acquired
-
-The downloader rejects missing, expired, revoked or incomplete permission records. It writes a local MP4 and a private metadata/rights sidecar. Installing the `vidtrace` extra pins your VidTrace repository revision so the existing Whisper and PaddleOCR wrappers are reused by the analyzer.
-
-### Batch-process authorized media with VidTrace
-
-The batch command downloads eligible 1M+ Shorts/Reels, validates the media with FFprobe, deduplicates by SHA-256, and runs the existing analyzer. ASR and OCR use the ShortsLM adapters that prefer your pinned VidTrace WhisperTranscriber and PaddleOCREngine implementations. Transcript and OCR artifacts are saved separately as JSON and Markdown, alongside the full analysis report.
-
-Create a private JSONL rights manifest containing one matching, current grant for each item. Every row must grant media retrieval, media analysis, temporary processing, derived-artifact retention and model training. The checked-in example is intentionally non-authorizing and must not be used as a real grant.
+Download confirmed candidates from the local SQLite inventory:
 
 ```powershell
-shorts-lm discover process --rights-manifest data/private/rights.jsonl --limit 10 --min-metric 1000000 --asr-model small --asr-device cpu
+shorts-lm discover download --limit 25 --min-metric 1000000 --output-dir data/private/acquired
+```
+
+### Batch-process videos with VidTrace
+
+The batch command downloads selected videos, checks each MP4 with FFprobe, removes exact duplicate files, and runs the existing analyzer. ASR uses the VidTrace Whisper adapter and OCR uses the VidTrace PaddleOCR adapter. Transcript and OCR outputs are saved separately as JSON and Markdown alongside the analysis report.
+
+Start with ten videos:
+
+```powershell
+shorts-lm discover process --limit 10 --min-metric 1000000 --asr-model small --asr-device cpu
 ```
 
 Useful controls:
-- `--limit 10`: begin with a small validation batch; increase only after reviewing results.
-- `--min-metric 1000000`: require at least one million on the stored platform-native metric.
-- `--asr-device cpu`: conservative default for a 4 GB GPU; `cuda` lets VidTrace try the GPU and fall back to CPU.
-- `--language hi`: optionally pin a language; omit it for automatic language detection.
-- `--allow-estimated-metrics`: opt in to processing rounded Instagram UI counts for research. Their metric provenance remains estimated and the manifest still marks them review-required.
-- `--dataset-manifest outputs/dataset/training-candidates.jsonl`: choose the JSONL manifest output path.
+- `--limit 10`: number of videos to process in this batch.
+- `--min-metric 1000000`: minimum platform-native views/plays value.
+- `--asr-device cpu`: conservative starting option for a 4 GB GPU; `cuda` tries GPU inference.
+- `--language hi`: optionally specify a language; omit it for automatic detection.
+- `--dataset-manifest outputs/dataset/processed-videos.jsonl`: choose the JSONL output path.
 
-The command is resumable. If ASR/OCR fails after a video downloads successfully, the MP4 remains recorded as downloaded and a later run retries processing without downloading it again. The local SQLite database retains per-item attempts, state, hashes, artifact paths and errors. The JSONL output is a **processing manifest, not an automatically approved training set**: every record stays `training_ready: false` and requires manual rights/content/transcript QA.
-
-Validate progressively: 10 assets, then 100, then 300. Do not start a multi-million-asset run until source permissions, download success rate, transcript/OCR quality, storage requirements and per-item processing cost have been measured.
+Processing resumes from the downloaded MP4 when ASR/OCR fails. The SQLite database keeps each video's download and processing state, checksums, output paths, attempts and errors. Start with 10 videos, then 100 and 300 after checking transcript and OCR quality.
 
 ## Local persistence and deduplication
 
@@ -163,15 +158,15 @@ Public indexed Reel links are attempted without a session first. Some Instagram 
 The Phase 1 analyzer remains the downstream processor for a permitted local MP4:
 
     shorts-lm doctor
-    shorts-lm analyze --input data/private/acquired/VIDEO.mp4 --output outputs/analysis.json --rights-basis creator_permission --rights-reference PRIVATE_CONSENT_REFERENCE --training-permitted
+    shorts-lm analyze --input data/private/acquired/VIDEO.mp4 --output outputs/analysis.json
 
 The 4 GB RTX 3050 is not required for discovery, SQLite or download. The local laptop is appropriate for discovery and CPU media preprocessing. Use a rented GPU for substantial multimodal fine-tuning after the dataset and rights gates pass.
 
 ## Revised phases
 
 1. Non-API discovery + SQLite — implemented.
-2. Authorized media acquisition + robust metadata/asset validation — implemented.
-3. Batch multimodal processing using the existing analyzer and VidTrace ASR/OCR adapters — implementation added in the current PR; validate locally on 10 → 100 → 300 authorized assets.
+2. Media acquisition + robust metadata/asset validation — implemented.
+3. Batch multimodal processing using the existing analyzer and VidTrace ASR/OCR adapters — implementation in the current PR; validate locally on 10 → 100 → 300 videos.
 4. Dataset QA, duplicate control and annotation.
 5. Model bake-off and frozen baselines.
 6. Cloud fine-tuning.
@@ -180,9 +175,9 @@ The 4 GB RTX 3050 is not required for discovery, SQLite or download. The local l
 
 ## Security and data safety
 
-Never commit the discovery SQLite database, downloaded MP4s, Instagram session files, cookies, credentials, private rights manifests, consent documents, raw transcripts or private metadata reports. The .gitignore includes these local artifacts.
+Never commit the discovery SQLite database, downloaded MP4s, Instagram session files, cookies, credentials, raw transcripts or private metadata reports. The .gitignore includes these local artifacts.
 
-Only acquire and train on media for which the exact intended use is authorized. Publicly viewable content is not automatically licensed for bulk copying, persistent storage or model training. This project does not attempt to bypass platform login, technical restrictions or rate limits.
+Instagram discovery uses ordinary browser navigation. A login prompt, account checkpoint or rate limit may prevent collection; the tool does not automate verification or bypass those restrictions.
 
 ## Tests
 
@@ -266,6 +261,6 @@ The graph engine is opt-in until repeated Windows runs validate real provider be
 
 TubeScrape is pinned to 0.6.0 and uses YouTube's public web/InnerTube interface; it is not the official YouTube Data API. The engine uses channel Shorts tabs, related-Shorts sequences, bounded batch enrichment and persistent creator scheduling. A popular-sort label is not assumed to guarantee strict descending numeric views, so the initial engine does not use an unsafe first-below-threshold cutoff.
 
-Instagram sign-in is performed in the user's installed Google Chrome outside Playwright automation. After the user closes Chrome, the collector reopens the same persistent profile through Playwright's Chrome channel and passively observes JSON responses and rendered Reel links generated by normal browser navigation. Each creator result records final URL, response counts, parsed/unparsed responses, Reel-link counts and an actionable zero-result reason. It does not replay captured requests, construct GraphQL calls, rotate identities, bypass checkpoints, or evade rate limits. Discovery remains separate from media acquisition, which still requires the private rights manifest.
+Instagram sign-in is performed in the user's installed Google Chrome outside Playwright automation. After the user closes Chrome, the collector reopens the same persistent profile through Playwright's Chrome channel and passively observes JSON responses and rendered Reel links generated by normal browser navigation. Each creator result records final URL, response counts, parsed/unparsed responses, Reel-link counts and an actionable zero-result reason. It does not replay captured requests, construct GraphQL calls, rotate identities, bypass checkpoints, or evade rate limits. Discovery and media acquisition are separate commands; batch processing downloads and processes selected candidates directly.
 
 See [ADR-003](docs/ADR-003-CREATOR-GRAPH-DISCOVERY.md) and the [Creator-Graph Discovery Plan](docs/CREATOR_GRAPH_DISCOVERY_PLAN.md) for architecture, schema, terminology, metrics and phase gates.
