@@ -1,4 +1,4 @@
-"""Resumable rights-gated media acquisition and VidTrace processing batches."""
+"""Resumable media acquisition and VidTrace processing batches."""
 
 from __future__ import annotations
 
