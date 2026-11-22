@@ -333,6 +333,19 @@ class DiscoveryStore:
         )
         effective_metadata = {**previous_metadata, **candidate.metadata}
 
+        # A newer exact observation supersedes an earlier rounded UI estimate.
+        # Do not let stale estimate provenance keep an exact-count item out of
+        # the default processing queue.
+        if exact_metric := (
+            effective_view_count if candidate.platform == "youtube"
+            else effective_play_count if effective_play_count is not None
+            else effective_view_count
+        ):
+            effective_metadata["metric_is_estimate"] = False
+            effective_metadata["metric_precision"] = "exact_numeric"
+            effective_metadata["metric_usage"] = "exact_platform_native_metric"
+            effective_metadata.pop("metric_conservative_lower_bound", None)
+
         # Compare platform-native metrics without relabeling Instagram plays
         # as views. Reports must retain the metric kind and source.
         exact_metric = (
