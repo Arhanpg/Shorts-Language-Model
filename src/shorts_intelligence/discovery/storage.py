@@ -6,7 +6,8 @@ import json
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from collections.abc import Iterable, Iterator
+from typing import Any
 
 from shorts_intelligence.discovery.models import (
     AcquisitionAuthorization,
