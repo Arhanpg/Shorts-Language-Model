@@ -13,7 +13,7 @@ import uuid
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Iterator, Literal
 
 import typer
 from rich.console import Console
@@ -996,21 +996,29 @@ def run_discovery(
         )
 
 
-def _load_rights_manifest(path: Path) -> dict[tuple[str, str], AcquisitionAuthorization]:
-    rights: dict[tuple[str, str], AcquisitionAuthorization] = {}
+def _iter_rights_manifest(
+    path: Path,
+) -> Iterator[AcquisitionAuthorization]:
+    """Stream and validate private item-specific rights records from JSONL."""
     with path.expanduser().resolve(strict=True).open("r", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
             text = line.strip()
             if not text or text.startswith("#"):
                 continue
             try:
-                item = AcquisitionAuthorization.model_validate_json(text)
+                yield AcquisitionAuthorization.model_validate_json(text)
             except Exception as exc:
                 raise ValueError(f"Invalid rights row {line_number}: {exc}") from exc
-            key = (item.platform, item.source_id)
-            if key in rights:
-                raise ValueError(f"Duplicate rights entry at row {line_number}: {key}")
-            rights[key] = item
+
+
+def _load_rights_manifest(path: Path) -> dict[tuple[str, str], AcquisitionAuthorization]:
+    """Load a small rights manifest for the single-command downloader."""
+    rights: dict[tuple[str, str], AcquisitionAuthorization] = {}
+    for item in _iter_rights_manifest(path):
+        key = (item.platform, item.source_id)
+        if key in rights:
+            raise ValueError(f"Duplicate rights entry: {key}")
+        rights[key] = item
     return rights
 
 
