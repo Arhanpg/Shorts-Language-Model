@@ -13,7 +13,7 @@ from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.discovery.downloader import download_candidate
 from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
 from shorts_intelligence.discovery.storage import DiscoveryStore
-from shorts_intelligence.media.probe import MediaError, probe_video, sha256_file
+from shorts_intelligence.media.probe import MediaError, sha256_file
 
 
 def _safe_component(value: str) -> str:
@@ -150,92 +150,90 @@ def _export_processing_manifest(
     *,
     min_metric: int,
 ) -> int:
-    records = store.processing_records()
-    lines: list[str] = []
+    """Stream current, rights-valid processing records to an atomic JSONL manifest."""
     exported_at = datetime.now(UTC).isoformat()
-    for row in records:
-        metadata = json.loads(row.get("metadata_json") or "{}")
-        is_estimate = bool(row["metric_is_estimate"])
-        metric = row["metric_value"]
-        metric_kind = row["metric_kind"]
-        flags = json.loads(row.get("quality_flags_json") or "[]")
-        reasons = ["manual_content_and_transcript_review_required"]
-        if is_estimate:
-            reasons.append("engagement_metric_is_estimated")
-        if metric is None or int(metric) < min_metric:
-            reasons.append("metric_below_export_threshold")
-        if row["transcript_segments"] == 0:
-            reasons.append("no_transcript_segments")
-        if row["ocr_spans"] == 0:
-            reasons.append("no_ocr_text_spans")
-        record = {
-            "schema_version": "1.0.0",
-            "record_type": "short_video_multimodal_observation",
-            "exported_at": exported_at,
-            "platform": row["platform"],
-            "source_id": row["source_id"],
-            "canonical_url": row["canonical_url"],
-            "title": row["title"],
-            "creator": row["creator"],
-            "description": row["description"],
-            "hashtags": json.loads(row["hashtags_json"] or "[]"),
-            "discovered_at": row["discovered_at"],
-            "metric": {
-                "kind": metric_kind,
-                "value": metric,
-                "is_estimate": is_estimate,
-                "display_value": row["metric_display_value"],
-                "source": row["metric_source"],
-                "threshold": min_metric,
-                "threshold_met": metric is not None and int(metric) >= min_metric,
-            },
-            "media": {
-                "path": row["media_path"],
-                "sha256": row["media_sha256"],
-            },
-            "artifacts": {
-                "analysis_json": row["analysis_path"],
-                "transcript_json": row["transcript_path"],
-                "ocr_json": row["ocr_path"],
-            },
-            "telemetry": {
-                "transcript_segments": row["transcript_segments"],
-                "ocr_spans": row["ocr_spans"],
-                "language": row["detected_language"],
-                "asr_engine": row["asr_engine"],
-                "ocr_engine": row["ocr_engine"],
-            },
-            "rights": {
-                "basis": row["rights_basis"],
-                "evidence_ref": row["evidence_ref"],
-                "media_retrieval": bool(row["media_retrieval"]),
-                "media_analysis": bool(row["media_analysis"]),
-                "temporary_processing": bool(row["temporary_processing"]),
-                "derived_artifact_retention": bool(row["derived_artifact_retention"]),
-                "model_training": bool(row["model_training"]),
-                "status": "locally_attested_current_grant",
-            },
-            "quality_flags": flags,
-            "processing_completed_at": row["completed_at"],
-            "review": {
-                "status": "review_required",
-                "training_approved": False,
-                "reasons": sorted(set(reasons)),
-            },
-            "training_ready": False,
-            "source_metadata_snapshot": metadata,
-        }
-        lines.append(json.dumps(record, ensure_ascii=False, default=str))
-
     output_path = output_path.expanduser().resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temporary = output_path.with_name(output_path.name + ".tmp")
-    temporary.write_text(
-        "\n".join(lines) + ("\n" if lines else ""),
-        encoding="utf-8",
-    )
+    count = 0
+    with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+        for row in store.iter_processing_records():
+            metadata = json.loads(row.get("metadata_json") or "{}")
+            is_estimate = bool(row["metric_is_estimate"])
+            metric = row["metric_value"]
+            metric_kind = row["metric_kind"]
+            flags = json.loads(row.get("quality_flags_json") or "[]")
+            reasons = ["manual_content_and_transcript_review_required"]
+            if is_estimate:
+                reasons.append("engagement_metric_is_estimated")
+            if metric is None or int(metric) < min_metric:
+                reasons.append("metric_below_export_threshold")
+            if row["transcript_segments"] == 0:
+                reasons.append("no_transcript_segments")
+            if row["ocr_spans"] == 0:
+                reasons.append("no_ocr_text_spans")
+            record = {
+                "schema_version": "1.0.0",
+                "record_type": "short_video_multimodal_observation",
+                "exported_at": exported_at,
+                "platform": row["platform"],
+                "source_id": row["source_id"],
+                "canonical_url": row["canonical_url"],
+                "title": row["title"],
+                "creator": row["creator"],
+                "description": row["description"],
+                "hashtags": json.loads(row["hashtags_json"] or "[]"),
+                "discovered_at": row["discovered_at"],
+                "metric": {
+                    "kind": metric_kind,
+                    "value": metric,
+                    "is_estimate": is_estimate,
+                    "display_value": row["metric_display_value"],
+                    "source": row["metric_source"],
+                    "threshold": min_metric,
+                    "threshold_met": metric is not None and int(metric) >= min_metric,
+                },
+                "media": {
+                    "path": row["media_path"],
+                    "sha256": row["media_sha256"],
+                },
+                "artifacts": {
+                    "analysis_json": row["analysis_path"],
+                    "transcript_json": row["transcript_path"],
+                    "ocr_json": row["ocr_path"],
+                },
+                "telemetry": {
+                    "transcript_segments": row["transcript_segments"],
+                    "ocr_spans": row["ocr_spans"],
+                    "language": row["detected_language"],
+                    "asr_engine": row["asr_engine"],
+                    "ocr_engine": row["ocr_engine"],
+                },
+                "rights": {
+                    "basis": row["rights_basis"],
+                    "evidence_ref": row["evidence_ref"],
+                    "media_retrieval": bool(row["media_retrieval"]),
+                    "media_analysis": bool(row["media_analysis"]),
+                    "temporary_processing": bool(row["temporary_processing"]),
+                    "derived_artifact_retention": bool(row["derived_artifact_retention"]),
+                    "model_training": bool(row["model_training"]),
+                    "status": "locally_attested_current_grant",
+                },
+                "quality_flags": flags,
+                "processing_completed_at": row["completed_at"],
+                "review": {
+                    "status": "review_required",
+                    "training_approved": False,
+                    "reasons": sorted(set(reasons)),
+                },
+                "training_ready": False,
+                "source_metadata_snapshot": metadata,
+            }
+            handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+            count += 1
+
     temporary.replace(output_path)
-    return len(lines)
+    return count
 
 
 def run_processing_batch(
@@ -271,11 +269,13 @@ def run_processing_batch(
             allow_estimated_metrics=allow_estimated_metrics,
             limit=limit,
         )
-        blocked = store.count_processing_blocked()
+        blocked = store.count_processing_blocked(min_metric=min_metric)
         for candidate, authorization, existing_path, download_status, stored_hash in queued:
             authorization.validate_for_training()
             platform = candidate.platform
             source_id = candidate.source_id
+            did_download = False
+            download_succeeded = False
             store.mark_processing_started(candidate, authorization)
 
             safe_id = _safe_component(source_id)
@@ -302,11 +302,13 @@ def run_processing_batch(
                             if instagram_session_file else None
                         ),
                     )
+                    did_download = True
                     downloaded += 1
 
                 media_path = media_path.expanduser().resolve(strict=True)
                 media_hash = sha256_file(media_path)
-                if stored_hash and stored_hash != media_hash:
+                download_succeeded = True
+                if stored_hash and not did_download and stored_hash != media_hash:
                     raise MediaError(
                         "Stored media SHA-256 no longer matches the downloaded file; "
                         "move the changed file aside and investigate before retrying."
@@ -332,10 +334,13 @@ def run_processing_batch(
                         duplicate_of=duplicate_of,
                         media_sha256=media_hash,
                     )
+                    if did_download:
+                        media_path.unlink(missing_ok=True)
+                        media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
                     duplicates += 1
                     continue
 
-                if download_status != "downloaded" or not existing_path:
+                if did_download or download_status != "downloaded" or not existing_path:
                     store.mark_download(
                         platform,
                         source_id,
@@ -408,7 +413,7 @@ def run_processing_batch(
                     source_id,
                     error=f"{type(exc).__name__}: {exc}",
                 )
-                if download_status != "downloaded":
+                if not download_succeeded and (did_download or download_status != "downloaded"):
                     store.mark_download_failure(
                         platform,
                         source_id,
