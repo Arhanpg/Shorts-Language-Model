@@ -28,8 +28,8 @@ _VIEW_FIELDS = (
     "view_count", "video_view_count", "viewCount", "videoViewCount",
 )
 _DISPLAY_COUNT = re.compile(
-    r"(?P<number>(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\\.[0-9]+)?)"
-    r"\\s*(?P<suffix>[KMB])?",
+    r"(?P<number>(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:[.][0-9]+)?)"
+    r"[ ]*(?P<suffix>[KMB])?",
     re.IGNORECASE,
 )
 
@@ -39,29 +39,29 @@ def _visible_metric_from_text(
     *,
     allow_bare_count: bool = False,
 ) -> dict[str, object] | None:
-    """Read a public UI view/play count; abbreviated values remain marked estimates."""
+    """Read a public UI views/plays label; abbreviations remain estimates."""
     cleaned = " ".join(text.split())
     if not cleaned:
         return None
 
-    labels = (
-        ("plays", re.compile(r"^\\s*plays?\\b", re.IGNORECASE)),
-        ("views", re.compile(r"^\\s*views?\\b", re.IGNORECASE)),
-    )
     for match in _DISPLAY_COUNT.finditer(cleaned):
         before = cleaned[:match.start()]
         after = cleaned[match.end():]
-        kind = next((name for name, pattern in labels if pattern.search(after)), None)
-        if kind is None:
-            kind = next(
-                (
-                    name for name, pattern in labels
-                    if re.search(r"\\b" + name.rstrip("s") + r"s?\\s*[:\\-]?\\s*$", before, re.IGNORECASE)
-                ),
-                None,
-            )
+        kind = None
+        for metric_kind in ("plays", "views"):
+            if re.match(r"^[ ]*" + metric_kind + r"?(?:[ ]|$)", after, re.IGNORECASE):
+                kind = metric_kind
+                break
+            if re.search(
+                r"(?:^|[ ])" + metric_kind + r"[ ]*[:=-]?[ ]*$",
+                before,
+                re.IGNORECASE,
+            ):
+                kind = metric_kind
+                break
+
         token = match.group(0).strip()
-        if kind is None and allow_bare_count and cleaned == token:
+        if kind is None and allow_bare_count and _DISPLAY_COUNT.fullmatch(cleaned):
             kind = "views"
         if kind is None:
             continue
@@ -72,10 +72,16 @@ def _visible_metric_from_text(
             number = Decimal(number_text)
         except InvalidOperation:
             continue
-        multiplier = {"": Decimal(1), "K": Decimal(1_000), "M": Decimal(1_000_000), "B": Decimal(1_000_000_000)}[suffix]
+        multiplier = {
+            "": Decimal(1),
+            "K": Decimal(1_000),
+            "M": Decimal(1_000_000),
+            "B": Decimal(1_000_000_000),
+        }[suffix]
         nominal = number * multiplier
         if nominal < 0:
             continue
+
         approximate = bool(suffix)
         if approximate:
             decimals = len(number_text.partition(".")[2])
@@ -88,16 +94,15 @@ def _visible_metric_from_text(
             if number != number.to_integral_value():
                 continue
             lower_bound = nominal
+
         return {
             "kind": kind,
             "display": token,
             "nominal_count": int(nominal),
             "lower_bound": int(lower_bound),
             "is_estimate": approximate,
-            "source_text": cleaned[:240],
         }
     return None
-
 
 def _apply_visible_metric(
     candidate: DiscoveredCandidate,
@@ -120,7 +125,7 @@ def _apply_visible_metric(
         "metric_display_value": str(metric["display"]),
         "metric_nominal_value": int(metric["nominal_count"]),
         "metric_conservative_lower_bound": value,
-        "metric_source_text": str(metric["source_text"]),
+        "metric_precision": "abbreviated_display" if metric["is_estimate"] else "exact_display",
         "metric_usage": "discovery_filter_only; not an exact training label"
         if metric["is_estimate"] else "exact_visible_numeric_count",
     })
@@ -623,6 +628,7 @@ class InstagramPlaywrightProvider:
                     str(item.get("aria_label") or ""),
                     str(item.get("title") or ""),
                     str(item.get("label_text") or ""),
+                    str(item.get("card_text") or ""),
                 ]
                 metric = next(
                     (
