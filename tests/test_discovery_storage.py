@@ -439,3 +439,48 @@ def test_processing_manifest_is_review_required_and_rechecks_rights(tmp_path: Pa
             store, manifest, min_metric=1_000_000
         ) == 0
         assert manifest.read_text(encoding="utf-8") == ""
+
+
+def test_exact_metric_refresh_clears_previous_instagram_estimate_flag(tmp_path: Path):
+    estimate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="RefreshExact123",
+        canonical_url="https://www.instagram.com/reel/RefreshExact123/",
+        short_format_status="confirmed",
+        metadata={
+            "metric_kind": "plays",
+            "metric_is_estimate": True,
+            "metric_display_value": "1.2M",
+            "metric_conservative_lower_bound": 1_150_000,
+        },
+    )
+    exact = DiscoveredCandidate(
+        platform="instagram",
+        source_id="RefreshExact123",
+        canonical_url="https://www.instagram.com/reel/RefreshExact123/",
+        play_count=1_234_567,
+        metric_source="instagram_response.video_play_count",
+        short_format_status="confirmed",
+        metadata={"metric_kind": "plays"},
+    )
+    with DiscoveryStore(tmp_path / "exact-refresh.sqlite3") as store:
+        store.start_run("estimate-first", 10, 1_000_000)
+        store.upsert_candidate(
+            estimate, min_views=1_000_000, run_id="estimate-first"
+        )
+        store.replace_rights_authorizations([
+            _training_rights("instagram", estimate.source_id)
+        ])
+        assert store.processing_candidates(limit=10) == []
+
+        store.start_run("exact-refresh", 10, 1_000_000)
+        store.upsert_candidate(
+            exact, min_views=1_000_000, run_id="exact-refresh"
+        )
+        saved = store.get_candidate("instagram", estimate.source_id)
+        assert saved is not None
+        assert saved.play_count == 1_234_567
+        assert saved.metadata["metric_is_estimate"] is False
+        assert saved.metadata["metric_precision"] == "exact_numeric"
+        assert "metric_conservative_lower_bound" not in saved.metadata
+        assert len(store.processing_candidates(limit=10)) == 1
