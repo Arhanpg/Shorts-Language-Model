@@ -28,7 +28,7 @@ This is a change in the discovery model, not another retry patch. The existing d
 Metric semantics are explicit:
 - YouTube uses numeric `view_count` from detailed TubeScrape video metadata.
 - Instagram retains raw `view_count` and `play_count` separately. An Instagram `play_count` may qualify as the platform's Reel plays metric, but it is never rewritten into the `view_count` column. Reports must label it as plays, not YouTube-style views.
-- Approximate display counts (e.g. `ShortResult.views`) are hints for prioritizing enrichment, not final eligibility evidence.
+- Rounded Instagram display counts (for example, `1.2M`) are retained as conservative lower-bound estimates and can contribute to discovery filtering; they are never stored in exact numeric count columns. The Phase 3 processing queue excludes estimate-backed candidates by default and labels any explicitly opted-in exploratory processing as review-required.
 - Missing or ambiguous metrics remain `metric_unknown`; no inferred counts.
 
 ## 3. Architecture
@@ -88,7 +88,7 @@ Metric semantics are explicit:
 6. In addition to observed JSON records, collect Reel shortcode links actually rendered in the visible Reels tab. A link-only record is persisted with an unknown metric; it is never promoted to the 1M threshold without an explicit numeric platform metric.
 7. Expand only from explicit collaborator/co-author metadata. Caption mentions are lower-priority leads, not proof of collaboration.
 8. If Instagram presents a login challenge, checkpoint, restriction, or rate limit, stop that creator/backend and ask for normal manual resolution. Do not bypass it.
-9. Also visit explicitly configured public hashtag pages (e.g. `/explore/tags/cricket/`) through the same visible browser context. Collect rendered Reel permalinks and response metadata with the hashtag provenance attached.
+9. Visit the current public hashtag keyword-search route through the same visible browser context. If it produces no recognized Reel candidates, try the ordinary public hashtag grid route (`/explore/tags/<hashtag>/`) once. Collect rendered Reel permalinks and observed response metadata with the hashtag provenance and the attempted surface attached.
 10. For a bounded sample of links with unknown metrics, navigate to their ordinary public Reel detail pages. Parse only explicit numeric metrics from observed responses or public JSON-LD WatchAction/ViewAction counters. Do not infer exact values from abbreviated UI text.
 11. Reuse one persistent browser context for the entire run, opening and closing individual pages as needed. Record candidate counts, metric coverage, detail-page enrichment yield, and per-hashtag/creator failure reasons.
 
