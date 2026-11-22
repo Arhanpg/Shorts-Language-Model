@@ -141,6 +141,12 @@ def instagram_hashtag_keyword_search_url(hashtag: str) -> str:
     return "https://www.instagram.com/explore/search/keyword/?" + urlencode({"q": f"#{tag}"})
 
 
+def instagram_hashtag_page_url(hashtag: str) -> str:
+    """Build the standard public hashtag-page URL used as a bounded fallback."""
+    tag = hashtag.strip().lstrip("#").casefold()
+    return f"https://www.instagram.com/explore/tags/{quote(tag, safe='')}/"
+
+
 def _apply_visible_metric(
     candidate: DiscoveredCandidate,
     metric: dict[str, object],
@@ -1038,28 +1044,83 @@ class InstagramPlaywrightProvider:
         if self.blocked:
             raise RuntimeError("Instagram backend is blocked; stopping without further requests.")
         tag = hashtag.strip().lstrip("#").casefold()
-        if not tag or not re.fullmatch(r"[\w.]{1,64}", tag, flags=re.UNICODE):
+        if not tag or not re.fullmatch(r"[\\w.]{1,64}", tag, flags=re.UNICODE):
             raise ValueError(f"Invalid Instagram hashtag: {hashtag!r}")
+
+        primary_url = instagram_hashtag_keyword_search_url(tag)
         try:
             records, _, diagnostic = await self._collect_surface(
-                url=instagram_hashtag_keyword_search_url(tag),
+                url=primary_url,
                 creator_handle=f"hashtag:{tag}",
-                surface="hashtag_page",
+                surface="hashtag_keyword_search",
                 hashtag=tag,
                 max_scrolls=max_scrolls,
                 max_reel_details=max_reel_details,
             )
         except Exception as exc:
             self.hashtag_diagnostics.append({
-                "surface": "hashtag_page",
+                "surface": "hashtag_keyword_search",
                 "hashtag": tag,
-                "requested_url": instagram_hashtag_keyword_search_url(tag),
+                "requested_url": primary_url,
                 "candidate_count": 0,
                 "metric_count": 0,
                 "reason": f"{type(exc).__name__}: {str(exc)[:180]}",
             })
             raise
+
+        diagnostic["attempt"] = "keyword_search"
         self.hashtag_diagnostics.append(diagnostic)
         if self.blocked:
             raise RuntimeError(diagnostic.get("reason") or "Instagram access restriction")
-        return records
+        if records:
+            return records
+
+        # The keyword-search route can return only suggested accounts/stories,
+        # even when the visible search UI is showing a hashtag query. Try the
+        # ordinary public hashtag grid once as a compatibility fallback. This
+        # is normal page navigation, not a private endpoint or request replay.
+        fallback_url = instagram_hashtag_page_url(tag)
+        try:
+            fallback_records, _, fallback_diagnostic = await self._collect_surface(
+                url=fallback_url,
+                creator_handle=f"hashtag:{tag}",
+                surface="hashtag_grid_fallback",
+                hashtag=tag,
+                max_scrolls=max_scrolls,
+                max_reel_details=max_reel_details,
+            )
+        except Exception as exc:
+            self.hashtag_diagnostics.append({
+                "surface": "hashtag_grid_fallback",
+                "hashtag": tag,
+                "requested_url": fallback_url,
+                "candidate_count": 0,
+                "metric_count": 0,
+                "reason": f"{type(exc).__name__}: {str(exc)[:180]}",
+            })
+            raise
+
+        fallback_diagnostic["attempt"] = "legacy_public_hashtag_grid_fallback"
+        fallback_diagnostic["fallback_from"] = primary_url
+        self.hashtag_diagnostics.append(fallback_diagnostic)
+        if self.blocked:
+            raise RuntimeError(
+                fallback_diagnostic.get("reason") or "Instagram access restriction"
+            )
+
+        merged = {item.source_id: item for item in records}
+        for candidate in fallback_records:
+            previous = merged.get(candidate.source_id)
+            if previous is None:
+                merged[candidate.source_id] = candidate
+            else:
+                if candidate.play_count is not None:
+                    previous.play_count = candidate.play_count
+                if candidate.view_count is not None:
+                    previous.view_count = candidate.view_count
+                if candidate.metric_source:
+                    previous.metric_source = candidate.metric_source
+                if candidate.description and not previous.description:
+                    previous.description = candidate.description
+                previous.metadata.update(candidate.metadata)
+        return list(merged.values())
