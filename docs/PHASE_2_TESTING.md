@@ -8,7 +8,7 @@ Use the Windows PowerShell environment on the local laptop. Install Python 3.11 
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-pip install -e ".[dev,discovery,audio]"
+pip install -e ".[dev,discovery,legacy-discovery,audio,vidtrace]"
 pip install -e ".[instagram-fallback]"
 shorts-lm doctor
 ```
@@ -49,6 +49,26 @@ Process one authorized asset with existing analyzer:
 ```powershell
 shorts-lm analyze --input data/private/acquired/VIDEO.mp4 --output outputs/analysis.json --rights-basis creator_permission --rights-reference PRIVATE_CONSENT_REFERENCE --training-permitted
 ```
+
+## Phase 3 batch-processing validation
+
+Install the pinned VidTrace integration and run the bounded batch worker only after adding real, current item-specific rights rows for each test asset:
+
+```powershell
+shorts-lm discover process --rights-manifest data/private/rights.jsonl --limit 10 --min-metric 1000000 --asr-model small --asr-device cpu
+```
+
+Inspect:
+
+- SQLite processing state and attempts for each source ID.
+- The MP4 and private metadata sidecar under the acquisition directory.
+- FFprobe metadata and media SHA-256.
+- Per-item analysis.json, transcript.json / transcript.md, OCR.json / OCR.md and asset provenance.
+- outputs/dataset/training-candidates.jsonl for metric kind/source, rights evidence, quality flags and review state.
+
+Test the analysis-retry path by making ASR/OCR or report generation fail after an MP4 has downloaded. A subsequent run must retry processing from that MP4 without a second download. Test missing, expired and revoked rights; test estimate-backed Instagram candidates both with the default exact-metric queue and the explicit exploratory option. Even when all five permission scopes are granted, a processed record must remain review_required and training_ready=false until Phase 4 quality review and approval.
+
+Scale the validation batch progressively from 10 to 100 to 300. Do not use a large run to compensate for missing permissions or unverified transcript/OCR quality.
 
 ## Acceptance criteria
 
