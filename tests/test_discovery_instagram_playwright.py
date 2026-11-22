@@ -409,3 +409,147 @@ def test_instagram_creates_a_tab_only_when_persistent_context_has_none(monkeypat
         await provider.close()
 
     asyncio.run(exercise())
+
+
+
+def test_visible_metric_parser_reads_exact_and_abbreviated_views_and_plays():
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _visible_metric_from_text,
+    )
+
+    exact_views = _visible_metric_from_text("1,234,567 views")
+    assert exact_views is not None
+    assert exact_views["kind"] == "views"
+    assert exact_views["nominal_count"] == 1_234_567
+    assert exact_views["lower_bound"] == 1_234_567
+    assert exact_views["is_estimate"] is False
+
+    abbreviated_views = _visible_metric_from_text("1.2M views")
+    assert abbreviated_views is not None
+    assert abbreviated_views["kind"] == "views"
+    assert abbreviated_views["nominal_count"] == 1_200_000
+    assert abbreviated_views["lower_bound"] == 1_150_000
+    assert abbreviated_views["is_estimate"] is True
+
+    abbreviated_plays = _visible_metric_from_text("Plays 850K")
+    assert abbreviated_plays is not None
+    assert abbreviated_plays["kind"] == "plays"
+    assert abbreviated_plays["lower_bound"] == 849_500
+
+
+def test_visible_metric_parser_does_not_confuse_likes_or_caption_numbers():
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _visible_metric_from_text,
+    )
+
+    assert _visible_metric_from_text("1.2M likes") is None
+    assert _visible_metric_from_text("2026 travel diaries") is None
+    assert _visible_metric_from_text("A caption with 2026 and 3 friends") is None
+    assert _visible_metric_from_text("1.2M", allow_bare_count=True) is not None
+
+
+def test_instagram_parser_accepts_new_video_typenames_and_flags():
+    payload = {
+        "data": {
+            "edges": [{
+                "node": {
+                    "__typename": "XDTGraphVideo",
+                    "shortcode": "NewGraphVideo123",
+                    "is_unified_video": True,
+                    "videoViewCount": 2_400_000,
+                }
+            }]
+        }
+    }
+    records = extract_reel_records(payload, creator_handle="hashtag:travel")
+    assert len(records) == 1
+    assert records[0].source_id == "NewGraphVideo123"
+    assert records[0].view_count == 2_400_000
+    assert records[0].qualifying_metric_kind() == "views"
+
+
+def test_visible_metric_parser_supports_label_before_number():
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _visible_metric_from_text,
+    )
+
+    metric = _visible_metric_from_text("Views: 2.4M")
+    assert metric is not None
+    assert metric["kind"] == "views"
+    assert metric["nominal_count"] == 2_400_000
+    assert metric["lower_bound"] == 2_350_000
+
+
+def test_apply_visible_metric_preserves_estimate_provenance():
+    from shorts_intelligence.discovery.models import DiscoveredCandidate
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _apply_visible_metric,
+        _visible_metric_from_text,
+    )
+
+    metric = _visible_metric_from_text("1.2M views")
+    assert metric is not None
+    candidate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="VisibleCount123",
+        canonical_url="https://www.instagram.com/reel/VisibleCount123/",
+        creator="creator",
+        short_format_status="confirmed",
+    )
+    _apply_visible_metric(
+        candidate, metric, source="instagram_rendered_reel_card.views"
+    )
+    assert candidate.view_count is None
+    assert candidate.play_count is None
+    assert candidate.qualifying_metric() == 1_150_000
+    assert candidate.metadata["metric_is_estimate"] is True
+    assert candidate.metadata["metric_display_value"] == "1.2M"
+    assert candidate.metadata["metric_usage"] == (
+        "discovery_filter_only; not an exact training label"
+    )
+
+
+def test_instagram_parser_extracts_shortcode_from_observed_public_permalink():
+    payload = {
+        "sections": [{
+            "layout_content": {
+                "medias": [{
+                    "media": {
+                        "__typename": "XDTGraphVideo",
+                        "permalink": "https://www.instagram.com/reel/PublicLink123/",
+                        "is_unified_video": True,
+                        "viewCount": 1_700_000,
+                    }
+                }]
+            }
+        }]
+    }
+    records = extract_reel_records(payload, creator_handle="hashtag:travel")
+    assert len(records) == 1
+    assert records[0].source_id == "PublicLink123"
+    assert records[0].view_count == 1_700_000
+
+
+def test_estimated_visible_metric_never_populates_exact_count_fields():
+    from shorts_intelligence.discovery.models import DiscoveredCandidate
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _apply_visible_metric,
+        _visible_metric_from_text,
+    )
+
+    metric = _visible_metric_from_text("1.2M views")
+    assert metric is not None
+    candidate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="EstimateOnly123",
+        canonical_url="https://www.instagram.com/reel/EstimateOnly123/",
+        creator="creator",
+        short_format_status="confirmed",
+    )
+    _apply_visible_metric(candidate, metric, source="instagram_rendered_reel_card.views")
+
+    assert candidate.view_count is None
+    assert candidate.play_count is None
+    assert candidate.qualifying_metric() == 1_150_000
+    assert candidate.qualifying_metric_kind() == "views"
+    assert candidate.metadata["metric_is_estimate"] is True

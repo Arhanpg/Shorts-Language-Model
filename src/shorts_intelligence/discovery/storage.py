@@ -285,11 +285,12 @@ class DiscoveryStore:
 
         # Compare platform-native metrics without relabeling Instagram plays
         # as views. Reports must retain the metric kind and source.
-        metric = (
+        exact_metric = (
             effective_view_count if candidate.platform == "youtube"
             else effective_play_count if effective_play_count is not None
             else effective_view_count
         )
+        metric = exact_metric if exact_metric is not None else candidate.qualifying_metric()
 
         if effective_format == "not_short":
             status = "not_short"

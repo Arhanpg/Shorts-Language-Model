@@ -39,16 +39,30 @@ class DiscoveredCandidate(BaseModel):
     metadata: dict[str, object] = Field(default_factory=dict)
 
     def qualifying_metric(self) -> int | None:
-        """Return the platform-native metric without conflating views and plays."""
+        """Return a discovery metric, keeping estimated UI counts in metadata."""
         if self.platform == "youtube":
             return self.view_count
-        return self.play_count if self.play_count is not None else self.view_count
+        exact_metric = (
+            self.play_count if self.play_count is not None else self.view_count
+        )
+        if exact_metric is not None:
+            return exact_metric
+        if self.metadata.get("metric_is_estimate") is True:
+            estimate = self.metadata.get("metric_conservative_lower_bound")
+            if isinstance(estimate, int) and not isinstance(estimate, bool) and estimate >= 0:
+                return estimate
+        return None
 
     def qualifying_metric_kind(self) -> str:
-        """Return the explicit metric label used for this platform."""
+        """Return the platform-native label without relabeling estimated values."""
         if self.platform == "youtube":
             return "views"
-        return "plays" if self.play_count is not None else "views"
+        if self.play_count is not None:
+            return "plays"
+        if self.view_count is not None:
+            return "views"
+        kind = self.metadata.get("metric_kind")
+        return str(kind) if kind in {"plays", "views"} else "views"
 
 
 class AcquisitionAuthorization(BaseModel):

@@ -73,6 +73,10 @@ async def run_creator_graph(
             stats["metric_unknown_candidates"] += 1
         else:
             stats["metric_observed_candidates"] += 1
+            if candidate.metadata.get("metric_is_estimate") is True:
+                stats["metric_estimated_candidates"] += 1
+            else:
+                stats["metric_exact_candidates"] += 1
             if metric >= min_metric:
                 stats["metric_above_threshold_candidates"] += 1
 
@@ -449,6 +453,8 @@ async def run_creator_graph(
             "metric_observed_candidates": stats["metric_observed_candidates"],
             "metric_unknown_candidates": stats["metric_unknown_candidates"],
             "metric_above_threshold_candidates": stats["metric_above_threshold_candidates"],
+            "metric_exact_candidates": stats["metric_exact_candidates"],
+            "metric_estimated_candidates": stats["metric_estimated_candidates"],
             "youtube_creator_candidates": stats["youtube_creator_candidates"],
             "youtube_related_candidates": stats["related_candidates"],
             "min_metric": min_metric, "max_depth": max_depth,
