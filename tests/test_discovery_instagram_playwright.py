@@ -218,3 +218,194 @@ def test_ensure_context_relaunches_after_chrome_was_closed(monkeypatch, tmp_path
     assert new_playwright.launches == 1
     assert new_context.closed is True
     assert new_playwright.stops == 1
+
+
+def test_instagram_reuses_the_persistent_startup_tab_across_surfaces(monkeypatch, tmp_path):
+    import asyncio
+    import sys
+    from types import ModuleType, SimpleNamespace
+
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        InstagramPlaywrightProvider,
+    )
+
+    class FakeResponse:
+        status = 200
+
+    class FakeLocator:
+        async def evaluate_all(self, _script):
+            return []
+
+        async def all_text_contents(self):
+            return []
+
+    class FakePage:
+        def __init__(self):
+            self.url = "about:blank"
+            self.mouse = SimpleNamespace(wheel=self.wheel)
+            self.handlers = {}
+            self.goto_urls = []
+            self.closed = False
+
+        async def wheel(self, *_args):
+            return None
+
+        def on(self, event, handler):
+            self.handlers.setdefault(event, []).append(handler)
+
+        def remove_listener(self, event, handler):
+            self.handlers.get(event, []).remove(handler)
+
+        def is_closed(self):
+            return self.closed
+
+        async def goto(self, url, **_kwargs):
+            self.url = url
+            self.goto_urls.append(url)
+            return FakeResponse()
+
+        async def wait_for_timeout(self, *_args):
+            return None
+
+        async def title(self):
+            return "Instagram"
+
+        def locator(self, _selector):
+            return FakeLocator()
+
+    class FakeContext:
+        def __init__(self, page):
+            self.pages = [page]
+            self.browser = SimpleNamespace(is_connected=lambda: True)
+            self.new_page_calls = 0
+            self.closed = False
+
+        async def new_page(self):
+            self.new_page_calls += 1
+            raise AssertionError("The persistent startup tab should be reused")
+
+        async def close(self):
+            self.closed = True
+
+    class FakePlaywright:
+        def __init__(self, context):
+            self.context = context
+            self.chromium = self
+            self.stops = 0
+
+        async def launch_persistent_context(self, **_kwargs):
+            return self.context
+
+        async def stop(self):
+            self.stops += 1
+
+    class Manager:
+        def __init__(self, playwright):
+            self.playwright = playwright
+
+        async def start(self):
+            return self.playwright
+
+    page = FakePage()
+    context = FakeContext(page)
+    playwright = FakePlaywright(context)
+    api = ModuleType("playwright.async_api")
+    api.async_playwright = lambda: Manager(playwright)
+    package = ModuleType("playwright")
+    package.async_api = api
+    monkeypatch.setitem(sys.modules, "playwright", package)
+    monkeypatch.setitem(sys.modules, "playwright.async_api", api)
+
+    provider = InstagramPlaywrightProvider(profile_dir=tmp_path / "profile")
+
+    async def exercise():
+        hashtag_records = await provider.harvest_hashtag(
+            "getreadywithme", max_scrolls=0, max_reel_details=0
+        )
+        creator_records, coauthors = await provider.harvest_creator(
+            "example_creator", max_scrolls=0, max_reel_details=0
+        )
+        assert hashtag_records == []
+        assert creator_records == []
+        assert coauthors == set()
+        assert page.goto_urls == [
+            "https://www.instagram.com/explore/tags/getreadywithme/",
+            "https://www.instagram.com/example_creator/reels/",
+        ]
+        assert context.new_page_calls == 0
+        assert page.handlers.get("response", []) == []
+        await provider.close()
+
+    asyncio.run(exercise())
+    assert context.closed is True
+    assert playwright.stops == 1
+
+
+def test_instagram_creates_a_tab_only_when_persistent_context_has_none(monkeypatch, tmp_path):
+    import asyncio
+    import sys
+    from types import ModuleType
+
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        InstagramPlaywrightProvider,
+    )
+
+    class FakePage:
+        def __init__(self):
+            self.closed = False
+
+        def is_closed(self):
+            return self.closed
+
+    class FakeContext:
+        def __init__(self):
+            self.pages = []
+            self.browser = None
+            self.created = 0
+
+        async def new_page(self):
+            self.created += 1
+            page = FakePage()
+            self.pages.append(page)
+            return page
+
+        async def close(self):
+            return None
+
+    class FakePlaywright:
+        def __init__(self, context):
+            self.chromium = self
+            self.context = context
+
+        async def launch_persistent_context(self, **_kwargs):
+            return self.context
+
+        async def stop(self):
+            return None
+
+    class Manager:
+        def __init__(self, playwright):
+            self.playwright = playwright
+
+        async def start(self):
+            return self.playwright
+
+    context = FakeContext()
+    playwright = FakePlaywright(context)
+    api = ModuleType("playwright.async_api")
+    api.async_playwright = lambda: Manager(playwright)
+    package = ModuleType("playwright")
+    package.async_api = api
+    monkeypatch.setitem(sys.modules, "playwright", package)
+    monkeypatch.setitem(sys.modules, "playwright.async_api", api)
+
+    provider = InstagramPlaywrightProvider(profile_dir=tmp_path / "profile")
+
+    async def exercise():
+        first = await provider._ensure_page()
+        second = await provider._ensure_page()
+        assert first is second
+        assert context.created == 1
+        await provider.close()
+
+    asyncio.run(exercise())
