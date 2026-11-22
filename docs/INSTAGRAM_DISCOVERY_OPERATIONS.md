@@ -16,9 +16,8 @@ The report now separates metric-unknown, metric-observed, above-threshold, new-i
 
 The Instagram provider supports:
 1. Creator Reels tabs: `https://www.instagram.com/<handle>/reels/`
-2. The current public hashtag keyword-search route: `/explore/search/keyword/?q=%23<hashtag>`
-3. A single fallback to the standard public hashtag grid: `/explore/tags/<hashtag>/`, used only when the keyword route returns no recognized Reel candidates
-4. Public Reel detail pages: `https://www.instagram.com/reel/<shortcode>/`
+2. Public hashtag pages: `https://www.instagram.com/explore/tags/<hashtag>/`
+3. Public Reel detail pages: `https://www.instagram.com/reel/<shortcode>/`
 
 All pages are navigated normally in one persistent, visible Chrome context per run. The user signs in manually. The collector closes each page but keeps the context alive across creator and hashtag visits. It observes ordinary browser responses and rendered Reel links. It does not build private GraphQL requests, replay captured requests, solve challenges, rotate proxies or bypass rate limits.
 
@@ -110,7 +109,7 @@ shorts-lm discover graph-run `
 - Likes are not treated as plays or views.
 - Display strings such as `1.2M` are retained as explicitly marked estimates with a conservative lower bound for discovery filtering; they are not exact labels for numerical training targets.
 - A Reel link without an explicit numeric metric is stored as metric-unknown and cannot pass the threshold.
-- A candidate can become discovery-eligible when it is a confirmed Reel and its platform-native qualifying metric reaches the configured threshold. Rounded UI metrics use a conservative lower bound and remain marked as estimates; the Phase 3 processing queue excludes them by default.
+- A candidate only becomes newly eligible when it is a confirmed Reel and its platform-native numeric metric reaches the configured threshold.
 - A duplicate already eligible in the database does not count as new eligible yield.
 
 ## Interpreting a run
@@ -124,7 +123,7 @@ The most useful checks are:
 6. How many were newly eligible rather than already in the database?
 7. Which surfaces produced the best metric coverage per detail-page visit?
 
-If the keyword-search route returns no Reel candidates, the provider tries the standard public hashtag grid once. If both routes produce no candidates, inspect the bounded response-shape diagnostics and rendered-link counts; do not claim successful high-view discovery based on links alone.
+If links are found but metric coverage remains zero after detail enrichment, the next task is to inspect the public response/JSON-LD shape captured by the browser and improve the parser with a fixture. Do not claim successful high-view discovery based on links alone.
 
 ## YouTube validation remains separate
 
@@ -194,7 +193,7 @@ Estimated UI metrics are for conservative discovery filtering only. They are sto
 
 ## Current Instagram hashtag keyword-search grid (November 22, 2026)
 
-The browser first navigates to the hashtag keyword-search route observed in the user's current Instagram UI:
+The browser navigates directly to the hashtag keyword-search route observed in the user's current Instagram UI:
 
 `/explore/search/keyword/?q=%23{hashtag}`
 
@@ -202,4 +201,4 @@ After each rendered Reel-link capture, the collector hovers over a bounded sampl
 
 A count-only overlay is accepted only when it is an abbreviated K/M/B value or a comma-grouped integer from a hovered Reel tile. It is stored as Instagram plays. Plain years, caption numbers and like counts are not treated as plays. Abbreviated counts use conservative lower bounds in metadata and are not written to exact numeric training-label columns.
 
-If this route yields no recognized Reel candidates, the provider makes one additional normal navigation to the standard public hashtag grid at `/explore/tags/<hashtag>/`. The fallback is bounded by the same scroll and detail-page budgets. The route, candidate count and fallback reason are stored in per-surface diagnostics. The keyword-search page's observed response diagnostics print bounded nested media-object field names (not private response values) so any remaining schema mismatch can be investigated without saving session data or replaying requests.
+The keyword-search page's observed GraphQL response diagnostics print bounded nested media-object field names (not private response values) so any remaining schema mismatch can be investigated without saving session data or replaying requests.
