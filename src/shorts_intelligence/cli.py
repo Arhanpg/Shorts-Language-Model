@@ -40,20 +40,6 @@ def analyze(
         Path("outputs/analysis.json"), "--output", "-o",
         help="JSON report destination.",
     ),
-    rights_basis: Literal[
-        "creator_owned", "creator_permission", "licensed_dataset", "approved_research"
-    ] = typer.Option(
-        ..., "--rights-basis",
-        help="Declare why you are permitted to process this local file.",
-    ),
-    rights_reference: str | None = typer.Option(
-        None, "--rights-reference",
-        help="Private consent/license reference; do not put sensitive proof in the report.",
-    ),
-    training_permitted: bool = typer.Option(
-        False, "--training-permitted/--no-training-permitted",
-        help="Record explicit training permission separately; defaults to false.",
-    ),
     max_duration: float = typer.Option(
         180.0, "--max-duration", min=1.0, max=1800.0,
         help="Maximum duration accepted in seconds.",
@@ -85,7 +71,7 @@ def analyze(
         help="Keep selected keyframe JPEGs beside the JSON report.",
     ),
 ) -> None:
-    """Analyze one permitted local video and write an evidence-linked JSON report."""
+    """Analyze one local video and write a JSON report."""
     config = AnalyzerConfig(
         max_file_size_mb=max_file_size_mb,
         max_duration_seconds=max_duration,
@@ -103,9 +89,6 @@ def analyze(
         report = analyze_video(
             input_path=input,
             output_path=output,
-            rights_basis=rights_basis,
-            rights_reference=rights_reference,
-            training_permitted=training_permitted,
             config=config,
         )
     except (MediaError, ValueError, OSError, RuntimeError) as exc:

@@ -58,7 +58,7 @@ def analyze_video(
     output_path: Path,
     rights_basis: Literal[
         "creator_owned", "creator_permission", "licensed_dataset", "approved_research"
-    ],
+    ] | None = None,
     rights_reference: str | None = None,
     training_permitted: bool = False,
     config: AnalyzerConfig | None = None,
@@ -221,11 +221,14 @@ def analyze_video(
         item.timestamp_seconds <= hook_end for item in sampling.cuts
     )
     report = AnalysisReport(
-        rights=RightsDeclaration(
-            basis=rights_basis,
-            reference=rights_reference,
-            media_analysis_permitted=True,
-            model_training_permitted=training_permitted,
+        rights=(
+            RightsDeclaration(
+                basis=rights_basis,
+                reference=rights_reference,
+                media_analysis_permitted=True,
+                model_training_permitted=training_permitted,
+            )
+            if rights_basis is not None else None
         ),
         video=metadata,
         hook_window=HookWindow(

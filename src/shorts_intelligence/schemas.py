@@ -130,7 +130,7 @@ class AnalysisReport(StrictModel):
     project: str = "Shorts Language Model"
     phase: str = "phase-1-single-video-telemetry"
     source_type: Literal["local_file"] = "local_file"
-    rights: RightsDeclaration
+    rights: RightsDeclaration | None = None
     video: VideoMetadata
     hook_window: HookWindow
     frame_evidence: list[FrameEvidence] = Field(default_factory=list)

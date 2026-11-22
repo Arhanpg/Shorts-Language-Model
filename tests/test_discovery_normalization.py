@@ -1,4 +1,4 @@
-from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
+from shorts_intelligence.discovery.models import DiscoveredCandidate
 from shorts_intelligence.discovery.normalization import (
     candidate_from_instagram_post,
     candidate_from_ytdlp,
@@ -53,20 +53,6 @@ def test_instagram_play_count_qualifies_as_plays_not_views():
     assert candidate.qualifying_metric_kind() == "plays"
     assert candidate.view_count is None
 
-
-def test_training_rights_require_all_separate_scopes():
-    rights = AcquisitionAuthorization(
-        platform="youtube",
-        source_id="AbCdEfGh123",
-        basis="creator_permission",
-        evidence_ref="consent-record-123",
-        media_retrieval=True,
-        media_analysis=True,
-        temporary_processing=True,
-        derived_artifact_retention=True,
-        model_training=True,
-    )
-    rights.validate_for_training()
 
 
 def test_ytdlp_vertical_short_is_confirmed():
@@ -138,38 +124,6 @@ def test_instaloader_missing_lazy_view_metric_is_unknown():
     assert candidate.play_count is None
     assert candidate.qualifying_metric() is None
 
-
-def test_training_rights_reject_missing_scope_and_revocation():
-    import pytest
-
-    incomplete = AcquisitionAuthorization(
-        platform="youtube",
-        source_id="AbCdEfGh123",
-        basis="creator_permission",
-        evidence_ref="consent-record-123",
-        media_retrieval=True,
-        media_analysis=True,
-        temporary_processing=True,
-        derived_artifact_retention=True,
-        model_training=False,
-    )
-    with pytest.raises(ValueError, match="model_training"):
-        incomplete.validate_for_training()
-
-    revoked = AcquisitionAuthorization(
-        platform="youtube",
-        source_id="AbCdEfGh123",
-        basis="creator_permission",
-        evidence_ref="consent-record-123",
-        media_retrieval=True,
-        media_analysis=True,
-        temporary_processing=True,
-        derived_artifact_retention=True,
-        model_training=True,
-        revoked=True,
-    )
-    with pytest.raises(ValueError, match="revoked"):
-        revoked.validate_for_training()
 
 
 def test_ytscrape_duration_text_parsing():

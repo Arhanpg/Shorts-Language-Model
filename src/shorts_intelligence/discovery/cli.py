@@ -1,4 +1,4 @@
-"""CLI commands for resilient non-API discovery and authorized acquisition."""
+"""CLI commands for resilient non-API discovery and media acquisition."""
 
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ import subprocess
 import time
 import uuid
 from collections import Counter
-from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
@@ -29,7 +28,7 @@ from shorts_intelligence.discovery.legacy_providers import (
     YouTubeSearchProvider,
     YouTubeShortsSurfaceProvider,
 )
-from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
+from shorts_intelligence.discovery.models import DiscoveredCandidate
 from shorts_intelligence.discovery.query_planner import (
     SearchQuery,
     build_instagram_query_pool,
@@ -997,64 +996,32 @@ def run_discovery(
         )
 
 
-def _iter_rights_manifest(
-    path: Path,
-) -> Iterator[AcquisitionAuthorization]:
-    """Stream and validate private item-specific rights records from JSONL."""
-    with path.expanduser().resolve(strict=True).open("r", encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, start=1):
-            text = line.strip()
-            if not text or text.startswith("#"):
-                continue
-            try:
-                yield AcquisitionAuthorization.model_validate_json(text)
-            except Exception as exc:
-                raise ValueError(f"Invalid rights row {line_number}: {exc}") from exc
-
-
-def _load_rights_manifest(path: Path) -> dict[tuple[str, str], AcquisitionAuthorization]:
-    """Load a small rights manifest for the single-command downloader."""
-    rights: dict[tuple[str, str], AcquisitionAuthorization] = {}
-    for item in _iter_rights_manifest(path):
-        key = (item.platform, item.source_id)
-        if key in rights:
-            raise ValueError(f"Duplicate rights entry: {key}")
-        rights[key] = item
-    return rights
-
-
 @discovery_app.command("download")
 def download_eligible(
-    rights_manifest: Path = typer.Option(..., "--rights-manifest", exists=True, readable=True),
     limit: int = typer.Option(25, "--limit", min=1, max=500),
+    min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
     database: Path = typer.Option(Path(".shortslm/discovery.sqlite3"), "--database"),
     output_dir: Path = typer.Option(Path("data/private/acquired"), "--output-dir"),
     instagram_session_user: str | None = typer.Option(None, "--instagram-session-user"),
     instagram_session_file: Path | None = typer.Option(None, "--instagram-session-file"),
 ) -> None:
-    """Download queued candidates only when the private rights manifest grants training."""
-    try:
-        permissions = _load_rights_manifest(rights_manifest)
-    except Exception as exc:
-        console.print(f"[bold red]Cannot read rights manifest:[/bold red] {exc}")
-        raise typer.Exit(code=2) from exc
-
-    success = failed = blocked = duplicate_media = 0
+    """Download confirmed Shorts and Reels from the local eligible inventory."""
+    success = failed = duplicate_media = 0
     errors: list[str] = []
     with DiscoveryStore(database) as store:
         queued = store.eligible_candidates(limit=limit)
         for candidate in queued:
-            authorization = permissions.get((candidate.platform, candidate.source_id))
-            if authorization is None:
-                blocked += 1
+            metric = candidate.qualifying_metric()
+            if metric is None or metric < min_metric:
                 continue
             try:
                 media_path = download_candidate(
                     candidate,
-                    authorization,
                     output_dir,
                     instagram_session_username=instagram_session_user,
-                    instagram_session_file=str(instagram_session_file) if instagram_session_file else None,
+                    instagram_session_file=(
+                        str(instagram_session_file) if instagram_session_file else None
+                    ),
                 )
                 media_hash = sha256_file(media_path)
                 duplicate = store.find_media_hash(media_hash)
@@ -1063,103 +1030,74 @@ def download_eligible(
                     media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
                     duplicate_of = f"{duplicate['platform']}:{duplicate['source_id']}"
                     store.mark_duplicate_media(
-                        candidate.platform,
-                        candidate.source_id,
-                        duplicate_of=duplicate_of,
-                        media_sha256=media_hash,
+                        candidate.platform, candidate.source_id,
+                        duplicate_of=duplicate_of, media_sha256=media_hash,
                     )
                     duplicate_media += 1
                     continue
                 store.mark_download(
-                    candidate.platform,
-                    candidate.source_id,
-                    path=str(media_path),
-                    media_sha256=media_hash,
+                    candidate.platform, candidate.source_id,
+                    path=str(media_path), media_sha256=media_hash,
                 )
                 success += 1
             except Exception as exc:
                 store.mark_download_failure(
-                    candidate.platform,
-                    candidate.source_id,
-                    error=str(exc)[:500],
+                    candidate.platform, candidate.source_id, error=str(exc)[:500]
                 )
                 failed += 1
                 errors.append(
                     f"{candidate.platform}:{candidate.source_id}: {str(exc)[:250]}"
                 )
 
-    table = Table(title="ShortsLM authorized download run")
+    table = Table(title="ShortsLM download run")
     table.add_column("Result")
     table.add_column("Count", justify="right")
     for label, count in [
         ("Downloaded MP4", success),
         ("Failed", failed),
-        ("Blocked (no matching permission)", blocked),
-        ("Duplicate media files (same SHA-256)", duplicate_media),
+        ("Duplicate media files", duplicate_media),
     ]:
         table.add_row(label, str(count))
     console.print(table)
     for error in errors[:20]:
         console.print(f"[red]{error}[/red]")
     console.print(f"Output: {output_dir.expanduser().resolve()}")
-    if blocked:
-        console.print(
-            "[yellow]Blocked items remain queued. Add a matching private rights-manifest row "
-            "only after the required rights have actually been obtained.[/yellow]"
-        )
 
 
 @discovery_app.command("process")
 def process_eligible_media(
-    rights_manifest: Path = typer.Option(
-        ..., "--rights-manifest", exists=True, readable=True,
-        help="Private item-specific JSONL grants for retrieval, analysis, retention and training.",
-    ),
-    limit: int = typer.Option(25, "--limit", min=1, max=500),
+    limit: int = typer.Option(10, "--limit", min=1, max=500),
     min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
     database: Path = typer.Option(Path(".shortslm/discovery.sqlite3"), "--database"),
     download_dir: Path = typer.Option(Path("data/private/acquired"), "--download-dir"),
     artifact_dir: Path = typer.Option(Path("data/private/processed"), "--artifact-dir"),
     dataset_manifest: Path = typer.Option(
-        Path("outputs/dataset/training-candidates.jsonl"), "--dataset-manifest"
-    ),
-    allow_estimated_metrics: bool = typer.Option(
-        False, "--allow-estimated-metrics",
-        help=(
-            "Also process rounded Instagram UI counts for transcript/OCR research. "
-            "Those records remain estimate-backed and are never training-ready."
-        ),
+        Path("outputs/dataset/processed-videos.jsonl"), "--dataset-manifest"
     ),
     instagram_session_user: str | None = typer.Option(None, "--instagram-session-user"),
     instagram_session_file: Path | None = typer.Option(
         None, "--instagram-session-file", exists=True, readable=True
     ),
     asr_model: str = typer.Option("small", "--asr-model"),
-    asr_device: Literal["cpu", "cuda", "auto"] = typer.Option(
-        "cpu", "--asr-device", help="CPU is the safe 4 GB GPU default; cuda enables VidTrace GPU fallback."
-    ),
+    asr_device: Literal["cpu", "cuda", "auto"] = typer.Option("cpu", "--asr-device"),
     language: str | None = typer.Option(None, "--language"),
     max_duration: float = typer.Option(180.0, "--max-duration", min=1.0, max=1800.0),
     max_file_size_mb: int = typer.Option(1000, "--max-file-size-mb", min=1, max=10000),
     max_keyframes: int = typer.Option(24, "--max-keyframes", min=4, max=96),
     max_ocr_frames: int = typer.Option(12, "--max-ocr-frames", min=1, max=64),
-    keep_frame_artifacts: bool = typer.Option(
-        False, "--keep-frame-artifacts", help="Retain selected JPEG frames beside the report."
-    ),
+    keep_frame_artifacts: bool = typer.Option(False, "--keep-frame-artifacts"),
 ) -> None:
-    """Download authorized 1M+ Shorts/Reels and generate VidTrace ASR/OCR artifacts."""
+    """Download, transcribe and OCR eligible Shorts and Reels."""
     from shorts_intelligence.discovery.processing import run_processing_batch
 
     try:
         summary = run_processing_batch(
             database=database,
-            rights_manifest=rights_manifest,
             download_dir=download_dir,
             artifact_dir=artifact_dir,
             dataset_manifest=dataset_manifest,
             limit=limit,
             min_metric=min_metric,
-            allow_estimated_metrics=allow_estimated_metrics,
             instagram_session_username=instagram_session_user,
             instagram_session_file=instagram_session_file,
             asr_model=asr_model,
@@ -1173,23 +1111,21 @@ def process_eligible_media(
         )
     except Exception as exc:
         console.print(
-            f"[bold red]Authorized processing batch failed:[/bold red] "
+            f"[bold red]Processing batch failed:[/bold red] "
             f"{type(exc).__name__}: {exc}"
         )
         raise typer.Exit(code=2) from exc
 
-    table = Table(title="ShortsLM authorized multimodal processing")
+    table = Table(title="ShortsLM multimodal processing")
     table.add_column("Result")
     table.add_column("Count", justify="right")
     for label, key in [
-        ("Rights records indexed", "rights_records_indexed"),
-        ("Authorized candidates selected", "authorized_candidates_selected"),
-        ("Blocked (no current complete grant)", "blocked_without_current_rights"),
-        ("Media downloaded this run", "media_downloaded_this_run"),
-        ("Processed this run", "processed_this_run"),
+        ("Candidates selected", "candidates_selected"),
+        ("Media downloaded", "media_downloaded_this_run"),
+        ("Processed", "processed_this_run"),
         ("Exact duplicates", "duplicates"),
         ("Failed / retryable", "failed"),
-        ("Completed processing total", "processing_complete_total"),
+        ("Completed total", "processing_complete_total"),
         ("Manifest records", "manifest_records"),
     ]:
         table.add_row(label, str(summary.get(key, 0)))
@@ -1197,16 +1133,6 @@ def process_eligible_media(
     console.print(f"Dataset manifest: [cyan]{summary['manifest_path']}[/cyan]")
     console.print(f"Downloads: {download_dir.expanduser().resolve()}")
     console.print(f"Artifacts: {artifact_dir.expanduser().resolve()}")
-    if not allow_estimated_metrics:
-        console.print(
-            "[yellow]Rounded Instagram display metrics are excluded by default. "
-            "Use --allow-estimated-metrics only to process them for research; "
-            "their outputs remain review-required and cannot become exact metric labels.[/yellow]"
-        )
-    console.print(
-        "[yellow]Processed records are not training-ready until rights, transcript, "
-        "OCR and content QA are reviewed and explicitly approved.[/yellow]"
-    )
 
 
 @discovery_app.command("graph-run")
