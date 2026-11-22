@@ -9,8 +9,8 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
-from decimal import Decimal, InvalidOperation, ROUND_FLOOR
 import re
+from decimal import ROUND_FLOOR, Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote, urlparse
