@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+from decimal import Decimal, InvalidOperation, ROUND_FLOOR
 import re
 from pathlib import Path
 from typing import Any
@@ -19,8 +20,145 @@ from shorts_intelligence.discovery.models import DiscoveredCandidate
 _CODE = re.compile(r"^[A-Za-z0-9_-]{5,}$")
 _REEL_PATH = re.compile(r"/reel/([A-Za-z0-9_-]{5,})/?", re.IGNORECASE)
 _NUMERIC_COUNT = re.compile(r"^\s*[0-9][0-9,]*\s*$")
-_PLAY_FIELDS = ("play_count", "video_play_count", "ig_play_count")
-_VIEW_FIELDS = ("view_count", "video_view_count")
+_PLAY_FIELDS = (
+    "play_count", "video_play_count", "ig_play_count",
+    "playCount", "videoPlayCount",
+)
+_VIEW_FIELDS = (
+    "view_count", "video_view_count", "viewCount", "videoViewCount",
+)
+_DISPLAY_COUNT = re.compile(
+    r"(?P<number>(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\\.[0-9]+)?)"
+    r"\\s*(?P<suffix>[KMB])?",
+    re.IGNORECASE,
+)
+
+
+def _visible_metric_from_text(
+    text: str,
+    *,
+    allow_bare_count: bool = False,
+) -> dict[str, object] | None:
+    """Read a public UI view/play count; abbreviated values remain marked estimates."""
+    cleaned = " ".join(text.split())
+    if not cleaned:
+        return None
+
+    labels = (
+        ("plays", re.compile(r"^\\s*plays?\\b", re.IGNORECASE)),
+        ("views", re.compile(r"^\\s*views?\\b", re.IGNORECASE)),
+    )
+    for match in _DISPLAY_COUNT.finditer(cleaned):
+        before = cleaned[:match.start()]
+        after = cleaned[match.end():]
+        kind = next((name for name, pattern in labels if pattern.search(after)), None)
+        if kind is None:
+            kind = next(
+                (
+                    name for name, pattern in labels
+                    if re.search(r"\\b" + name.rstrip("s") + r"s?\\s*[:\\-]?\\s*$", before, re.IGNORECASE)
+                ),
+                None,
+            )
+        token = match.group(0).strip()
+        if kind is None and allow_bare_count and cleaned == token:
+            kind = "views"
+        if kind is None:
+            continue
+
+        number_text = match.group("number").replace(",", "")
+        suffix = (match.group("suffix") or "").upper()
+        try:
+            number = Decimal(number_text)
+        except InvalidOperation:
+            continue
+        multiplier = {"": Decimal(1), "K": Decimal(1_000), "M": Decimal(1_000_000), "B": Decimal(1_000_000_000)}[suffix]
+        nominal = number * multiplier
+        if nominal < 0:
+            continue
+        approximate = bool(suffix)
+        if approximate:
+            decimals = len(number_text.partition(".")[2])
+            display_step = multiplier / (Decimal(10) ** decimals)
+            lower_bound = max(
+                Decimal(0),
+                (nominal - display_step / 2).to_integral_value(rounding=ROUND_FLOOR),
+            )
+        else:
+            if number != number.to_integral_value():
+                continue
+            lower_bound = nominal
+        return {
+            "kind": kind,
+            "display": token,
+            "nominal_count": int(nominal),
+            "lower_bound": int(lower_bound),
+            "is_estimate": approximate,
+            "source_text": cleaned[:240],
+        }
+    return None
+
+
+def _apply_visible_metric(
+    candidate: DiscoveredCandidate,
+    metric: dict[str, object],
+    *,
+    source: str,
+) -> None:
+    """Attach a conservative UI count while preserving its display precision."""
+    value = int(metric["lower_bound"])
+    kind = str(metric["kind"])
+    if kind == "plays":
+        candidate.play_count = value
+    else:
+        candidate.view_count = value
+    candidate.metric_source = source
+    candidate.metadata.update({
+        "metric_kind": kind,
+        "metric_source": source,
+        "metric_is_estimate": bool(metric["is_estimate"]),
+        "metric_display_value": str(metric["display"]),
+        "metric_nominal_value": int(metric["nominal_count"]),
+        "metric_conservative_lower_bound": value,
+        "metric_source_text": str(metric["source_text"]),
+        "metric_usage": "discovery_filter_only; not an exact training label"
+        if metric["is_estimate"] else "exact_visible_numeric_count",
+    })
+
+
+def _response_shape(payload: object) -> dict[str, object]:
+    """Return bounded schema-only diagnostics without retaining response values."""
+    if isinstance(payload, dict):
+        top_level = sorted(str(key) for key in payload)[:24]
+    else:
+        top_level = [type(payload).__name__]
+    media_shapes: list[dict[str, object]] = []
+    interesting = {
+        "code", "shortcode", "media_code", "media_type", "product_type",
+        "is_reel", "is_video", "__typename", "video_versions",
+        "view_count", "video_view_count", "play_count", "video_play_count",
+    }
+
+    def walk(value: object, depth: int = 0) -> None:
+        if len(media_shapes) >= 8 or depth > 8:
+            return
+        if isinstance(value, dict):
+            keys = {str(key) for key in value}
+            signals = sorted(keys.intersection(interesting))
+            if signals:
+                media_shapes.append({
+                    "keys": sorted(keys)[:32],
+                    "signals": signals,
+                    "typename": str(value.get("__typename") or "")[:80] or None,
+                })
+            for child in value.values():
+                walk(child, depth + 1)
+        elif isinstance(value, list):
+            for child in value[:30]:
+                walk(child, depth + 1)
+
+    walk(payload)
+    return {"top_level_keys": top_level, "media_like_objects": media_shapes}
 
 
 def _raw_count(value: object) -> int | None:
@@ -68,13 +206,21 @@ def extract_reel_records(
             code = value.get("code") or value.get("shortcode") or value.get("media_code")
             product_type = str(value.get("product_type") or "").casefold()
             media_type = value.get("media_type")
+            media_type_text = str(media_type or "").casefold()
             if isinstance(media_type, str) and media_type.isdigit():
                 media_type = int(media_type)
+            typename = str(value.get("__typename") or value.get("typename") or "").casefold()
             is_reel = (
                 product_type in {"clips", "reels", "reel"}
                 or media_type == 2
+                or media_type_text in {"video", "graphvideo", "clips", "reel", "reels"}
+                or "graphvideo" in typename
+                or "clip" in typename
+                or "reel" in typename
                 or value.get("is_reel") is True
                 or value.get("is_video") is True
+                or value.get("is_unified_video") is True
+                or isinstance(value.get("clips_metadata"), dict)
             )
             if isinstance(code, str) and _CODE.fullmatch(code) and is_reel:
                 plays, play_field = _first_count(value, _PLAY_FIELDS)
@@ -87,7 +233,18 @@ def extract_reel_records(
                 }) if isinstance(coauthors, list) else []
                 caption_value = value.get("caption")
                 if isinstance(caption_value, dict):
-                    caption_value = caption_value.get("text")
+                    direct_text = caption_value.get("text")
+                    if isinstance(direct_text, str):
+                        caption_value = direct_text
+                    else:
+                        edges = caption_value.get("edges")
+                        caption_value = None
+                        if isinstance(edges, list):
+                            for edge in edges:
+                                node = edge.get("node") if isinstance(edge, dict) else None
+                                if isinstance(node, dict) and isinstance(node.get("text"), str):
+                                    caption_value = node["text"]
+                                    break
                 caption = caption_value if isinstance(caption_value, str) else None
                 hashtags = sorted(set(re.findall(r"#([\w]+)", caption or "")))
                 metric_source = (
@@ -120,6 +277,7 @@ def extract_reel_records(
                         "product_type": product_type or None,
                         "media_type": media_type,
                         "instagram_owner": owner,
+                        "instagram_typename": typename or None,
                     },
                 )
                 previous = found.get(code)
@@ -361,6 +519,9 @@ class InstagramPlaywrightProvider:
             "metric_count": 0,
             "login_or_checkpoint": False,
             "reason": None,
+            "response_shapes": [],
+            "dom_metric_count": 0,
+            "visible_detail_metrics": 0,
         }
 
         def add_records(records: list[DiscoveredCandidate]) -> None:
@@ -405,6 +566,11 @@ class InstagramPlaywrightProvider:
                     discovery_surface=surface,
                     hashtag=hashtag,
                 )
+                if not records and len(diagnostic["response_shapes"]) < 8:
+                    diagnostic["response_shapes"].append({
+                        "path": parsed_url.path[:180],
+                        **_response_shape(payload),
+                    })
                 if records:
                     self.responses_parsed += 1
                     diagnostic["responses_with_reels"] += 1
@@ -427,14 +593,17 @@ class InstagramPlaywrightProvider:
             tasks.add(task)
             task.add_done_callback(tasks.discard)
 
-        def collect_rendered_links(raw_links: list[str]) -> None:
-            for href in raw_links:
-                match = _REEL_PATH.search(href or "")
+        def collect_rendered_links(raw_links: list[Any]) -> None:
+            for entry in raw_links:
+                item = entry if isinstance(entry, dict) else {"href": entry}
+                href = str(item.get("href") or "")
+                match = _REEL_PATH.search(href)
                 if not match:
                     continue
                 code = match.group(1)
-                if code not in candidates:
-                    candidates[code] = DiscoveredCandidate(
+                candidate = candidates.get(code)
+                if candidate is None:
+                    candidate = DiscoveredCandidate(
                         platform="instagram",
                         source_id=code,
                         canonical_url=f"https://www.instagram.com/reel/{code}/",
@@ -447,6 +616,55 @@ class InstagramPlaywrightProvider:
                             "metric_kind": "unknown",
                         },
                     )
+                    candidates[code] = candidate
+
+                text_fields = [
+                    str(item.get("text") or ""),
+                    str(item.get("aria_label") or ""),
+                    str(item.get("title") or ""),
+                    str(item.get("label_text") or ""),
+                ]
+                metric = next(
+                    (
+                        parsed for text in text_fields
+                        if (parsed := _visible_metric_from_text(text)) is not None
+                    ),
+                    None,
+                )
+                if metric is None:
+                    metric = next(
+                        (
+                            parsed for text in text_fields
+                            if (parsed := _visible_metric_from_text(
+                                text, allow_bare_count=True
+                            )) is not None
+                        ),
+                        None,
+                    )
+                if metric is not None and candidate.qualifying_metric() is None:
+                    _apply_visible_metric(
+                        candidate,
+                        metric,
+                        source="instagram_rendered_reel_card." + str(metric["kind"]),
+                    )
+                    diagnostic["dom_metric_count"] += 1
+
+        async def capture_rendered_links() -> None:
+            links = await page.locator('a[href*="/reel/"]').evaluate_all(
+                "(els) => els.map((el) => ({"
+                "href: el.getAttribute('href') || '',"
+                "text: el.innerText || el.textContent || '',"
+                "aria_label: el.getAttribute('aria-label') || '',"
+                "title: el.getAttribute('title') || '',"
+                "label_text: Array.from(el.querySelectorAll('[aria-label]'))"
+                ".map((node) => node.getAttribute('aria-label') || '').join(' ')"
+                "}))"
+            )
+            collect_rendered_links(links)
+            diagnostic["dom_reel_links"] = sum(
+                item.metadata.get("provider") == "playwright_rendered_reel_link"
+                for item in candidates.values()
+            )
 
         page.on("response", on_response)
         try:
@@ -469,16 +687,16 @@ class InstagramPlaywrightProvider:
                 diagnostic["reason"] = f"Surface page returned HTTP {response.status}"
 
             if not self.blocked:
+                # Capture the initially rendered cards as well as subsequent
+                # scroll batches; hashtag pages often load a useful first row
+                # before the first wheel event.
+                await capture_rendered_links()
                 previous_count = -1
                 stable_rounds = 0
                 for _ in range(max(0, min(max_scrolls, 20))):
                     await page.mouse.wheel(0, 1750)
                     await page.wait_for_timeout(850)
-                    links = await page.locator('a[href*="/reel/"]').evaluate_all(
-                        "(els) => els.map((el) => el.getAttribute('href')).filter(Boolean)"
-                    )
-                    collect_rendered_links(links)
-                    diagnostic["dom_reel_links"] = len(candidates)
+                    await capture_rendered_links()
                     current_count = len(candidates)
                     stable_rounds = stable_rounds + 1 if current_count == previous_count else 0
                     previous_count = current_count
@@ -508,6 +726,7 @@ class InstagramPlaywrightProvider:
                         scripts = await page.locator(
                             'script[type="application/ld+json"]'
                         ).all_text_contents()
+                        target = candidates[code]
                         for script in scripts:
                             try:
                                 payload = json.loads(script)
@@ -522,7 +741,6 @@ class InstagramPlaywrightProvider:
                             detail_metric = _jsonld_video_metric(payload)
                             if detail_metric:
                                 kind, count, source = detail_metric
-                                target = candidates[code]
                                 if kind == "plays":
                                     target.play_count = count
                                 else:
@@ -531,6 +749,34 @@ class InstagramPlaywrightProvider:
                                 target.metadata["metric_kind"] = kind
                                 target.metadata["metric_source"] = source
                                 target.metadata["metric_detail_enriched"] = True
+
+                        # Logged-in public Reel pages do not always expose
+                        # JSON-LD. Read only rendered body text and public
+                        # description meta tags; never inspect private app state.
+                        visible_texts: list[str] = []
+                        meta_locator = page.locator(
+                            'meta[name="description"], meta[property="og:description"]'
+                        )
+                        with contextlib.suppress(Exception):
+                            visible_texts.extend(await meta_locator.evaluate_all(
+                                "(els) => els.map((el) => el.getAttribute('content') || '')"
+                            ))
+                        with contextlib.suppress(Exception):
+                            visible_texts.append(
+                                await page.locator("body").inner_text(timeout=1800)
+                            )
+                        for visible_text in visible_texts:
+                            visible_metric = _visible_metric_from_text(visible_text)
+                            if visible_metric is not None:
+                                _apply_visible_metric(
+                                    target,
+                                    visible_metric,
+                                    source="instagram_reel_detail_visible_text."
+                                    + str(visible_metric["kind"]),
+                                )
+                                target.metadata["metric_detail_enriched"] = True
+                                diagnostic["visible_detail_metrics"] += 1
+                                break
                     except Exception as exc:
                         if len(self.errors) < 50:
                             self.errors.append(
