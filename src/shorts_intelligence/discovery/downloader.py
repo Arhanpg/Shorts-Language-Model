@@ -1,4 +1,4 @@
-"""Permission-gated local MP4 acquisition adapters for discovered candidates."""
+"""Local MP4 acquisition adapters for discovered candidates."""
 
 from __future__ import annotations
 
@@ -10,29 +10,25 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
+from shorts_intelligence.discovery.models import DiscoveredCandidate
 
 
 class DownloadError(RuntimeError):
     """A source-specific downloader could not produce a local MP4."""
 
 
-def _write_metadata(candidate: DiscoveredCandidate, authorization: AcquisitionAuthorization, path: Path) -> None:
+def _write_metadata(candidate: DiscoveredCandidate, path: Path) -> None:
+    """Write a small source/download sidecar beside the MP4."""
     metadata_path = path.with_suffix(".metadata.json")
     payload = {
         "candidate": candidate.model_dump(mode="json"),
-        "rights": authorization.model_dump(mode="json"),
         "downloaded_at": datetime.now(UTC).isoformat(),
-        "rights_grant_validated": True,
-        "training_ready": False,
-        "review_status": "review_required",
-        "note": (
-            "Private provenance sidecar. A valid rights grant permits processing; "
-            "transcript/OCR quality review and dataset approval are still required."
-        ),
     }
     temporary = metadata_path.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    temporary.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
     temporary.replace(metadata_path)
 
 
@@ -161,17 +157,12 @@ def _download_gallery_dl(candidate: DiscoveredCandidate, output_dir: Path) -> Pa
 
 def download_candidate(
     candidate: DiscoveredCandidate,
-    authorization: AcquisitionAuthorization,
     output_dir: Path,
     *,
     instagram_session_username: str | None = None,
     instagram_session_file: str | None = None,
 ) -> Path:
-    """Download only after validating an item-specific explicit training grant."""
-    if authorization.platform != candidate.platform or authorization.source_id != candidate.source_id:
-        raise ValueError("Rights manifest entry does not match platform and source_id.")
-    authorization.validate_for_training()
-
+    """Download a discovered video with the configured public-media extractor."""
     output_dir = output_dir.expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     if candidate.platform == "youtube":
@@ -198,5 +189,5 @@ def download_candidate(
                     ) from gallery_error
     if not media_path.exists() or media_path.stat().st_size == 0:
         raise DownloadError("Downloaded media file is empty or missing.")
-    _write_metadata(candidate, authorization, media_path)
+    _write_metadata(candidate, media_path)
     return media_path
