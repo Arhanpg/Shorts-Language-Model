@@ -336,11 +336,12 @@ class DiscoveryStore:
         # A newer exact observation supersedes an earlier rounded UI estimate.
         # Do not let stale estimate provenance keep an exact-count item out of
         # the default processing queue.
-        if exact_metric := (
-            effective_view_count if candidate.platform == "youtube"
-            else effective_play_count if effective_play_count is not None
-            else effective_view_count
-        ):
+        has_exact_metric = (
+            effective_view_count is not None
+            if candidate.platform == "youtube"
+            else effective_play_count is not None or effective_view_count is not None
+        )
+        if has_exact_metric:
             effective_metadata["metric_is_estimate"] = False
             effective_metadata["metric_precision"] = "exact_numeric"
             effective_metadata["metric_usage"] = "exact_platform_native_metric"
