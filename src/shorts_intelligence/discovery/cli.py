@@ -1240,6 +1240,8 @@ def graph_run(
             f"{len(hashtag_diags)} hashtag pages, {len(creator_diags)} creator pages; "
             f"{sum(int(d.get('candidate_count', 0)) for d in all_diags)} Reel links; "
             f"{sum(int(d.get('metric_count', 0)) for d in all_diags)} with numeric metrics; "
+            f"{sum(int(d.get('dom_metric_count', 0)) for d in all_diags)} from Reel cards; "
+            f"{sum(int(d.get('visible_detail_metrics', 0)) for d in all_diags)} from visible detail text; "
             f"{sum(int(d.get('detail_pages_with_metrics', 0)) for d in all_diags)} detail pages enriched."
         )
         for item in summary.get("hashtag_results", []):
