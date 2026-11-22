@@ -113,10 +113,13 @@ def _apply_visible_metric(
     """Attach a conservative UI count while preserving its display precision."""
     value = int(metric["lower_bound"])
     kind = str(metric["kind"])
-    if kind == "plays":
-        candidate.play_count = value
-    else:
-        candidate.view_count = value
+    # Keep rounded UI values out of exact numeric columns. The lower bound is
+    # exposed only through qualifying_metric() for conservative discovery.
+    if not metric["is_estimate"]:
+        if kind == "plays":
+            candidate.play_count = value
+        else:
+            candidate.view_count = value
     candidate.metric_source = source
     candidate.metadata.update({
         "metric_kind": kind,
