@@ -6,7 +6,7 @@ import json
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 
 from shorts_intelligence.discovery.models import (
     AcquisitionAuthorization,
@@ -514,6 +514,9 @@ class DiscoveryStore:
         Rounded Instagram display metrics can be included only with an explicit
         opt-in; the caller still marks those records as review-required.
         """
+        maximum = max(0, int(limit))
+        if maximum == 0:
+            return []
         now = datetime.now(UTC).isoformat()
         cursor = self.connection.execute(
             """SELECT
@@ -566,7 +569,6 @@ class DiscoveryStore:
             (int(min_metric), now),
         )
         output = []
-        maximum = max(0, int(limit))
         for row in cursor:
             candidate = self._candidate_from_row(row)
             if (
@@ -601,8 +603,8 @@ class DiscoveryStore:
                 break
         return output
 
-    def count_processing_blocked(self) -> int:
-        """Count otherwise eligible media lacking a current, complete training grant."""
+    def count_processing_blocked(self, *, min_metric: int = 1_000_000) -> int:
+        """Count above-threshold, confirmed candidates lacking a current complete grant."""
         now = datetime.now(UTC).isoformat()
         row = self.connection.execute(
             """SELECT COUNT(*) AS n
@@ -612,7 +614,16 @@ class DiscoveryStore:
             WHERE c.status='eligible'
               AND c.short_format_status='confirmed'
               AND c.download_status IN ('not_downloaded','download_failed','downloaded')
-              AND COALESCE(p.status, '')!='complete'
+              AND COALESCE(p.status, '') NOT IN ('complete','duplicate_media')
+              AND CASE
+                    WHEN c.platform='youtube' THEN COALESCE(c.view_count, 0)
+                    ELSE COALESCE(
+                        c.play_count,
+                        c.view_count,
+                        CAST(json_extract(c.metadata_json, '$.metric_conservative_lower_bound') AS INTEGER),
+                        0
+                    )
+                  END >= ?
               AND NOT EXISTS (
                 SELECT 1 FROM rights_authorizations AS r
                 WHERE r.platform=c.platform AND r.source_id=c.source_id
@@ -621,7 +632,7 @@ class DiscoveryStore:
                   AND r.model_training=1 AND r.revoked=0
                   AND (r.expires_at IS NULL OR r.expires_at > ?)
               )""",
-            (now,),
+            (int(min_metric), now),
         ).fetchone()
         return int(row["n"]) if row else 0
 
@@ -733,8 +744,8 @@ class DiscoveryStore:
         )
         self.connection.commit()
 
-    def processing_records(self) -> list[dict[str, Any]]:
-        """Return completed processing records whose current grant still permits training."""
+    def iter_processing_records(self) -> Iterator[dict[str, Any]]:
+        """Stream completed records whose current grant still permits training."""
         now = datetime.now(UTC).isoformat()
         rows = self.connection.execute(
             """SELECT
@@ -764,8 +775,13 @@ class DiscoveryStore:
               AND (r.expires_at IS NULL OR r.expires_at > ?)
             ORDER BY p.completed_at ASC""",
             (now,),
-        ).fetchall()
-        return [dict(row) for row in rows]
+        )
+        for row in rows:
+            yield dict(row)
+
+    def processing_records(self) -> list[dict[str, Any]]:
+        """Return a materialized view for small inspection/test workloads."""
+        return list(self.iter_processing_records())
 
     def processing_summary(self) -> dict[str, int]:
         rows = self.connection.execute(
