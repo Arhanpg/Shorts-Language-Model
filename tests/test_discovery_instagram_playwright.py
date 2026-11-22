@@ -505,3 +505,24 @@ def test_apply_visible_metric_preserves_estimate_provenance():
     assert candidate.metadata["metric_usage"] == (
         "discovery_filter_only; not an exact training label"
     )
+
+
+def test_instagram_parser_extracts_shortcode_from_observed_public_permalink():
+    payload = {
+        "sections": [{
+            "layout_content": {
+                "medias": [{
+                    "media": {
+                        "__typename": "XDTGraphVideo",
+                        "permalink": "https://www.instagram.com/reel/PublicLink123/",
+                        "is_unified_video": True,
+                        "viewCount": 1_700_000,
+                    }
+                }]
+            }
+        }]
+    }
+    records = extract_reel_records(payload, creator_handle="hashtag:travel")
+    assert len(records) == 1
+    assert records[0].source_id == "PublicLink123"
+    assert records[0].view_count == 1_700_000
