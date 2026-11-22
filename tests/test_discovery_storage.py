@@ -278,3 +278,164 @@ def test_instagram_play_count_qualifies_as_plays_without_becoming_views(tmp_path
         assert saved.qualifying_metric_kind() == "plays"
         assert saved.view_count is None
         assert store.eligible_candidates()[0].source_id == "PlayCount123"
+
+
+def _training_rights(
+    platform: str,
+    source_id: str,
+    *,
+    revoked: bool = False,
+    expires_at=None,
+):
+    from shorts_intelligence.discovery.models import AcquisitionAuthorization
+
+    return AcquisitionAuthorization(
+        platform=platform,
+        source_id=source_id,
+        basis="creator_permission",
+        evidence_ref=f"private-consent:{platform}:{source_id}",
+        media_retrieval=True,
+        media_analysis=True,
+        temporary_processing=True,
+        derived_artifact_retention=True,
+        model_training=True,
+        revoked=revoked,
+        expires_at=expires_at,
+    )
+
+
+def test_processing_queue_requires_current_complete_item_rights(tmp_path: Path):
+    from datetime import UTC, datetime
+
+    with DiscoveryStore(tmp_path / "rights-gate.sqlite3") as store:
+        store.start_run("rights-gate", 10, 1_000_000)
+        candidate = _candidate(1_500_000)
+        store.upsert_candidate(candidate, min_views=1_000_000, run_id="rights-gate")
+
+        assert store.processing_candidates(limit=10) == []
+        assert store.count_processing_blocked() == 1
+
+        expired = _training_rights(
+            "youtube",
+            candidate.source_id,
+            expires_at=datetime(2020, 1, 1, tzinfo=UTC),
+        )
+        store.replace_rights_authorizations([expired])
+        assert store.processing_candidates(limit=10) == []
+        assert store.count_processing_blocked() == 1
+
+        valid = _training_rights("youtube", candidate.source_id)
+        store.replace_rights_authorizations([valid])
+        queued = store.processing_candidates(limit=10)
+        assert len(queued) == 1
+        assert queued[0][0].source_id == candidate.source_id
+        assert queued[0][1].evidence_ref == valid.evidence_ref
+        assert store.count_processing_blocked() == 0
+
+        revoked = _training_rights("youtube", candidate.source_id, revoked=True)
+        store.replace_rights_authorizations([revoked])
+        assert store.processing_candidates(limit=10) == []
+        assert store.count_processing_blocked() == 1
+
+
+def test_processing_queue_excludes_estimates_unless_explicitly_allowed(tmp_path: Path):
+    estimate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="EstimatedReel123",
+        canonical_url="https://www.instagram.com/reel/EstimatedReel123/",
+        view_count=None,
+        play_count=None,
+        metric_source="instagram_rendered_reel_card.plays",
+        short_format_status="confirmed",
+        metadata={
+            "metric_kind": "plays",
+            "metric_is_estimate": True,
+            "metric_display_value": "1.2M",
+            "metric_conservative_lower_bound": 1_150_000,
+        },
+    )
+    with DiscoveryStore(tmp_path / "estimate-gate.sqlite3") as store:
+        store.start_run("estimate-gate", 10, 1_000_000)
+        store.upsert_candidate(
+            estimate, min_views=1_000_000, run_id="estimate-gate"
+        )
+        store.replace_rights_authorizations([
+            _training_rights("instagram", estimate.source_id)
+        ])
+
+        assert store.processing_candidates(limit=10) == []
+        opted_in = store.processing_candidates(
+            limit=10, allow_estimated_metrics=True
+        )
+        assert len(opted_in) == 1
+        candidate = opted_in[0][0]
+        assert candidate.view_count is None
+        assert candidate.play_count is None
+        assert candidate.qualifying_metric() == 1_150_000
+        assert candidate.metadata["metric_is_estimate"] is True
+
+
+def test_processing_queue_honours_custom_threshold_and_zero_limit(tmp_path: Path):
+    with DiscoveryStore(tmp_path / "processing-threshold.sqlite3") as store:
+        store.start_run("processing-threshold", 10, 1_000_000)
+        candidate = _candidate(1_500_000)
+        store.upsert_candidate(
+            candidate, min_views=1_000_000, run_id="processing-threshold"
+        )
+        store.replace_rights_authorizations([
+            _training_rights("youtube", candidate.source_id)
+        ])
+
+        assert store.processing_candidates(limit=0) == []
+        assert store.processing_candidates(min_metric=2_000_000, limit=10) == []
+        assert store.count_processing_blocked(min_metric=2_000_000) == 0
+
+
+def test_processing_manifest_is_review_required_and_rechecks_rights(tmp_path: Path):
+    import json
+
+    from shorts_intelligence.discovery.processing import _export_processing_manifest
+
+    candidate = _candidate(1_500_000)
+    authorization = _training_rights("youtube", candidate.source_id)
+    with DiscoveryStore(tmp_path / "processing-manifest.sqlite3") as store:
+        store.start_run("processing-manifest", 10, 1_000_000)
+        store.upsert_candidate(
+            candidate, min_views=1_000_000, run_id="processing-manifest"
+        )
+        store.replace_rights_authorizations([authorization])
+        store.mark_processing_started(candidate, authorization)
+        store.mark_processing_complete(
+            "youtube",
+            candidate.source_id,
+            media_path=str(tmp_path / "asset.mp4"),
+            media_sha256="a" * 64,
+            analysis_path=str(tmp_path / "analysis.json"),
+            transcript_path=str(tmp_path / "transcript.json"),
+            ocr_path=str(tmp_path / "ocr.json"),
+            transcript_segments=3,
+            ocr_spans=2,
+            detected_language="en",
+            asr_engine="vidtrace-faster-whisper",
+            ocr_engine="vidtrace-paddleocr",
+            quality_flags=[],
+        )
+
+        manifest = tmp_path / "dataset" / "training-candidates.jsonl"
+        assert _export_processing_manifest(
+            store, manifest, min_metric=1_000_000
+        ) == 1
+        record = json.loads(manifest.read_text(encoding="utf-8").strip())
+        assert record["metric"]["threshold_met"] is True
+        assert record["review"]["status"] == "review_required"
+        assert record["review"]["training_approved"] is False
+        assert record["training_ready"] is False
+        assert record["telemetry"]["transcript_segments"] == 3
+
+        store.replace_rights_authorizations([
+            _training_rights("youtube", candidate.source_id, revoked=True)
+        ])
+        assert _export_processing_manifest(
+            store, manifest, min_metric=1_000_000
+        ) == 0
+        assert manifest.read_text(encoding="utf-8") == ""
