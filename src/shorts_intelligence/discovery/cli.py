@@ -1256,6 +1256,25 @@ def graph_run(
                     f"[yellow]@{item.get('handle')}: "
                     f"{provider.get('reason') or item.get('error') or 'No Reel candidates captured'}[/yellow]"
                 )
+
+        for label, diagnostics in (
+            ("hashtag", hashtag_diags),
+            ("creator", creator_diags),
+        ):
+            for diagnostic in diagnostics:
+                shapes = diagnostic.get("response_shapes", [])
+                for shape in shapes[:2]:
+                    keys = shape.get("top_level_keys", [])
+                    media = shape.get("media_like_objects", [])
+                    media_keys = [
+                        "/".join(item.get("signals", []))
+                        for item in media[:2]
+                    ]
+                    console.print(
+                        f"[dim]Instagram {label} response shape "
+                        f"{diagnostic.get('hashtag') or diagnostic.get('handle')}: "
+                        f"path={shape.get('path')}; top-level={keys}; media-signals={media_keys}[/dim]"
+                    )
     console.print(f"Creator seed file: {instagram_seeds_file.expanduser().resolve()}")
     console.print(f"Hashtag seed file: {instagram_hashtags_file.expanduser().resolve()}")
     console.print(f"Report: {report.expanduser().resolve()}")
