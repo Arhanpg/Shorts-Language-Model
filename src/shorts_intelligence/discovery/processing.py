@@ -275,23 +275,24 @@ def run_processing_batch(
             platform = candidate.platform
             source_id = candidate.source_id
             did_download = False
+            download_attempted = False
             download_succeeded = False
             store.mark_processing_started(candidate, authorization)
 
-            safe_id = _safe_component(source_id)
-            item_dir = (
-                artifact_dir.expanduser().resolve()
-                / platform
-                / safe_id
-            )
-            item_dir.mkdir(parents=True, exist_ok=True)
-
             try:
+                safe_id = _safe_component(source_id)
+                item_dir = (
+                    artifact_dir.expanduser().resolve()
+                    / platform
+                    / safe_id
+                )
+                item_dir.mkdir(parents=True, exist_ok=True)
                 media_path = (
                     Path(existing_path).expanduser().resolve()
                     if existing_path else None
                 )
                 if media_path is None or not media_path.is_file() or media_path.stat().st_size == 0:
+                    download_attempted = True
                     media_path = download_candidate(
                         candidate,
                         authorization,
@@ -413,7 +414,7 @@ def run_processing_batch(
                     source_id,
                     error=f"{type(exc).__name__}: {exc}",
                 )
-                if not download_succeeded and (did_download or download_status != "downloaded"):
+                if download_attempted and not download_succeeded:
                     store.mark_download_failure(
                         platform,
                         source_id,
