@@ -34,8 +34,6 @@ venv/
 *.mp3
 *.flac
 *.jsonl.private
-*rights*.jsonl
-*consent*
 *session*
 *cookie*
 *token*.json
