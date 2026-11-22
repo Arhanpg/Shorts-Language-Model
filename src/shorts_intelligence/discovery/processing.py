@@ -258,12 +258,13 @@ def run_processing_batch(
     keep_frame_artifacts: bool = False,
 ) -> dict[str, int | str]:
     """Acquire and process a bounded set of authorized 1M+ short-form videos."""
-    from shorts_intelligence.discovery.cli import _load_rights_manifest
+    from shorts_intelligence.discovery.cli import _iter_rights_manifest
 
-    permissions = _load_rights_manifest(rights_manifest)
     processed = downloaded = failed = duplicates = 0
     with DiscoveryStore(database) as store:
-        indexed = store.replace_rights_authorizations(permissions.values())
+        indexed = store.replace_rights_authorizations(
+            _iter_rights_manifest(rights_manifest)
+        )
         queued = store.processing_candidates(
             min_metric=min_metric,
             allow_estimated_metrics=allow_estimated_metrics,
