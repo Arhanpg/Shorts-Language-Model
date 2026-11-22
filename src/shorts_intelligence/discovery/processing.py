@@ -422,9 +422,8 @@ def run_processing_batch(
                     source_id,
                     error=f"{type(exc).__name__}: {exc}",
                 )
-                if download_validation_failed := (
-                    media_validation_failed
-                    or download_attempted and not download_succeeded
+                if media_validation_failed or (
+                    download_attempted and not download_succeeded
                 ):
                     store.mark_download_failure(
                         platform,
