@@ -11,7 +11,7 @@ from typing import Any
 from shorts_intelligence.analyzer import analyze_video
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.discovery.downloader import download_candidate
-from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
+from shorts_intelligence.discovery.models import DiscoveredCandidate
 from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.media.probe import MediaError, probe_video
 
@@ -422,9 +422,8 @@ def run_processing_batch(
                     source_id,
                     error=f"{type(exc).__name__}: {exc}",
                 )
-                if download_validation_failed := (
-                    media_validation_failed
-                    or download_attempted and not download_succeeded
+                if media_validation_failed or (
+                    download_attempted and not download_succeeded
                 ):
                     store.mark_download_failure(
                         platform,
