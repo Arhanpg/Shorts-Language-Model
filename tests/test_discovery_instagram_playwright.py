@@ -499,7 +499,9 @@ def test_apply_visible_metric_preserves_estimate_provenance():
     _apply_visible_metric(
         candidate, metric, source="instagram_rendered_reel_card.views"
     )
-    assert candidate.view_count == 1_150_000
+    assert candidate.view_count is None
+    assert candidate.play_count is None
+    assert candidate.qualifying_metric() == 1_150_000
     assert candidate.metadata["metric_is_estimate"] is True
     assert candidate.metadata["metric_display_value"] == "1.2M"
     assert candidate.metadata["metric_usage"] == (
