@@ -107,7 +107,7 @@ shorts-lm discover graph-run `
 - Instagram play counts and view counts remain distinct fields and are reported with their source.
 - Exact numeric response fields and exact numeric JSON-LD `WatchAction` / `ViewAction` counters can be retained.
 - Likes are not treated as plays or views.
-- Display strings such as `1.2M` are not converted into exact integers.
+- Display strings such as `1.2M` are retained as explicitly marked estimates with a conservative lower bound for discovery filtering; they are not exact labels for numerical training targets.
 - A Reel link without an explicit numeric metric is stored as metric-unknown and cannot pass the threshold.
 - A candidate only becomes newly eligible when it is a confirmed Reel and its platform-native numeric metric reaches the configured threshold.
 - A duplicate already eligible in the database does not count as new eligible yield.
@@ -176,3 +176,16 @@ The collector keeps the blank tab created by `launch_persistent_context` alive a
 Each surface attaches its own response listener and detaches it before the shared tab is reused. This prevents events from one hashtag or profile from leaking into another surface's diagnostics. The tab remains open until the provider closes the persistent context at the end of the run.
 
 The regression tests assert that sequential hashtag and creator harvesting use the same page and do not call `BrowserContext.new_page()` when the persistent context already has an open tab.
+
+
+## Reel view-count extraction follow-up (November 22, 2026)
+
+The provider now supplements response JSON and Reel-detail JSON-LD with public rendered-card and visible detail-page text:
+- Read the text and accessibility labels on each rendered Reel link and its containing card.
+- Recognize explicit `views` and `plays` labels with either exact integers or abbreviated K/M/B display strings.
+- Read public `og:description` / description meta text and the visible Reel page body when JSON-LD has no metric.
+- Keep the raw display form, metric kind, source and estimate flag. An abbreviated value such as `1.2M` is stored as a conservative lower bound (1.15M), not as an exact 1.2M training label.
+- Likes and arbitrary numbers in captions are never treated as views or plays.
+- For hashtag JSON responses that still contain no recognized media, the report stores only bounded schema diagnostics (top-level keys and media-like object key names), not response payload values. The CLI prints a small sample so parser changes can be based on actual observed schemas.
+
+Estimated UI metrics are for conservative discovery filtering only. They must not be used as exact labels for view-count regression or other numerical training targets.
