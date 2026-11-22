@@ -13,7 +13,8 @@ import uuid
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterator, Literal
+from collections.abc import Iterator
+from typing import Literal
 
 import typer
 from rich.console import Console
