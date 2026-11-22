@@ -140,7 +140,8 @@ def _response_shape(payload: object) -> dict[str, object]:
     media_shapes: list[dict[str, object]] = []
     interesting = {
         "code", "shortcode", "media_code", "media_type", "product_type",
-        "is_reel", "is_video", "__typename", "video_versions",
+        "is_reel", "is_video", "is_unified_video", "__typename",
+        "video_versions", "clips_metadata", "media_or_ad", "pk", "id",
         "view_count", "video_view_count", "play_count", "video_play_count",
     }
 
@@ -663,7 +664,8 @@ class InstagramPlaywrightProvider:
                 "aria_label: el.getAttribute('aria-label') || '',"
                 "title: el.getAttribute('title') || '',"
                 "label_text: Array.from(el.querySelectorAll('[aria-label]'))"
-                ".map((node) => node.getAttribute('aria-label') || '').join(' ')"
+                ".map((node) => node.getAttribute('aria-label') || '').join(' '),"
+                "card_text: (el.closest('article') || el.parentElement?.parentElement)?.innerText || ''"
                 "}))"
             )
             collect_rendered_links(links)
