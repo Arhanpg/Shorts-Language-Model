@@ -1,4 +1,4 @@
-"""CLI commands for resilient non-API discovery and authorized acquisition."""
+"""CLI commands for resilient non-API discovery and media acquisition."""
 
 from __future__ import annotations
 
