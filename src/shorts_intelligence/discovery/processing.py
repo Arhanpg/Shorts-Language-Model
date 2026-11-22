@@ -13,7 +13,7 @@ from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.discovery.downloader import download_candidate
 from shorts_intelligence.discovery.models import AcquisitionAuthorization, DiscoveredCandidate
 from shorts_intelligence.discovery.storage import DiscoveryStore
-from shorts_intelligence.media.probe import MediaError, sha256_file
+from shorts_intelligence.media.probe import MediaError, probe_video
 
 
 def _safe_component(value: str) -> str:
@@ -278,6 +278,8 @@ def run_processing_batch(
             did_download = False
             download_attempted = False
             download_succeeded = False
+            media_validation_failed = False
+            media_path: Path | None = None
             store.mark_processing_started(candidate, authorization)
 
             try:
@@ -288,6 +290,19 @@ def run_processing_batch(
                     / safe_id
                 )
                 item_dir.mkdir(parents=True, exist_ok=True)
+                config = AnalyzerConfig(
+                    max_file_size_mb=max_file_size_mb,
+                    max_duration_seconds=max_duration_seconds,
+                    max_keyframes=max_keyframes,
+                    max_ocr_frames=max_ocr_frames,
+                    asr_model=asr_model,
+                    asr_device=asr_device,
+                    language=language,
+                    enable_asr=True,
+                    enable_ocr=True,
+                    enable_audio_analysis=True,
+                    keep_artifacts=keep_frame_artifacts,
+                )
                 media_path = (
                     Path(existing_path).expanduser().resolve()
                     if existing_path else None
@@ -308,7 +323,12 @@ def run_processing_batch(
                     downloaded += 1
 
                 media_path = media_path.expanduser().resolve(strict=True)
-                media_hash = sha256_file(media_path)
+                try:
+                    media_metadata = probe_video(media_path, config)
+                except Exception:
+                    media_validation_failed = True
+                    raise
+                media_hash = media_metadata.sha256
                 download_succeeded = True
                 if stored_hash and not did_download and stored_hash != media_hash:
                     raise MediaError(
@@ -350,19 +370,6 @@ def run_processing_batch(
                         media_sha256=media_hash,
                     )
 
-                config = AnalyzerConfig(
-                    max_file_size_mb=max_file_size_mb,
-                    max_duration_seconds=max_duration_seconds,
-                    max_keyframes=max_keyframes,
-                    max_ocr_frames=max_ocr_frames,
-                    asr_model=asr_model,
-                    asr_device=asr_device,
-                    language=language,
-                    enable_asr=True,
-                    enable_ocr=True,
-                    enable_audio_analysis=True,
-                    keep_artifacts=keep_frame_artifacts,
-                )
                 analysis_path = item_dir / "analysis.json"
                 report = analyze_video(
                     media_path,
@@ -415,12 +422,18 @@ def run_processing_batch(
                     source_id,
                     error=f"{type(exc).__name__}: {exc}",
                 )
-                if download_attempted and not download_succeeded:
+                if download_validation_failed := (
+                    media_validation_failed
+                    or download_attempted and not download_succeeded
+                ):
                     store.mark_download_failure(
                         platform,
                         source_id,
                         error=f"{type(exc).__name__}: {exc}",
                     )
+                    if media_validation_failed and media_path is not None:
+                        media_path.unlink(missing_ok=True)
+                        media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
                 failed += 1
 
         manifest_count = _export_processing_manifest(
