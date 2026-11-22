@@ -443,6 +443,12 @@ async def run_creator_graph(
             **dict(stats), **graph_summary, "run_id": run_id, "platform": platform,
             "elapsed_seconds": elapsed, "new_eligible": new_eligible,
             "target_new": target_new,
+            # Counter omits untouched keys; the JSON API must expose stable
+            # zero-valued metrics so CLI/report consumers need no key checks.
+            "new_inventory_candidates": stats["new_inventory_candidates"],
+            "metric_observed_candidates": stats["metric_observed_candidates"],
+            "metric_unknown_candidates": stats["metric_unknown_candidates"],
+            "metric_above_threshold_candidates": stats["metric_above_threshold_candidates"],
             "youtube_creator_candidates": stats["youtube_creator_candidates"],
             "youtube_related_candidates": stats["related_candidates"],
             "min_metric": min_metric, "max_depth": max_depth,
