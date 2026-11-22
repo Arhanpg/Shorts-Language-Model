@@ -466,3 +466,42 @@ def test_instagram_parser_accepts_new_video_typenames_and_flags():
     assert records[0].source_id == "NewGraphVideo123"
     assert records[0].view_count == 2_400_000
     assert records[0].qualifying_metric_kind() == "views"
+
+
+def test_visible_metric_parser_supports_label_before_number():
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _visible_metric_from_text,
+    )
+
+    metric = _visible_metric_from_text("Views: 2.4M")
+    assert metric is not None
+    assert metric["kind"] == "views"
+    assert metric["nominal_count"] == 2_400_000
+    assert metric["lower_bound"] == 2_350_000
+
+
+def test_apply_visible_metric_preserves_estimate_provenance():
+    from shorts_intelligence.discovery.models import DiscoveredCandidate
+    from shorts_intelligence.discovery.providers.instagram_playwright import (
+        _apply_visible_metric,
+        _visible_metric_from_text,
+    )
+
+    metric = _visible_metric_from_text("1.2M views")
+    assert metric is not None
+    candidate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="VisibleCount123",
+        canonical_url="https://www.instagram.com/reel/VisibleCount123/",
+        creator="creator",
+        short_format_status="confirmed",
+    )
+    _apply_visible_metric(
+        candidate, metric, source="instagram_rendered_reel_card.views"
+    )
+    assert candidate.view_count == 1_150_000
+    assert candidate.metadata["metric_is_estimate"] is True
+    assert candidate.metadata["metric_display_value"] == "1.2M"
+    assert candidate.metadata["metric_usage"] == (
+        "discovery_filter_only; not an exact training label"
+    )
