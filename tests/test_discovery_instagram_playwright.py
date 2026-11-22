@@ -329,7 +329,7 @@ def test_instagram_reuses_the_persistent_startup_tab_across_surfaces(monkeypatch
         assert creator_records == []
         assert coauthors == set()
         assert page.goto_urls == [
-            "https://www.instagram.com/explore/tags/getreadywithme/",
+            "https://www.instagram.com/explore/search/keyword/?q=%23getreadywithme",
             "https://www.instagram.com/example_creator/reels/",
         ]
         assert context.new_page_calls == 0
