@@ -184,8 +184,8 @@ The provider now supplements response JSON and Reel-detail JSON-LD with public r
 - Read the text and accessibility labels on each rendered Reel link and its containing card.
 - Recognize explicit `views` and `plays` labels with either exact integers or abbreviated K/M/B display strings.
 - Read public `og:description` / description meta text and the visible Reel page body when JSON-LD has no metric.
-- Keep the raw display form, metric kind, source and estimate flag. An abbreviated value such as `1.2M` is stored as a conservative lower bound (1.15M), not as an exact 1.2M training label.
+- Keep the display form, metric kind, source and estimate flag. An abbreviated value such as `1.2M` supplies a conservative lower bound (1.15M) for discovery, but exact `view_count` / `play_count` columns remain empty.
 - Likes and arbitrary numbers in captions are never treated as views or plays.
 - For hashtag JSON responses that still contain no recognized media, the report stores only bounded schema diagnostics (top-level keys and media-like object key names), not response payload values. The CLI prints a small sample so parser changes can be based on actual observed schemas.
 
-Estimated UI metrics are for conservative discovery filtering only. They must not be used as exact labels for view-count regression or other numerical training targets.
+Estimated UI metrics are for conservative discovery filtering only. They are stored in metadata as `metric_conservative_lower_bound`, while exact `view_count` / `play_count` columns remain null. They must not be used as exact labels for view-count regression or other numerical training targets. JSON reports and CLI output distinguish exact metrics from estimates.
