@@ -455,7 +455,8 @@ class DiscoveryStore:
 
     def mark_download_failure(self, platform: str, source_id: str, *, error: str) -> None:
         self.connection.execute(
-            "UPDATE candidates SET download_status='download_failed', last_error=?, updated_at=? "
+            "UPDATE candidates SET download_status='download_failed', download_path=NULL, "
+            "media_sha256=NULL, downloaded_at=NULL, last_error=?, updated_at=? "
             "WHERE platform=? AND source_id=?",
             (error[:500], datetime.now(UTC).isoformat(), platform, source_id),
         )
