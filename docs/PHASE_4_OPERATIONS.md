@@ -54,7 +54,7 @@ To run every generated batch from PowerShell, use the controlled runner (choose 
 # All three campaigns (long-running; run separately if you want to inspect each stage)
 .\\scripts\\run_phase4_discovery_batches.ps1 -RunInstagramCreators -RunInstagramHashtags -RunYouTubeChannels
 ```
-The script keeps the same SQLite database, creates a distinct report per batch, pauses between batches and stops on a non-zero CLI exit. Inspect each report for provider restrictions before restarting. Account-only batches use `--instagram-max-hashtags 0`; hashtag-only batches use `--max-creators 0` and an empty creator seed file. Do not use `--force` unless intentionally requeueing completed seeds.
+The script keeps the same SQLite database, creates a distinct report per batch, pauses between batches and stops on a non-zero CLI exit or a restriction signal in the report (challenge, CAPTCHA, login requirement, 403/429 or rate limit). Review the report and wait for normal access to resume; do not bypass the restriction. Account-only batches use `--instagram-max-hashtags 0`; hashtag-only batches use `--max-creators 0` and an empty creator seed file. Do not use `--force` unless intentionally requeueing completed seeds.
 
 YouTube channel candidates are not all directly usable channel IDs. Phase 4 exports only IDs matching the stable `UC...` shape to `youtube_channel_id_seeds.txt`. The graph runner now accepts this file directly. Example:
 ```powershell
