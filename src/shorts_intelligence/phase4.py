@@ -94,6 +94,7 @@ def catalogue(
     catalogue_dir: Path = typer.Option(Path("data/seed_catalogue/v0.2"), "--catalogue-dir", exists=True, file_okay=False),
     output_dir: Path = typer.Option(Path("outputs/phase4/catalogue"), "--output-dir"),
     batch_size: int = typer.Option(100, "--batch-size", min=10, max=500),
+    hashtag_batch_size: int = typer.Option(20, "--hashtag-batch-size", min=5, max=100),
 ) -> None:
     """Materialize all v0.2 creator and hashtag candidates into deduplicated batches."""
     catalogue_dir = catalogue_dir.expanduser().resolve(strict=True)
@@ -160,24 +161,24 @@ def catalogue(
     batch_dir = output_dir / "batches"
     batch_dir.mkdir(parents=True, exist_ok=True)
     batches = []
-    for kind, platform, values in (
-        ("instagram_creators", "instagram", ig_handles),
-        ("youtube_channel_ids", "youtube", yt_ids),
-        ("hashtags", "all", [row["hashtag"] for row in tags]),
+    for kind, platform, values, chunk_size in (
+        ("instagram_creators", "instagram", ig_handles, batch_size),
+        ("youtube_channel_ids", "youtube", yt_ids, batch_size),
+        ("hashtags", "all", [row["hashtag"] for row in tags], hashtag_batch_size),
     ):
-        for offset in range(0, len(values), batch_size):
-            index = offset // batch_size + 1
+        for offset in range(0, len(values), chunk_size):
+            index = offset // chunk_size + 1
             filename = f"{kind}_{index:04d}.txt"
-            _write_lines(batch_dir / filename, values[offset:offset + batch_size])
+            _write_lines(batch_dir / filename, values[offset:offset + chunk_size])
             batches.append({"kind": kind, "platform": platform, "batch": index,
-                            "count": len(values[offset:offset + batch_size]), "path": f"batches/{filename}"})
+                            "count": len(values[offset:offset + chunk_size]), "path": f"batches/{filename}"})
     report = {
         "schema_version": "phase4.catalogue.v1", "created_at": datetime.now(UTC).isoformat(),
         "source_rows": source_counts, "unique_instagram_accounts": len(ig_handles),
         "unique_youtube_channel_candidates": len(creators["youtube"]),
         "youtube_channel_id_seedable": len(yt_ids),
         "youtube_handle_only_or_unresolved": len(creators["youtube"]) - len(yt_ids),
-        "unique_normalized_hashtags": len(tags), "invalid_rows": invalid, "batch_size": batch_size,
+        "unique_normalized_hashtags": len(tags), "invalid_rows": invalid, "creator_batch_size": batch_size, "hashtag_batch_size": hashtag_batch_size,
         "batches": batches,
         "limitations": [
             "Creator candidates are leads, not proof of active Shorts/Reels publishing.",
