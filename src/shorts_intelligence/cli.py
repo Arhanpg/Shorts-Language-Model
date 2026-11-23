@@ -64,6 +64,10 @@ def analyze(
         None, "--language",
         help="Optional language code, e.g. hi, en, mr. Omit for auto-detection.",
     ),
+    asr_timeout_seconds: int = typer.Option(
+        300, "--asr-timeout-seconds", min=10, max=3600,
+        help="Hard ASR timeout; stuck inference is terminated.",
+    ),
     no_asr: bool = typer.Option(False, "--no-asr", help="Skip speech transcription."),
     no_ocr: bool = typer.Option(False, "--no-ocr", help="Skip on-screen text extraction."),
     no_audio_analysis: bool = typer.Option(
@@ -82,6 +86,7 @@ def analyze(
         max_ocr_frames=max_ocr_frames,
         asr_model=asr_model,
         asr_device=asr_device,
+        asr_timeout_seconds=asr_timeout_seconds,
         language=language,
         enable_asr=not no_asr,
         enable_ocr=not no_ocr,
