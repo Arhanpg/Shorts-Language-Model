@@ -1179,6 +1179,10 @@ def graph_run(
         Path("data/youtube_channel_ids.txt"), "--youtube-channel-ids-file",
         help="Optional newline-delimited stable UC... channel IDs for creator graph seeding.",
     ),
+    youtube_hashtags_file: Path = typer.Option(
+        Path("data/youtube_hashtags.txt"), "--youtube-hashtags-file",
+        help="Optional newline-delimited YouTube hashtag seeds.",
+    ),
     instagram_hashtag: list[str] = typer.Option(
         [], "--instagram-hashtag", help="Repeatable hashtag seed, with or without #."
     ),
@@ -1228,6 +1232,10 @@ def graph_run(
             load_youtube_channel_seeds(youtube_channel_ids_file)
             if platform in {"youtube", "all"} else []
         )
+        youtube_hashtag_seeds = (
+            load_instagram_hashtags(youtube_hashtags_file)
+            if platform in {"youtube", "all"} else []
+        )
         if instagram_enabled and not creator_seeds and not hashtag_seeds:
             raise ValueError(
                 "No Instagram creator or hashtag seeds found. Supply --instagram-creator, "
@@ -1249,6 +1257,7 @@ def graph_run(
                 instagram_creators=creator_seeds,
                 instagram_hashtags=hashtag_seeds,
                 youtube_creators=youtube_creator_seeds,
+                youtube_hashtags=youtube_hashtag_seeds,
                 force=force,
                 instagram_max_scrolls=instagram_max_scrolls,
                 instagram_max_reel_details=instagram_max_reel_details,
