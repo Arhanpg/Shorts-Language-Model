@@ -336,7 +336,7 @@ def run_all(
         f"unique hashtags={len(hashtags)} (each platform)"
     )
     console.print("[yellow]Instagram plays and YouTube views remain separate. Threshold 0 includes confirmed short-form items with unknown/low metrics; unknown counts remain null, not zero. Only exact source IDs in the rights manifest can enter media processing. Media is deleted after each processed item.[/yellow]")
-    console.print(f"[cyan]Authorized exact items in rights manifest:[/cyan] {len(grants)}")
+    console.print(f"[cyan]Authorized items/creator scopes in rights manifest:[/cyan] {len(grants)}")
     if not instagram_creators:
         raise typer.BadParameter("The normalized catalogue contains zero Instagram creators. Check source CSV headers and catalogue inputs.")
     if not youtube_creators:
@@ -462,8 +462,8 @@ def run_all(
         "seed": seed,
         "rights": {
             "manifest": str(rights_manifest.expanduser().resolve()),
-            "authorized_exact_items": len(grants),
-            "creator_scope_grants_supported": False,
+            "authorized_grants": len(grants),
+            "creator_scope_grants_supported": True,
         },
         "catalogue": {
             "instagram_creator_candidates": len(instagram_creators),
