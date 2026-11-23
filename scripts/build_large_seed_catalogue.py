@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build 10K+ Shorts-LM creator-account and hashtag discovery seed catalogues."""
 from __future__ import annotations
-import argparse, csv, json, re, sys, time
+import argparse, csv, json, os, re, sys, time
 from collections import OrderedDict
 from datetime import UTC, datetime
 from pathlib import Path

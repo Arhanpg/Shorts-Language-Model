@@ -20,6 +20,7 @@ from scripts.build_large_seed_catalogue import (
     youtube_scan_target,
 )
 
+
 def test_evenly_spaced_page_sampling():
     offsets=page_offsets(7_264_739,10_000,100)
     assert len(offsets)==100 and offsets==sorted(set(offsets))
