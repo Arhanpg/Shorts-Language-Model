@@ -27,14 +27,14 @@ The `shorts-lm phase4 run-all` command is the single orchestration entry point f
 Run from the repository root in PowerShell:
 
 ```powershell
-shorts-lm phase4 run-all --all-catalogue
+shorts-lm phase4 run-all --all-catalogue --min-metric 1000000
 ```
 
 The command uses conservative defaults suitable for a resumable long-running campaign. To use an explicitly authenticated local Instagram session for the downloader, add `--instagram-session-user YOUR_USERNAME --instagram-session-file .shortslm/instagram.session` only if you created that session through the supported interactive login flow. The browser profile is still required for graph discovery.
 
 ## What it does
 
-- Rebuilds `outputs/phase4/catalogue` from `data/seed_catalogue/v0.2`.
+- Rebuilds `outputs/phase4/catalogue` from `data/seed_catalogue/v0.2`, including Instagram person, organization/publisher and unknown-entity lead files. Creator identity parsing accepts `account_handle` and `account_url` as well as generic handle/URL columns.
 - Randomizes creator and hashtag order with a recorded seed.
 - Processes Instagram creators in bounded batches (up to 100 by default).
 - Processes stable YouTube `UC...` channel IDs in bounded batches. Handle-only/unresolved YouTube records are counted and skipped rather than guessed.
@@ -55,7 +55,7 @@ The command uses conservative defaults suitable for a resumable long-running cam
 
 ## Important expectations
 
-This is a multi-hour or multi-day campaign, not a promise of 10,000 successful account resolutions or 10,000 processed videos. Catalogue rows are candidate leads; some accounts may be inactive, inaccessible, invalid, private, blocked, or have no eligible short-form videos. YouTube handle-only rows cannot be resolved from a handle by guessing. Provider results are best-effort samples and do not prove a globally complete popularity ranking. Instagram plays and YouTube views are stored as separate metrics.
+The default qualifying threshold is 1,000,000 native views/plays. Set `--min-metric 0` only for a deliberate unfiltered test. This is a multi-hour or multi-day campaign, not a promise of 10,000 successful account resolutions or 10,000 processed videos. Catalogue rows are candidate leads; some accounts may be inactive, inaccessible, invalid, private, blocked, or have no eligible short-form videos. YouTube handle-only rows cannot be resolved from a handle by guessing. Provider results are best-effort samples and do not prove a globally complete popularity ranking. Instagram plays and YouTube views are stored as separate metrics.
 
 The runner checkpoints discovery and processing state. If interrupted, run the same command again. It has bounded processing retries and no unbounded retry loop. A reported restriction stops further discovery on that platform; wait for the platform to restore ordinary access before manually restarting. It does not bypass restrictions.
 
