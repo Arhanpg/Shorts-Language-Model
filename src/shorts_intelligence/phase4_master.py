@@ -88,11 +88,16 @@ def _load_rights_grants(path: Path) -> list[dict[str, Any]]:
                 raise ValueError(f"Rights manifest line {line_number} must be a JSON object.")
             platform = str(item.get("platform") or "").strip().casefold()
             source_id = str(item.get("source_id") or "").strip()
+            creator_id = str(item.get("creator_id") or "").strip().lstrip("@")
             evidence_ref = str(item.get("evidence_ref") or "").strip()
             expires_at = item.get("expires_at")
-            if platform not in {"youtube", "instagram"} or not source_id or not evidence_ref:
+            if (
+                platform not in {"youtube", "instagram"}
+                or bool(source_id) == bool(creator_id)
+                or not evidence_ref
+            ):
                 raise ValueError(
-                    f"Rights manifest line {line_number} requires platform, exact source_id and evidence_ref."
+                    f"Rights manifest line {line_number} requires platform, exactly one of source_id/creator_id, and evidence_ref."
                 )
             if item.get("revoked") is True or not all(item.get(scope) is True for scope in required_true):
                 raise ValueError(
@@ -107,11 +112,16 @@ def _load_rights_grants(path: Path) -> list[dict[str, Any]]:
                 raise ValueError(f"Rights manifest line {line_number} has invalid expires_at.") from exc
             if expiry.tzinfo is None or expiry <= datetime.now(UTC):
                 raise ValueError(f"Rights manifest line {line_number} has expired or timezone-naive expiry.")
-            if any(existing["platform"] == platform and existing["source_id"] == source_id for existing in grants):
-                raise ValueError(f"Duplicate rights grant for {platform}:{source_id}.")
+            grant_identity = source_id or creator_id
+            if any(
+                existing["platform"] == platform
+                and (existing.get("source_id") or existing.get("creator_id")) == grant_identity
+                for existing in grants
+            ):
+                raise ValueError(f"Duplicate rights grant for {platform}:{grant_identity}.")
             grant = {
                 "platform": platform,
-                "source_id": source_id,
+                **({"source_id": source_id} if source_id else {"creator_id": creator_id}),
                 "media_retrieval": True,
                 "media_analysis": True,
                 "temporary_processing": True,
