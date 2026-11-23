@@ -2,18 +2,28 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import zipfile
 from pathlib import Path
 
 import pytest
 
-from scripts.install_research_catalogue import (
-    CatalogueArchiveError,
-    install_archive,
-    safe_member_path,
-    verify_archive,
+SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "scripts"
+    / "install_research_catalogue.py"
 )
+SPEC = importlib.util.spec_from_file_location("install_research_catalogue", SCRIPT_PATH)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError(f"Cannot load installer module from {SCRIPT_PATH}")
+INSTALLER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(INSTALLER)
+
+CatalogueArchiveError = INSTALLER.CatalogueArchiveError
+install_archive = INSTALLER.install_archive
+safe_member_path = INSTALLER.safe_member_path
+verify_archive = INSTALLER.verify_archive
 
 ROOT = "ShortsLM_Research_Catalogue_v0.1"
 
