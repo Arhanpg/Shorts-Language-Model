@@ -620,6 +620,30 @@ class DiscoveryStore:
         )
         self.connection.commit()
 
+    def mark_processing_rejected(
+        self,
+        platform: str,
+        source_id: str,
+        *,
+        reason: str,
+    ) -> None:
+        """Permanently classify media that violates an acquisition/analysis constraint."""
+        now = datetime.now(UTC).isoformat()
+        self.connection.execute(
+            """UPDATE candidates SET status='media_rejected',
+                download_status='download_failed', download_path=NULL,
+                last_error=?, updated_at=?
+            WHERE platform=? AND source_id=?""",
+            (reason[:500], now, platform, source_id),
+        )
+        self.connection.execute(
+            """UPDATE media_processing SET status='rejected',
+                media_path=NULL, last_error=?, completed_at=?, updated_at=?
+            WHERE platform=? AND source_id=?""",
+            (reason[:1000], now, now, platform, source_id),
+        )
+        self.connection.commit()
+
     def mark_processing_failure(
         self,
         platform: str,
