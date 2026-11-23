@@ -192,7 +192,7 @@ def analyze_video(
                     exc,
                 )
                 stages["asr"] = StageStatus(
-                    status="skipped", engine="faster-whisper/vidtrace",
+                    status="failed", engine="faster-whisper/vidtrace",
                     detail=str(exc),
                 )
                 warnings.append(str(exc))
