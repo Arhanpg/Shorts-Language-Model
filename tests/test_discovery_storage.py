@@ -375,7 +375,7 @@ def test_processing_attempt_cap_prevents_infinite_retries(tmp_path: Path):
 
         store.mark_processing_started(candidate)
         store.mark_processing_failure("youtube", candidate.source_id, error="first failure")
-        assert len(store.processing_candidates(min_metric=0, max_attempts=2)) == 1
+        assert len(store.processing_candidates(min_metric=0, max_attempts=2, authorized_grants_json=_grant_json(candidate))) == 1
 
         store.mark_processing_started(candidate)
         store.mark_processing_failure("youtube", candidate.source_id, error="second failure")
