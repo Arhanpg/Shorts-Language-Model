@@ -10,7 +10,8 @@ Run from the repository root in PowerShell:
 shorts-lm phase4 catalogue `
   --catalogue-dir data/seed_catalogue/v0.2 `
   --output-dir outputs/phase4/catalogue `
-  --batch-size 100
+  --batch-size 100 `
+  --hashtag-batch-size 20
 ```
 
 This reads all supported CSV files, deduplicates normalized handles and hashtags, and writes:
@@ -39,7 +40,21 @@ shorts-lm discover graph-run `
   --report outputs/phase4/discovery/instagram_batch_0001.json
 ```
 
-Repeat for each `instagram_creators_*.txt` and `hashtags_*.txt` batch. Account-only batches use `--instagram-max-hashtags 0`. Hashtag-only batches use `--max-creators 0` and an empty creator seed file. Do not use `--force` unless intentionally requeueing completed seeds.
+To run every generated batch from PowerShell, use the controlled runner (choose one or more scopes):
+```powershell
+# Every Instagram account batch
+.\\scripts\\run_phase4_discovery_batches.ps1 -RunInstagramCreators
+
+# Every hashtag batch (20 tags per run)
+.\\scripts\\run_phase4_discovery_batches.ps1 -RunInstagramHashtags
+
+# Every stable YouTube channel-ID batch
+.\\scripts\\run_phase4_discovery_batches.ps1 -RunYouTubeChannels
+
+# All three campaigns (long-running; run separately if you want to inspect each stage)
+.\\scripts\\run_phase4_discovery_batches.ps1 -RunInstagramCreators -RunInstagramHashtags -RunYouTubeChannels
+```
+The script keeps the same SQLite database, creates a distinct report per batch, pauses between batches and stops on a non-zero CLI exit. Inspect each report for provider restrictions before restarting. Account-only batches use `--instagram-max-hashtags 0`; hashtag-only batches use `--max-creators 0` and an empty creator seed file. Do not use `--force` unless intentionally requeueing completed seeds.
 
 YouTube channel candidates are not all directly usable channel IDs. Phase 4 exports only IDs matching the stable `UC...` shape to `youtube_channel_id_seeds.txt`. The graph runner now accepts this file directly. Example:
 ```powershell
