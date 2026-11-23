@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import logging
+import multiprocessing
+import time
 from pathlib import Path
 from typing import Any
 
 from shorts_intelligence.schemas import TranscriptSegment
+
+logger = logging.getLogger(__name__)
 
 
 class ASRError(RuntimeError):
@@ -42,7 +47,7 @@ def _convert_segments(
     return converted
 
 
-def transcribe_audio(
+def _transcribe_audio_inline(
     audio_path: Path,
     model_name: str = "small",
     language: str | None = None,
@@ -133,3 +138,175 @@ def transcribe_audio(
         f"faster-whisper-{actual_device}",
         detected_language,
     )
+
+
+def _transcription_worker(
+    connection: Any,
+    audio_path: str,
+    model_name: str,
+    language: str | None,
+    device: str,
+    compute_type: str,
+) -> None:
+    """Run ASR outside the parent process so a stuck CUDA call can be stopped."""
+    try:
+        segments, engine_name, detected_language = _transcribe_audio_inline(
+            Path(audio_path),
+            model_name=model_name,
+            language=language,
+            device=device,
+            compute_type=compute_type,
+        )
+        connection.send({
+            "ok": True,
+            "segments": [segment.model_dump(mode="json") for segment in segments],
+            "engine": engine_name,
+            "language": detected_language,
+        })
+    except BaseException as exc:
+        try:
+            connection.send({
+                "ok": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            })
+        except (BrokenPipeError, EOFError, OSError):
+            pass
+    finally:
+        connection.close()
+
+
+def _stop_transcription_worker(process: Any) -> None:
+    """Terminate a worker even if a native CUDA/CPU inference call is stuck."""
+    try:
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=3)
+        if process.is_alive():
+            process.kill()
+            process.join(timeout=3)
+    except (AssertionError, OSError, ValueError):
+        pass
+
+
+def transcribe_audio(
+    audio_path: Path,
+    model_name: str = "small",
+    language: str | None = None,
+    device: str = "cpu",
+    compute_type: str = "int8",
+    timeout_seconds: float = 300.0,
+    heartbeat_seconds: float = 15.0,
+) -> tuple[list[TranscriptSegment], str, str | None]:
+    """Run bounded ASR; timeout=0 keeps an in-process path for embedded callers/tests."""
+    if timeout_seconds <= 0:
+        return _transcribe_audio_inline(
+            audio_path,
+            model_name=model_name,
+            language=language,
+            device=device,
+            compute_type=compute_type,
+        )
+
+    audio_path = Path(audio_path).expanduser().resolve(strict=True)
+    context = multiprocessing.get_context("spawn")
+    receiver, sender = context.Pipe(duplex=False)
+    process = context.Process(
+        target=_transcription_worker,
+        args=(sender, str(audio_path), model_name, language, device, compute_type),
+        name=f"shortslm-asr-{audio_path.stem[:32]}",
+    )
+    started = time.monotonic()
+    deadline = started + float(timeout_seconds)
+    next_heartbeat = started + max(1.0, float(heartbeat_seconds))
+    result: dict[str, Any] | None = None
+
+    logger.info(
+        "ASR worker starting | file=%s | model=%s | requested_device=%s | timeout=%.0fs",
+        audio_path.name,
+        model_name,
+        device,
+        timeout_seconds,
+    )
+    try:
+        try:
+            process.start()
+        except Exception as exc:
+            raise ASRError(
+                f"Could not start isolated ASR worker: {type(exc).__name__}: {exc}"
+            ) from exc
+        sender.close()
+
+        while result is None:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                elapsed = time.monotonic() - started
+                _stop_transcription_worker(process)
+                raise ASRError(
+                    f"ASR timed out after {elapsed:.1f}s; the worker was terminated. "
+                    "Retry with --device cpu or a smaller Whisper model."
+                )
+
+            if receiver.poll(min(0.5, remaining)):
+                try:
+                    result = receiver.recv()
+                except (EOFError, OSError) as exc:
+                    raise ASRError(
+                        f"ASR worker exited without a result: {type(exc).__name__}: {exc}"
+                    ) from exc
+                break
+
+            if not process.is_alive():
+                if receiver.poll(0.1):
+                    result = receiver.recv()
+                    break
+                raise ASRError(
+                    f"ASR worker exited without a result (exit code {process.exitcode})."
+                )
+
+            now = time.monotonic()
+            if heartbeat_seconds > 0 and now >= next_heartbeat:
+                logger.info(
+                    "ASR still running | file=%s | elapsed=%.0fs | requested_device=%s",
+                    audio_path.name,
+                    now - started,
+                    device,
+                )
+                next_heartbeat = now + heartbeat_seconds
+
+        process.join(timeout=3)
+        if process.is_alive():
+            _stop_transcription_worker(process)
+
+        if not isinstance(result, dict) or not result.get("ok"):
+            detail = result.get("error", "unknown worker error") if isinstance(result, dict) else "invalid worker response"
+            raise ASRError(f"ASR worker failed: {detail}")
+
+        segments = [
+            TranscriptSegment.model_validate(item)
+            for item in result.get("segments", [])
+        ]
+        elapsed = time.monotonic() - started
+        engine_name = str(result.get("engine") or "unknown")
+        detected_language = result.get("language")
+        logger.info(
+            "ASR worker completed | file=%s | segments=%d | engine=%s | elapsed=%.1fs",
+            audio_path.name,
+            len(segments),
+            engine_name,
+            elapsed,
+        )
+        return segments, engine_name, detected_language
+    except BaseException:
+        _stop_transcription_worker(process)
+        raise
+    finally:
+        receiver.close()
+        try:
+            sender.close()
+        except OSError:
+            pass
+        try:
+            if not process.is_alive():
+                process.close()
+        except (AssertionError, OSError, ValueError):
+            pass
