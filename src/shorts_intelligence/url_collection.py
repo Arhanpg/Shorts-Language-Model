@@ -72,42 +72,153 @@ def _balanced_hashtags(path: Path) -> list[str]:
     return ordered
 
 
-def _resolve_youtube_channel_id(reference: str) -> str | None:
-    """Resolve a public YouTube @handle to a stable UC channel ID via yt-dlp metadata."""
+def _youtube_source_url(reference: str) -> str:
+    """Build the creator Shorts-tab URL; no channel-ID lookup is needed."""
     value = reference.strip()
+    if value.startswith(("https://www.youtube.com/", "https://youtube.com/")):
+        base = value.rstrip("/")
+        return base if base.endswith("/shorts") else f"{base}/shorts"
     if _CHANNEL_ID.fullmatch(value):
-        return value
+        return f"https://www.youtube.com/channel/{value}/shorts"
     handle = value.lstrip("@")
-    if not handle:
-        return None
+    if not handle or any(char.isspace() for char in handle):
+        raise ValueError(f"Invalid YouTube creator reference: {reference!r}")
+    return f"https://www.youtube.com/@{handle}/shorts"
+
+
+def _youtube_video_urls(info: Any, *, source: str) -> list[str]:
+    """Extract video IDs from flat yt-dlp metadata without requesting media."""
+    if not isinstance(info, dict):
+        return []
+    entries = info.get("entries")
+    if entries is None:
+        entries = [info]
+    urls: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        video_id = str(entry.get("id") or "").strip()
+        if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
+            webpage_url = str(entry.get("webpage_url") or entry.get("url") or "")
+            match = re.search(r"(?:youtu\\.be/|youtube\\.com/(?:shorts/|watch\\?v=))([A-Za-z0-9_-]{11})", webpage_url)
+            if match:
+                video_id = match.group(1)
+        if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
+            continue
+        # Creator Shorts tabs are already format-specific. Search results are
+        # treated as potential Shorts when duration is unknown or <= 180 sec.
+        duration = entry.get("duration")
+        if source == "hashtag" and duration is not None:
+            try:
+                if float(duration) > 180:
+                    continue
+            except (TypeError, ValueError):
+                pass
+        urls.add(f"https://www.youtube.com/shorts/{video_id}")
+    return sorted(urls)
+
+
+def _collect_youtube_urls(
+    *,
+    creators: list[str],
+    hashtags: list[str],
+    destination: Path,
+    creator_batch_size: int,
+    hashtag_batch_size: int,
+    per_surface_limit: int = 30,
+) -> dict[str, int]:
+    """Collect YouTube Shorts URLs through yt-dlp flat metadata extraction only."""
     try:
         from yt_dlp import YoutubeDL
     except ImportError as exc:
-        raise RuntimeError('Install YouTube discovery dependencies: pip install -e ".[discovery]"') from exc
+        raise RuntimeError('Install yt-dlp with: pip install -e ".[discovery]"') from exc
+
+    class QuietLogger:
+        def debug(self, message: str) -> None:
+            return None
+
+        def warning(self, message: str) -> None:
+            return None
+
+        def error(self, message: str) -> None:
+            return None
+
     options = {
         "quiet": True,
         "no_warnings": True,
+        "logger": QuietLogger(),
         "skip_download": True,
         "extract_flat": "in_playlist",
-        "playlistend": 1,
-        "socket_timeout": 12,
+        "playlistend": per_surface_limit,
+        "socket_timeout": 15,
         "retries": 0,
         "extractor_retries": 0,
         "ignoreerrors": True,
+        "noplaylist": False,
     }
-    with YoutubeDL(options) as client:
-        info = client.extract_info(f"https://www.youtube.com/@{handle}", download=False)
-    if not isinstance(info, dict):
-        return None
-    candidates = [info.get("channel_id"), info.get("id")]
-    for entry in info.get("entries") or []:
-        if isinstance(entry, dict):
-            candidates.extend((entry.get("channel_id"), entry.get("channel")))
-    return next(
-        (str(item) for item in candidates if isinstance(item, str) and _CHANNEL_ID.fullmatch(item)),
-        None,
-    )
+    existing = set()
+    if destination.exists():
+        existing = {
+            line.strip()
+            for line in destination.read_text(encoding="utf-8-sig").splitlines()
+            if line.strip().startswith("https://www.youtube.com/shorts/")
+        }
+    counts = Counter()
+    destination.parent.mkdir(parents=True, exist_ok=True)
 
+    def save_checkpoint() -> None:
+        temporary = destination.with_suffix(destination.suffix + ".tmp")
+        temporary.write_text("".join(f"{url}\\n" for url in sorted(existing)), encoding="utf-8")
+        temporary.replace(destination)
+
+    with YoutubeDL(options) as client:
+        creator_batches = list(_chunks(creators, creator_batch_size))
+        for batch_number, batch in enumerate(creator_batches, 1):
+            for reference in batch:
+                try:
+                    url = _youtube_source_url(reference)
+                    info = client.extract_info(url, download=False)
+                    found = _youtube_video_urls(info, source="creator")
+                    existing.update(found)
+                    counts["creator_surfaces_processed"] += 1
+                    counts["creator_urls_found"] += len(found)
+                    if not found:
+                        counts["creator_surfaces_without_results"] += 1
+                except Exception as exc:
+                    counts["creator_errors"] += 1
+                    counts["creator_404_or_unavailable"] += int("404" in str(exc))
+            save_checkpoint()
+            console.print(
+                f"[cyan]YouTube creator batch {batch_number}/{len(creator_batches)}[/cyan] "
+                f"| URLs={len(existing)} | processed={counts['creator_surfaces_processed']} "
+                f"| errors={counts['creator_errors']}"
+            )
+
+        hashtag_batches = list(_chunks(hashtags, hashtag_batch_size))
+        for batch_number, batch in enumerate(hashtag_batches, 1):
+            for tag in batch:
+                try:
+                    query = f"ytsearch{per_surface_limit}:#{tag} #shorts"
+                    info = client.extract_info(query, download=False)
+                    found = _youtube_video_urls(info, source="hashtag")
+                    existing.update(found)
+                    counts["hashtag_surfaces_processed"] += 1
+                    counts["hashtag_urls_found"] += len(found)
+                    if not found:
+                        counts["hashtag_surfaces_without_results"] += 1
+                except Exception as exc:
+                    counts["hashtag_errors"] += 1
+                    counts["hashtag_404_or_unavailable"] += int("404" in str(exc))
+            save_checkpoint()
+            console.print(
+                f"[cyan]YouTube hashtag batch {batch_number}/{len(hashtag_batches)}[/cyan] "
+                f"| URLs={len(existing)} | processed={counts['hashtag_surfaces_processed']} "
+                f"| errors={counts['hashtag_errors']}"
+            )
+
+    save_checkpoint()
+    counts["unique_urls"] = len(existing)
+    return dict(counts)
 
 def _load_resolution_cache(path: Path) -> dict[str, str]:
     if not path.exists():
@@ -215,12 +326,11 @@ def collect_urls(
     ),
     creator_batch_size: int = typer.Option(100, "--creator-batch-size", min=1, max=500),
     instagram_hashtag_batch_size: int = typer.Option(50, "--instagram-hashtag-batch-size", min=1, max=100),
-    youtube_hashtag_batch_size: int = typer.Option(20, "--youtube-hashtag-batch-size", min=1, max=20),
+    youtube_hashtag_batch_size: int = typer.Option(20, "--youtube-hashtag-batch-size", min=1, max=100),
     runtime_seconds: int = typer.Option(900, "--runtime-seconds", min=30, max=900),
-    resolve_delay_seconds: float = typer.Option(0.25, "--resolve-delay-seconds", min=0.0, max=10.0),
     platforms: str = typer.Option("all", "--platforms", help="all, instagram, or youtube."),
 ) -> None:
-    """Discover metadata only and export separate deduplicated Reel/Short URL lists."""
+    """Discover metadata only and export deduplicated Instagram Reel/YouTube Shorts URLs."""
     selected = {part.strip().casefold() for part in platforms.split(",") if part.strip()}
     if selected == {"all"}:
         selected = {"instagram", "youtube"}
@@ -243,133 +353,119 @@ def collect_urls(
     instagram_rows = _read_csv_values(catalogue_output / "instagram_creator_candidates.csv", "identity")
     youtube_rows = _read_csv_values(catalogue_output / "youtube_creator_candidates.csv", "identity")
     instagram_creators = [row["identity"] for row in instagram_rows]
-    youtube_references = [row["identity"] for row in youtube_rows]
+    youtube_creators = [row["identity"] for row in youtube_rows]
     hashtags = _balanced_hashtags(catalogue_output / "hashtag_candidates.csv")
 
-    totals: Counter[str] = Counter()
+    output_dir.mkdir(parents=True, exist_ok=True)
     reports = report_dir / "runs"
     database.parent.mkdir(parents=True, exist_ok=True)
+    totals: Counter[str] = Counter()
+    ig_path = output_dir / "instagram_reels.txt"
+    yt_path = output_dir / "youtube_shorts.txt"
 
+    # YouTube collection is deliberately yt-dlp-only: no TubeScrape, no API
+    # channel resolution, and no media download.
     if "youtube" in selected:
-        cache_path = Path(".shortslm/youtube_channel_resolution.csv")
-        resolved = _load_resolution_cache(cache_path)
-        unresolved = [value for value in youtube_references if value not in resolved]
         console.print(
-            f"[bold cyan]YouTube channel resolution[/bold cyan] | cached={len(resolved)} "
-            f"| pending={len(unresolved)}"
-        )
-        for index, reference in enumerate(unresolved, 1):
-            try:
-                channel_id = _resolve_youtube_channel_id(reference)
-                if channel_id:
-                    resolved[reference] = channel_id
-                    totals["youtube_handles_resolved_this_run"] += 1
-                else:
-                    totals["youtube_handles_unresolved_this_run"] += 1
-            except Exception as exc:
-                message = f"{type(exc).__name__}: {str(exc)[:180]}"
-                console.print(f"[yellow]Could not resolve @{reference}: {message}[/yellow]")
-                totals["youtube_resolution_errors"] += 1
-                if any(token in message.casefold() for token in ("429", "403", "captcha", "bot", "rate limit")):
-                    console.print("[yellow]YouTube access restriction detected; stopping handle resolution without retries or bypass.[/yellow]")
-                    break
-            if index % 25 == 0:
-                _save_resolution_cache(cache_path, resolved)
-                console.print(f"[dim]Resolved {index}/{len(unresolved)} pending handles; cached={len(resolved)}[/dim]")
-            if resolve_delay_seconds:
-                time.sleep(resolve_delay_seconds)
-        _save_resolution_cache(cache_path, resolved)
-        youtube_channel_ids = list(dict.fromkeys(resolved.values()))
-    else:
-        youtube_channel_ids = []
-
-    jobs: list[tuple[str, list[str], list[str], str]] = []
-    if "instagram" in selected:
-        for index, chunk in enumerate(_chunks(instagram_creators, creator_batch_size), 1):
-            jobs.append(("instagram", chunk, [], f"instagram-creators-{index:04d}"))
-        for index, chunk in enumerate(_chunks(hashtags, instagram_hashtag_batch_size), 1):
-            jobs.append(("instagram", [], chunk, f"instagram-hashtags-{index:04d}"))
-    if "youtube" in selected:
-        for index, chunk in enumerate(_chunks(youtube_channel_ids, creator_batch_size), 1):
-            jobs.append(("youtube", chunk, [], f"youtube-creators-{index:04d}"))
-        for index, chunk in enumerate(_chunks(hashtags, youtube_hashtag_batch_size), 1):
-            jobs.append(("youtube", [], chunk, f"youtube-hashtags-{index:04d}"))
-
-    blocked: set[str] = set()
-    for index, (platform, creators, tags, label) in enumerate(jobs, 1):
-        if platform in blocked:
-            continue
-        console.print(
-            f"\n[bold cyan]URL discovery {index}/{len(jobs)} · {label}[/bold cyan] "
-            f"| creators={len(creators)} hashtags={len(tags)}"
+            f"[bold cyan]YouTube yt-dlp discovery[/bold cyan] | "
+            f"creators={len(youtube_creators)} hashtags={len(hashtags)}"
         )
         try:
-            summary = _run_batch(
-                platform=platform,
-                creators=creators,
-                hashtags=tags,
-                database=database,
-                profile_dir=instagram_profile_dir,
-                runtime_seconds=runtime_seconds,
-                report_path=reports / f"{label}.json",
-            )
-        except Exception as exc:
-            console.print(f"[red]Batch failed: {type(exc).__name__}: {exc}[/red]")
-            totals["failed_batches"] += 1
-            blocked.add(platform)
-            continue
-        totals["batches_completed"] += 1
-        totals[f"{platform}_candidates_observed"] += int(summary.get("candidates_observed", 0))
-        errors = summary.get("error_details", [])
-        if any(
-            any(token in str(error).casefold() for token in (
-                "captcha", "challenge", "rate limit", "429", "403", "forbidden",
-                "login required", "checkpoint", "temporarily blocked",
+            totals.update(_collect_youtube_urls(
+                creators=youtube_creators,
+                hashtags=hashtags,
+                destination=yt_path,
+                creator_batch_size=creator_batch_size,
+                hashtag_batch_size=youtube_hashtag_batch_size,
             ))
-            for error in errors
-        ):
-            blocked.add(platform)
-            console.print(f"[yellow]{platform} discovery stopped after an access restriction. Resume after normal access is restored.[/yellow]")
-        ig_count = _export_urls(database, "instagram", output_dir / "instagram_reels.txt")
-        yt_count = _export_urls(database, "youtube", output_dir / "youtube_shorts.txt")
-        console.print(
-            f"[green]URL checkpoint saved[/green] | Instagram={ig_count} | YouTube={yt_count}"
-        )
+        except Exception as exc:
+            totals["youtube_fatal_errors"] += 1
+            console.print(f"[red]YouTube collection failed: {type(exc).__name__}: {exc}[/red]")
 
-    ig_count = _export_urls(database, "instagram", output_dir / "instagram_reels.txt")
-    yt_count = _export_urls(database, "youtube", output_dir / "youtube_shorts.txt")
+    # Instagram collection remains the user's chosen visible-browser workflow.
+    if "instagram" in selected:
+        jobs: list[tuple[list[str], list[str], str]] = []
+        for index, chunk in enumerate(_chunks(instagram_creators, creator_batch_size), 1):
+            jobs.append((chunk, [], f"instagram-creators-{index:04d}"))
+        for index, chunk in enumerate(_chunks(hashtags, instagram_hashtag_batch_size), 1):
+            jobs.append(([], chunk, f"instagram-hashtags-{index:04d}"))
+        blocked = False
+        for index, (creators, tags, label) in enumerate(jobs, 1):
+            if blocked:
+                break
+            console.print(
+                f"\\n[bold cyan]Instagram browser discovery {index}/{len(jobs)} · {label}[/bold cyan] "
+                f"| creators={len(creators)} hashtags={len(tags)}"
+            )
+            try:
+                summary = _run_batch(
+                    platform="instagram",
+                    creators=creators,
+                    hashtags=tags,
+                    database=database,
+                    profile_dir=instagram_profile_dir,
+                    runtime_seconds=runtime_seconds,
+                    report_path=reports / f"{label}.json",
+                )
+            except Exception as exc:
+                totals["instagram_failed_batches"] += 1
+                console.print(f"[red]Instagram batch failed: {type(exc).__name__}: {exc}[/red]")
+                blocked = True
+                continue
+            totals["instagram_batches_completed"] += 1
+            totals["instagram_candidates_observed"] += int(summary.get("candidates_observed", 0))
+            errors = summary.get("error_details", [])
+            if any(
+                any(token in str(error).casefold() for token in (
+                    "captcha", "challenge", "rate limit", "429", "403", "forbidden",
+                    "login required", "checkpoint", "temporarily blocked",
+                ))
+                for error in errors
+            ):
+                blocked = True
+                console.print("[yellow]Instagram discovery stopped after an access restriction.[/yellow]")
+            ig_count = _export_urls(database, "instagram", ig_path)
+            console.print(f"[green]Instagram URL checkpoint saved[/green] | unique URLs={ig_count}")
+        totals["instagram_unique_urls"] = _export_urls(database, "instagram", ig_path)
+
+    ig_count = _export_urls(database, "instagram", ig_path) if "instagram" in selected else (
+        sum(1 for line in ig_path.read_text(encoding="utf-8-sig").splitlines() if line.strip())
+        if ig_path.exists() else 0
+    )
+    yt_count = sum(
+        1 for line in yt_path.read_text(encoding="utf-8-sig").splitlines() if line.strip()
+    ) if yt_path.exists() else 0
     report = {
-        "schema_version": "shortslm.url-collection.v1",
+        "schema_version": "shortslm.url-collection.v2",
         "catalogue": {
             "instagram_creator_candidates": len(instagram_creators),
-            "youtube_creator_candidates": len(youtube_references),
-            "youtube_channel_ids_resolved": len(youtube_channel_ids),
+            "youtube_creator_candidates": len(youtube_creators),
             "hashtags": len(hashtags),
         },
+        "youtube_provider": "yt-dlp flat metadata extraction",
+        "instagram_provider": "Playwright visible browser session",
         "totals": dict(totals),
         "exported_urls": {"instagram_reels": ig_count, "youtube_shorts": yt_count},
         "files": {
-            "instagram_reels": str((output_dir / "instagram_reels.txt").resolve()),
-            "youtube_shorts": str((output_dir / "youtube_shorts.txt").resolve()),
+            "instagram_reels": str(ig_path.resolve()),
+            "youtube_shorts": str(yt_path.resolve()),
         },
-        "blocked_platforms": sorted(blocked),
         "elapsed_seconds": round(time.monotonic() - started, 2),
         "media_downloaded": False,
         "feature_extraction_performed": False,
     }
     report_dir.mkdir(parents=True, exist_ok=True)
     (report_dir / "summary.json").write_text(
-        json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8",
+        json.dumps(report, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8",
     )
     table = Table(title="ShortsLM URL collection")
     table.add_column("Output")
     table.add_column("Unique URLs", justify="right")
     table.add_row("Instagram Reels", str(ig_count))
     table.add_row("YouTube Shorts", str(yt_count))
-    table.add_row("Discovery batches", str(totals["batches_completed"]))
-    table.add_row("Blocked platforms", ", ".join(sorted(blocked)) or "none")
+    table.add_row("YouTube creator surfaces", str(totals.get("creator_surfaces_processed", 0)))
+    table.add_row("YouTube hashtag surfaces", str(totals.get("hashtag_surfaces_processed", 0)))
     console.print(table)
     console.print("[green]Metadata-only run complete. No video or audio media was downloaded.[/green]")
-    console.print("[bold]Git-trackable URL files:[/bold]")
-    console.print(output_dir / "instagram_reels.txt")
-    console.print(output_dir / "youtube_shorts.txt")
+    console.print(ig_path)
+    console.print(yt_path)
