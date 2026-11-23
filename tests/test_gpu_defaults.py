@@ -65,6 +65,7 @@ def test_asr_passes_cuda_and_compute_type_to_vidtrace(monkeypatch, tmp_path: Pat
         model_name="small",
         device="cuda",
         compute_type="int8_float16",
+        timeout_seconds=0,
     )
 
     assert segments == []
@@ -74,3 +75,89 @@ def test_asr_passes_cuda_and_compute_type_to_vidtrace(monkeypatch, tmp_path: Pat
     assert captured["compute_type"] == "int8_float16"
     assert captured["config"] == {"whisper_model": "small", "language": None}
     assert captured["closed"] is True
+
+
+def test_asr_watchdog_terminates_a_stalled_worker(monkeypatch, tmp_path):
+    import time
+
+    import pytest
+
+    import shorts_intelligence.telemetry.asr as asr
+
+    class FakeConnection:
+        def __init__(self):
+            self.closed = False
+
+        def poll(self, timeout=0):
+            time.sleep(timeout)
+            return False
+
+        def recv(self):
+            raise AssertionError("A timed-out worker must not return a result.")
+
+        def close(self):
+            self.closed = True
+
+        def send(self, _payload):
+            pass
+
+    class FakeProcess:
+        def __init__(self):
+            self.started = False
+            self.terminated = False
+            self.killed = False
+            self.closed = False
+            self.exitcode = None
+
+        def start(self):
+            self.started = True
+
+        def is_alive(self):
+            return self.started and not self.terminated and not self.killed
+
+        def join(self, timeout=None):
+            pass
+
+        def terminate(self):
+            self.terminated = True
+            self.exitcode = -15
+
+        def kill(self):
+            self.killed = True
+            self.exitcode = -9
+
+        def close(self):
+            self.closed = True
+
+    class FakeContext:
+        def __init__(self):
+            self.receiver = FakeConnection()
+            self.sender = FakeConnection()
+            self.process = FakeProcess()
+
+        def Pipe(self, duplex=False):
+            assert duplex is False
+            return self.receiver, self.sender
+
+        def Process(self, **kwargs):
+            assert kwargs["name"].startswith("shortslm-asr-")
+            return self.process
+
+    context = FakeContext()
+    monkeypatch.setattr(asr.multiprocessing, "get_context", lambda _method: context)
+
+    audio_path = tmp_path / "stalled.wav"
+    audio_path.write_bytes(b"audio")
+
+    with pytest.raises(asr.ASRError, match="ASR timed out"):
+        asr.transcribe_audio(
+            audio_path,
+            device="cuda",
+            timeout_seconds=0.02,
+            heartbeat_seconds=0,
+        )
+
+    assert context.process.started is True
+    assert context.process.terminated is True
+    assert context.receiver.closed is True
+    assert context.sender.closed is True
