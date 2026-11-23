@@ -7,8 +7,8 @@ import csv
 import json
 import random
 import time
-from datetime import UTC, datetime
 from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -69,10 +69,9 @@ def _read_balanced_hashtags(path: Path, *, seed: int) -> list[str]:
     return ordered
 
 
-def _load_rights_grants(path: Path) -> tuple[list[dict[str, Any]], dict[tuple[str, str], dict[str, Any]]]:
+def _load_rights_grants(path: Path) -> list[dict[str, Any]]:
     """Load exact-item grants; fail closed before the master campaign starts."""
     grants: list[dict[str, Any]] = []
-    by_key: dict[tuple[str, str], dict[str, Any]] = {}
     required_true = (
         "media_retrieval", "media_analysis", "temporary_processing",
         "derived_artifact_retention", "model_training",
@@ -108,8 +107,7 @@ def _load_rights_grants(path: Path) -> tuple[list[dict[str, Any]], dict[tuple[st
                 raise ValueError(f"Rights manifest line {line_number} has invalid expires_at.") from exc
             if expiry.tzinfo is None or expiry <= datetime.now(UTC):
                 raise ValueError(f"Rights manifest line {line_number} has expired or timezone-naive expiry.")
-            key = (platform, source_id)
-            if key in by_key:
+            if any(existing["platform"] == platform and existing["source_id"] == source_id for existing in grants):
                 raise ValueError(f"Duplicate rights grant for {platform}:{source_id}.")
             grant = {
                 "platform": platform,
@@ -123,14 +121,13 @@ def _load_rights_grants(path: Path) -> tuple[list[dict[str, Any]], dict[tuple[st
                 "expires_at": expiry.isoformat(),
                 "revoked": False,
             }
-            by_key[key] = grant
             grants.append(grant)
     if not grants:
         raise ValueError(
             "Rights manifest contains no authorized item grants. Metadata discovery can run separately, "
             "but media downloading and feature extraction require documented item-specific permission."
         )
-    return grants, by_key
+    return grants
 
 
 def _write_lines(path: Path, values: list[str]) -> None:
@@ -273,13 +270,13 @@ def run_all(
     instagram_session_file: Path | None = typer.Option(None, "--instagram-session-file", exists=True, readable=True),
     rights_manifest: Path = typer.Option(Path("data/private/rights-manifest.jsonl"), "--rights-manifest", exists=True, file_okay=True, dir_okay=False, readable=True),
     seed: int = typer.Option(20261123, "--seed"),
-    min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
+    min_metric: int = typer.Option(0, "--min-metric", min=0),
     target_new_per_batch: int = typer.Option(2000, "--target-new-per-batch", min=1, max=2000),
     discovery_runtime_seconds: int = typer.Option(900, "--discovery-runtime-seconds", min=30, max=900),
     creator_batch_size: int = typer.Option(100, "--creator-batch-size", min=1, max=500),
     instagram_hashtag_batch_size: int = typer.Option(50, "--instagram-hashtag-batch-size", min=1, max=100),
     youtube_hashtag_batch_size: int = typer.Option(20, "--youtube-hashtag-batch-size", min=1, max=20),
-    processing_batch_size: int = typer.Option(25, "--processing-batch-size", min=1, max=500),
+    processing_batch_size: int = typer.Option(1, "--processing-batch-size", min=1, max=500),
     max_processing_attempts: int = typer.Option(2, "--max-processing-attempts", min=1, max=5),
     asr_model: str = typer.Option("small", "--asr-model"),
     device: str = typer.Option("cuda", "--device"),
@@ -293,7 +290,7 @@ def run_all(
     """Discover the full catalogue and sequentially extract features, deleting temporary media."""
     if not all_catalogue:
         raise typer.BadParameter("Pass --all-catalogue to explicitly confirm the potentially multi-day full-catalogue run.")
-    grants, rights_by_key = _load_rights_grants(rights_manifest)
+    grants = _load_rights_grants(rights_manifest)
     authorized_grants_json = json.dumps(grants, ensure_ascii=False)
     if not instagram_profile_dir.exists():
         raise typer.BadParameter(
