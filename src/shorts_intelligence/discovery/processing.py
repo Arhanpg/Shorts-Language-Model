@@ -244,7 +244,16 @@ def _export_processing_manifest(
                 "exported_at": exported_at,
                 "platform": row["platform"],
                 "source_id": row["source_id"],
-                "rights": rights_by_key.get((row["platform"], row["source_id"])),
+                "rights": rights_by_key.get((row["platform"], row["source_id"]))
+                    or rights_by_key.get((
+                        row["platform"],
+                        str(
+                            json.loads(row["metadata_json"] or "{}").get("creator_id")
+                            or json.loads(row["metadata_json"] or "{}").get("channel_id")
+                            or row["creator"]
+                            or ""
+                        ),
+                    )),
                 "canonical_url": row["canonical_url"],
                 "title": row["title"],
                 "creator": row["creator"],
@@ -483,7 +492,10 @@ def run_processing_batch(
 
         grants = json.loads(authorized_grants_json)
         rights_by_key = {
-            (str(item["platform"]), str(item["source_id"])): item
+            (
+                str(item["platform"]),
+                str(item.get("source_id") or item.get("creator_id")),
+            ): item
             for item in grants
         }
         manifest_count = _export_processing_manifest(
