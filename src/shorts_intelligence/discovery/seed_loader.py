@@ -42,3 +42,19 @@ def load_instagram_creator_seeds(
         if handle:
             unique.setdefault(handle, None)
     return list(unique)
+
+
+_YOUTUBE_CHANNEL_ID = re.compile(r"^UC[A-Za-z0-9_-]{22}$")
+
+
+def load_youtube_channel_seeds(path: Path) -> list[str]:
+    """Load stable YouTube channel IDs only; handle-only leads are not guessed."""
+    if not path.expanduser().is_file():
+        return []
+    values = path.expanduser().read_text(encoding="utf-8-sig").splitlines()
+    unique: dict[str, None] = {}
+    for value in values:
+        channel_id = value.strip()
+        if _YOUTUBE_CHANNEL_ID.fullmatch(channel_id):
+            unique.setdefault(channel_id, None)
+    return list(unique)
