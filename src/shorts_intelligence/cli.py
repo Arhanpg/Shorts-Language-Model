@@ -55,7 +55,10 @@ def analyze(
         help="faster-whisper model: tiny, base, small, medium or large-v3.",
     ),
     asr_device: Literal["cpu", "cuda", "auto"] = typer.Option(
-        "cpu", "--asr-device", help="CPU is the safe default for 4 GB GPUs.",
+        "cuda",
+        "--device",
+        "--asr-device",
+        help="Inference device for Whisper and PaddleOCR; CUDA is the default.",
     ),
     language: str | None = typer.Option(
         None, "--language",
