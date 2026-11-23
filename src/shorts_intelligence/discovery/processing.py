@@ -222,6 +222,7 @@ def _export_processing_manifest(
     output_path: Path,
     *,
     min_metric: int,
+    rights_by_key: dict[tuple[str, str], dict[str, Any]],
 ) -> int:
     """Write a compact JSONL manifest for successfully processed videos."""
     exported_at = datetime.now(UTC).isoformat()
@@ -243,6 +244,7 @@ def _export_processing_manifest(
                 "exported_at": exported_at,
                 "platform": row["platform"],
                 "source_id": row["source_id"],
+                "rights": rights_by_key.get((row["platform"], row["source_id"])),
                 "canonical_url": row["canonical_url"],
                 "title": row["title"],
                 "creator": row["creator"],
@@ -479,7 +481,15 @@ def run_processing_batch(
                         media_path.unlink(missing_ok=True)
                         media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
 
-        manifest_count = _export_processing_manifest(store, dataset_manifest, min_metric=min_metric)
+        grants = json.loads(authorized_grants_json)
+        rights_by_key = {
+            (str(item["platform"]), str(item["source_id"])): item
+            for item in grants
+        }
+        manifest_count = _export_processing_manifest(
+            store, dataset_manifest, min_metric=min_metric,
+            rights_by_key=rights_by_key,
+        )
         statuses = store.processing_summary()
 
     return {
