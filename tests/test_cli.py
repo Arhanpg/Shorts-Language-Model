@@ -16,3 +16,6 @@ def test_doctor_json_is_valid_json() -> None:
     assert result.exit_code == 0
     payload = json.loads(result.stdout)
     assert "ffmpeg" in payload["checks"]
+    assert "nvidia_smi" in payload["checks"]
+    assert "ctranslate2_cuda" in payload["checks"]
+    assert "paddle_cuda" in payload["checks"]
