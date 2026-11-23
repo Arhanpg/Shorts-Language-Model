@@ -19,8 +19,8 @@ class AnalyzerConfig:
     keyframe_width: int = 640
     jpeg_quality: int = 88
     asr_model: str = "small"
-    asr_device: str = "cpu"
-    asr_compute_type: str = "int8"
+    asr_device: str = "cuda"
+    asr_compute_type: str = "int8_float16"
     language: str | None = None
     enable_asr: bool = True
     enable_ocr: bool = True
