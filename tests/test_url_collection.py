@@ -24,25 +24,49 @@ def test_balanced_hashtags_preserves_all_unique_tags(tmp_path):
     assert len(values) == 3
 
 
-def test_resolution_cache_ignores_invalid_channel_ids(tmp_path):
-    cache = tmp_path / "resolved.csv"
-    with cache.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["reference", "channel_id"])
-        writer.writeheader()
-        writer.writerow({"reference": "valid", "channel_id": "UC" + "a" * 22})
-        writer.writerow({"reference": "invalid", "channel_id": "not-a-channel-id"})
+def test_youtube_source_url_uses_shorts_tab_without_resolving_handle():
+    assert url_collection._youtube_source_url("@creator_name") == (
+        "https://www.youtube.com/@creator_name/shorts"
+    )
+    assert url_collection._youtube_source_url("UC" + "a" * 22) == (
+        f"https://www.youtube.com/channel/{'UC' + 'a' * 22}/shorts"
+    )
+    assert url_collection._youtube_source_url("https://www.youtube.com/@creator") == (
+        "https://www.youtube.com/@creator/shorts"
+    )
 
-    assert url_collection._load_resolution_cache(cache) == {
-        "valid": "UC" + "a" * 22
+
+def test_youtube_video_urls_normalizes_flat_entries_and_filters_long_search_results():
+    info = {
+        "entries": [
+            {"id": "abcdefghijk"},
+            {"id": "lmnopqrstuv", "duration": 45},
+            {"id": "zyxwvutsrqp", "duration": 240},
+            {"id": "not-a-video-id"},
+            None,
+        ]
     }
 
+    assert url_collection._youtube_video_urls(info, source="hashtag") == [
+        "https://www.youtube.com/shorts/abcdefghijk",
+        "https://www.youtube.com/shorts/lmnopqrstuv",
+    ]
 
-def test_resolve_youtube_handle_uses_metadata_only_ytdlp(monkeypatch):
-    calls = {}
+
+def test_youtube_video_urls_keeps_creator_shorts_tab_entries():
+    info = {"entries": [{"id": "abcdefghijk"}, {"id": "abcdefghijk"}]}
+
+    assert url_collection._youtube_video_urls(info, source="creator") == [
+        "https://www.youtube.com/shorts/abcdefghijk"
+    ]
+
+
+def test_collect_youtube_urls_uses_ytdlp_flat_mode_and_checkpoints(monkeypatch, tmp_path):
+    calls = []
 
     class FakeYoutubeDL:
         def __init__(self, options):
-            calls["options"] = options
+            calls.append(("options", options))
 
         def __enter__(self):
             return self
@@ -51,28 +75,47 @@ def test_resolve_youtube_handle_uses_metadata_only_ytdlp(monkeypatch):
             return False
 
         def extract_info(self, url, download=False):
-            calls["url"] = url
-            calls["download"] = download
-            return {"channel_id": "UC" + "b" * 22}
+            calls.append((url, download))
+            if "missing_creator" in url:
+                raise RuntimeError("HTTP Error 404: Not Found")
+            if url.startswith("ytsearch"):
+                return {"entries": [{"id": "bbbbbbbbbbb", "duration": 30}]}
+            return {"entries": [{"id": "aaaaaaaaaaa"}]}
 
     monkeypatch.setitem(sys.modules, "yt_dlp", SimpleNamespace(YoutubeDL=FakeYoutubeDL))
+    destination = tmp_path / "exports" / "youtube_shorts.txt"
 
-    assert url_collection._resolve_youtube_channel_id("@sample_creator") == "UC" + "b" * 22
-    assert calls["url"] == "https://www.youtube.com/@sample_creator"
-    assert calls["download"] is False
-    assert calls["options"]["skip_download"] is True
+    counts = url_collection._collect_youtube_urls(
+        creators=["@working_creator", "@missing_creator"],
+        hashtags=["regional_topic"],
+        destination=destination,
+        creator_batch_size=1,
+        hashtag_batch_size=1,
+        per_surface_limit=5,
+    )
 
-
-def test_resolve_youtube_channel_id_returns_stable_ids_without_network():
-    channel_id = "UC" + "c" * 22
-
-    assert url_collection._resolve_youtube_channel_id(channel_id) == channel_id
+    lines = destination.read_text(encoding="utf-8").splitlines()
+    assert lines == [
+        "https://www.youtube.com/shorts/aaaaaaaaaaa",
+        "https://www.youtube.com/shorts/bbbbbbbbbbb",
+    ]
+    options = calls[0][1]
+    assert options["skip_download"] is True
+    assert options["extract_flat"] == "in_playlist"
+    assert options["logger"] is not None
+    assert all(download is False for _, download in calls[1:])
+    assert counts["creator_surfaces_processed"] == 1
+    assert counts["creator_errors"] == 1
+    assert counts["creator_404_or_unavailable"] == 1
+    assert counts["hashtag_surfaces_processed"] == 1
+    assert counts["unique_urls"] == 2
 
 
 def test_export_urls_deduplicates_and_keeps_existing_urls(monkeypatch, tmp_path):
     class FakeConnection:
         def execute(self, query, params):
             assert params == ("instagram",)
+
             class Cursor:
                 def fetchall(self):
                     return [
@@ -80,6 +123,7 @@ def test_export_urls_deduplicates_and_keeps_existing_urls(monkeypatch, tmp_path)
                         {"canonical_url": "https://www.instagram.com/reel/DEF456/"},
                         {"canonical_url": "https://www.instagram.com/reel/ABC123/"},
                     ]
+
             return Cursor()
 
     class FakeStore:
