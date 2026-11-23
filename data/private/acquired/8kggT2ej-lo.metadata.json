@@ -1,0 +1,30 @@
+{
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "8kggT2ej-lo",
+    "canonical_url": "https://www.youtube.com/shorts/8kggT2ej-lo",
+    "title": "Would You Pet a Cheetah in Africa?",
+    "description": "",
+    "creator": "MrBeast",
+    "view_count": 1101475110,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 38.0,
+    "upload_date": "2023-05-01T13:00:02-07:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-22T12:00:25.389460Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "listed_views_hint": 1100000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  },
+  "downloaded_at": "2026-11-23T08:24:16.746403+00:00"
+}

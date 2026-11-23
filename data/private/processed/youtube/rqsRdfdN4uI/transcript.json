@@ -1,0 +1,974 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "youtube",
+  "source_id": "rqsRdfdN4uI",
+  "language": "en",
+  "segment_count": 32,
+  "segments": [
+    {
+      "start_seconds": 0.33,
+      "end_seconds": 1.95,
+      "text": "Ha! Ow!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 3.89,
+      "end_seconds": 4.67,
+      "text": "It's a penguin.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 5.05,
+      "end_seconds": 5.37,
+      "text": "No.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 5.73,
+      "end_seconds": 6.23,
+      "text": "Come on.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 6.51,
+      "end_seconds": 7.05,
+      "text": "Chevy's scared.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 7.45,
+      "end_seconds": 9.49,
+      "text": "Oh, wait, wait, that's sharp.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 9.77,
+      "end_seconds": 10.99,
+      "text": "Whoa, it's like a little dinosaur.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 11.29,
+      "end_seconds": 11.59,
+      "text": "Alligator?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 11.89,
+      "end_seconds": 12.37,
+      "text": "You got it.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 12.41,
+      "end_seconds": 13.25,
+      "text": "Yeah, that's an alligator.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 13.73,
+      "end_seconds": 13.97,
+      "text": "Look at that.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 14.01,
+      "end_seconds": 14.53,
+      "text": "Oh, whoa!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 14.89,
+      "end_seconds": 15.65,
+      "text": "Hey, good job.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 17.35,
+      "end_seconds": 18.11,
+      "text": "Sounds like a bird.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 18.47,
+      "end_seconds": 19.07,
+      "text": "That's so cool.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 19.17,
+      "end_seconds": 19.73,
+      "text": "Can I weigh it?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 20.09,
+      "end_seconds": 21.03,
+      "text": "They're likes being held.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 21.35,
+      "end_seconds": 22.19,
+      "text": "Is it an otter?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 22.83,
+      "end_seconds": 23.93,
+      "text": "Yes, it's an otter.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 24.01,
+      "end_seconds": 24.45,
+      "text": "Right.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 25.35,
+      "end_seconds": 28.36,
+      "text": "This is probably the most dangerous animal so far.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 28.9,
+      "end_seconds": 30.14,
+      "text": "Oh my god, it hit me.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 30.24,
+      "end_seconds": 30.72,
+      "text": "It bit you?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 31.02,
+      "end_seconds": 31.8,
+      "text": "Slender neck.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 32.47,
+      "end_seconds": 33.25,
+      "text": "Is it a peacock?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 33.25,
+      "end_seconds": 34.57,
+      "text": "Yes! Very good!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 35.09,
+      "end_seconds": 35.39,
+      "text": "Bro!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 36.07,
+      "end_seconds": 37.69,
+      "text": "Subscribe if you think she'll get it right.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 39.5,
+      "end_seconds": 40.52,
+      "text": "Is it a mini horse?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 41.06,
+      "end_seconds": 41.38,
+      "text": "Close.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 42.0,
+      "end_seconds": 43.92,
+      "text": "What is happening? Is this Jimmy?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 44.4,
+      "end_seconds": 45.7,
+      "text": "Yeah, good boy.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "asr_stage": {
+    "status": "complete",
+    "engine": "vidtrace-faster-whisper",
+    "detail": "Detected language: en; 32 segments."
+  }
+}

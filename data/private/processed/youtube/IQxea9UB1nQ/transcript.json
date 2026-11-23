@@ -1,0 +1,680 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "youtube",
+  "source_id": "IQxea9UB1nQ",
+  "language": "en",
+  "segment_count": 14,
+  "segments": [
+    {
+      "start_seconds": 0.0,
+      "end_seconds": 2.34,
+      "text": "This is how you open a $100,000 car door.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 3.46,
+      "end_seconds": 3.98,
+      "text": "Pretty simple.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 4.34,
+      "end_seconds": 5.14,
+      "text": "One million dollars.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 6.83,
+      "end_seconds": 7.89,
+      "text": "Ooh, not too hard.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 10.7,
+      "end_seconds": 11.74,
+      "text": "I don't know how to open it.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 12.36,
+      "end_seconds": 13.52,
+      "text": "I don't think it's down here.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 14.21,
+      "end_seconds": 15.79,
+      "text": "If you don't open it from the inside,",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 16.07,
+      "end_seconds": 16.77,
+      "text": "I'm not sure how to.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 17.11,
+      "end_seconds": 19.31,
+      "text": "So, there is no door handle anywhere.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 19.69,
+      "end_seconds": 21.31,
+      "text": "I'm not sure how to open this door",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 21.31,
+      "end_seconds": 22.85,
+      "text": "and it's too expensive for me to touch it.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 22.93,
+      "end_seconds": 25.23,
+      "text": "And lastly, this $100 million car,",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 25.47,
+      "end_seconds": 26.77,
+      "text": "it's the first Ferrari ever made",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 26.77,
+      "end_seconds": 28.25,
+      "text": "is before they figured out the whole door thing.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "asr_stage": {
+    "status": "complete",
+    "engine": "vidtrace-faster-whisper",
+    "detail": "Detected language: en; 14 segments."
+  }
+}

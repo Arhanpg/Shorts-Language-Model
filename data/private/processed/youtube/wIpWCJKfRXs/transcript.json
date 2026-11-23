@@ -1,0 +1,413 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "youtube",
+  "source_id": "wIpWCJKfRXs",
+  "language": "en",
+  "segment_count": 11,
+  "segments": [
+    {
+      "start_seconds": 0.0,
+      "end_seconds": 0.88,
+      "text": "let's make a pizza",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 1.79,
+      "end_seconds": 3.35,
+      "text": "with power tool",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 4.13,
+      "end_seconds": 5.77,
+      "text": "nice and slow okay",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 8.88,
+      "end_seconds": 10.26,
+      "text": "alright bring it on in",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 10.26,
+      "end_seconds": 11.28,
+      "text": "dump it down",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 11.28,
+      "end_seconds": 12.18,
+      "text": "oh yeah",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 13.7,
+      "end_seconds": 16.47,
+      "text": "put on the cheese",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 16.47,
+      "end_seconds": 28.26,
+      "text": "pineapple on your pizza, subscribe if you think pineapple on pizza is gross",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 28.26,
+      "end_seconds": 29.54,
+      "text": "time to cook the pizza",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 35.48,
+      "end_seconds": 36.86,
+      "text": "let's see how she tastes",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 37.9,
+      "end_seconds": 38.92,
+      "text": "not about",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "asr_stage": {
+    "status": "complete",
+    "engine": "vidtrace-faster-whisper",
+    "detail": "Detected language: en; 11 segments."
+  }
+}

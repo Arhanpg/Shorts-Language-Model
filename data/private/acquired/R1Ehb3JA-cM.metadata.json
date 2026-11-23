@@ -1,0 +1,27 @@
+{
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "R1Ehb3JA-cM",
+    "canonical_url": "https://www.youtube.com/shorts/R1Ehb3JA-cM",
+    "title": "How Zach King Gets Away With Doing Graffiti",
+    "description": "Video credit: Zach King\nArt credit: Banksy",
+    "creator": "dollarbill",
+    "view_count": 1237853657,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 28.0,
+    "upload_date": "2019-07-23T13:19:53-07:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-21T20:25:52.040262Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "shorts_search_seed",
+      "is_short_field": true,
+      "channel_id": "UCXY3y252ZWJ7g9GCxzmJo3g"
+    }
+  },
+  "downloaded_at": "2026-11-23T08:12:36.082463+00:00"
+}

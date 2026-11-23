@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "youtube",
+  "source_id": "gh6YIQC_Ifw",
+  "span_count": 0,
+  "spans": [],
+  "ocr_stage": {
+    "status": "skipped",
+    "engine": "paddleocr/vidtrace",
+    "detail": "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+  }
+}

@@ -1,0 +1,653 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "youtube",
+  "source_id": "L5kIXRdwGAI",
+  "language": "en",
+  "segment_count": 15,
+  "segments": [
+    {
+      "start_seconds": 0.0,
+      "end_seconds": 2.32,
+      "text": "Can you slice a bullet with a katana?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 2.52,
+      "end_seconds": 2.82,
+      "text": "Yes, sir.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 3.02,
+      "end_seconds": 4.48,
+      "text": "And obviously, I don't believe him,",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 4.54,
+      "end_seconds": 6.92,
+      "text": "so I bet $20,000 he couldn't.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 7.0,
+      "end_seconds": 8.04,
+      "text": "So let's put it to the test.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 10.17,
+      "end_seconds": 12.11,
+      "text": "All he has to do is slice a bullet in half",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 12.11,
+      "end_seconds": 13.33,
+      "text": "before the glass shatters.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 13.61,
+      "end_seconds": 14.27,
+      "text": "Hey, aim for this.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 19.92,
+      "end_seconds": 20.18,
+      "text": "Close?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 20.5,
+      "end_seconds": 21.62,
+      "text": "This is just not possible.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 22.24,
+      "end_seconds": 23.72,
+      "text": "You only have a few shots left.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 23.88,
+      "end_seconds": 24.64,
+      "text": "Fire when you're ready.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 35.44,
+      "end_seconds": 37.28,
+      "text": "I don't do this, but you're kind of dropping a lot.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 37.28,
+      "end_seconds": 38.42,
+      "text": "I... I... I... I...",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 38.42,
+      "end_seconds": 39.78,
+      "text": "Hey, Lace! Subscribe!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "asr_stage": {
+    "status": "complete",
+    "engine": "vidtrace-faster-whisper",
+    "detail": "Detected language: en; 15 segments."
+  }
+}

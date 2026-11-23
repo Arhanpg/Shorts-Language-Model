@@ -1,0 +1,821 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "youtube",
+  "source_id": "_sBRk9ADpK8",
+  "language": "en",
+  "segment_count": 15,
+  "segments": [
+    {
+      "start_seconds": 0.0,
+      "end_seconds": 1.72,
+      "text": "I'm about to surprise the college classroom.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 1.9,
+      "end_seconds": 2.86,
+      "text": "How's it going everybody?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 3.28,
+      "end_seconds": 3.3,
+      "text": "What?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 4.48,
+      "end_seconds": 7.1,
+      "text": "All right, if you guys subscribe to MrBeast, come on down.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 7.24,
+      "end_seconds": 8.36,
+      "text": "Okay, he is subscribed.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 8.6,
+      "end_seconds": 11.16,
+      "text": "If you flip this coin and it lands on the money symbol,",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 11.3,
+      "end_seconds": 12.92,
+      "text": "I will give you $30,000.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 13.24,
+      "end_seconds": 16.12,
+      "text": "But if it lands on the tiger symbol, you get nothing.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 16.4,
+      "end_seconds": 18.06,
+      "text": "And I'll split the money with everyone here,",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 18.14,
+      "end_seconds": 19.6,
+      "text": "which is roughly $700.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 20.14,
+      "end_seconds": 22.25,
+      "text": "Come on, bring in the money.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 24.19,
+      "end_seconds": 26.01,
+      "text": "Okay, you gotta flip it really high.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 26.11,
+      "end_seconds": 27.45,
+      "text": "I need a bunch of spins.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 27.93,
+      "end_seconds": 42.36,
+      "text": "Is this gonna make things awkward for you",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 42.36,
+      "end_seconds": 45.76,
+      "text": "That he won all the money and to be honest. I don't really talk to anyone. Oh",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "asr_stage": {
+    "status": "complete",
+    "engine": "vidtrace-faster-whisper",
+    "detail": "Detected language: en; 15 segments."
+  }
+}

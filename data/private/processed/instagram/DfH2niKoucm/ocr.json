@@ -1,0 +1,390 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "instagram",
+  "source_id": "DfH2niKoucm",
+  "span_count": 29,
+  "spans": [
+    {
+      "timestamp_seconds": 0.0,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.995354950428009,
+      "bbox_xyxy": [
+        112,
+        121,
+        526,
+        149
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 0
+    },
+    {
+      "timestamp_seconds": 0.0,
+      "text": "after Marriage.",
+      "confidence": 0.9999477863311768,
+      "bbox_xyxy": [
+        227,
+        157,
+        412,
+        189
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 0
+    },
+    {
+      "timestamp_seconds": 0.26666666666666666,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9963545203208923,
+      "bbox_xyxy": [
+        112,
+        121,
+        526,
+        149
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 8
+    },
+    {
+      "timestamp_seconds": 0.26666666666666666,
+      "text": "after Marriage.",
+      "confidence": 0.9999596476554871,
+      "bbox_xyxy": [
+        227,
+        156,
+        412,
+        190
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 8
+    },
+    {
+      "timestamp_seconds": 0.5333333333333333,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9945734739303589,
+      "bbox_xyxy": [
+        112,
+        121,
+        526,
+        149
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 16
+    },
+    {
+      "timestamp_seconds": 0.5333333333333333,
+      "text": "after Marriage.",
+      "confidence": 0.999964714050293,
+      "bbox_xyxy": [
+        227,
+        156,
+        412,
+        190
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 16
+    },
+    {
+      "timestamp_seconds": 1.0666666666666667,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9998523592948914,
+      "bbox_xyxy": [
+        112,
+        121,
+        526,
+        150
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 32
+    },
+    {
+      "timestamp_seconds": 1.0666666666666667,
+      "text": "after Marriage.",
+      "confidence": 0.9999745488166809,
+      "bbox_xyxy": [
+        227,
+        156,
+        412,
+        190
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 32
+    },
+    {
+      "timestamp_seconds": 1.3333333333333333,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9882869720458984,
+      "bbox_xyxy": [
+        112,
+        120,
+        526,
+        149
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 40
+    },
+    {
+      "timestamp_seconds": 1.3333333333333333,
+      "text": "after Marriage.",
+      "confidence": 0.9823597073554993,
+      "bbox_xyxy": [
+        227,
+        155,
+        412,
+        189
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 40
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9997498989105225,
+      "bbox_xyxy": [
+        112,
+        121,
+        526,
+        150
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "after Marriage.",
+      "confidence": 0.9737308025360107,
+      "bbox_xyxy": [
+        227,
+        156,
+        412,
+        189
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 5.6,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9924818873405457,
+      "bbox_xyxy": [
+        112,
+        121,
+        527,
+        149
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 168
+    },
+    {
+      "timestamp_seconds": 5.6,
+      "text": "after Marriage.",
+      "confidence": 0.9999615550041199,
+      "bbox_xyxy": [
+        227,
+        156,
+        412,
+        190
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 168
+    },
+    {
+      "timestamp_seconds": 10.933333333333334,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9881981015205383,
+      "bbox_xyxy": [
+        113,
+        121,
+        526,
+        149
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 328
+    },
+    {
+      "timestamp_seconds": 10.933333333333334,
+      "text": "after Marriage.",
+      "confidence": 0.9999750256538391,
+      "bbox_xyxy": [
+        227,
+        157,
+        412,
+        190
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 328
+    },
+    {
+      "timestamp_seconds": 10.933333333333334,
+      "text": "12",
+      "confidence": 0.9096386432647705,
+      "bbox_xyxy": [
+        162,
+        276,
+        175,
+        292
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 328
+    },
+    {
+      "timestamp_seconds": 10.933333333333334,
+      "text": "4",
+      "confidence": 0.9967081546783447,
+      "bbox_xyxy": [
+        190,
+        322,
+        198,
+        333
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 328
+    },
+    {
+      "timestamp_seconds": 10.933333333333334,
+      "text": "6",
+      "confidence": 0.9999576807022095,
+      "bbox_xyxy": [
+        164,
+        335,
+        175,
+        349
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 328
+    },
+    {
+      "timestamp_seconds": 10.933333333333334,
+      "text": "5",
+      "confidence": 0.9998038411140442,
+      "bbox_xyxy": [
+        179,
+        332,
+        188,
+        345
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 328
+    },
+    {
+      "timestamp_seconds": 16.8,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9926513433456421,
+      "bbox_xyxy": [
+        112,
+        120,
+        527,
+        150
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 504
+    },
+    {
+      "timestamp_seconds": 16.8,
+      "text": "after Marriage.",
+      "confidence": 0.9998621344566345,
+      "bbox_xyxy": [
+        226,
+        154,
+        412,
+        190
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 504
+    },
+    {
+      "timestamp_seconds": 28.0,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9978188872337341,
+      "bbox_xyxy": [
+        113,
+        121,
+        526,
+        150
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 840
+    },
+    {
+      "timestamp_seconds": 28.0,
+      "text": "after Marriage.",
+      "confidence": 0.9999713897705078,
+      "bbox_xyxy": [
+        227,
+        157,
+        411,
+        189
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 840
+    },
+    {
+      "timestamp_seconds": 51.46666666666667,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9995231628417969,
+      "bbox_xyxy": [
+        113,
+        121,
+        526,
+        149
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 1544
+    },
+    {
+      "timestamp_seconds": 51.46666666666667,
+      "text": "after Marriage.",
+      "confidence": 0.9998854398727417,
+      "bbox_xyxy": [
+        227,
+        156,
+        412,
+        190
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 1544
+    },
+    {
+      "timestamp_seconds": 51.46666666666667,
+      "text": "11",
+      "confidence": 0.6641062498092651,
+      "bbox_xyxy": [
+        281,
+        663,
+        298,
+        677
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 1544
+    },
+    {
+      "timestamp_seconds": 75.73333333333333,
+      "text": "Devar when its Bhabhi's 1st Diwali",
+      "confidence": 0.9994226098060608,
+      "bbox_xyxy": [
+        113,
+        121,
+        526,
+        149
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 2272
+    },
+    {
+      "timestamp_seconds": 75.73333333333333,
+      "text": "after Marriage.",
+      "confidence": 0.9996909499168396,
+      "bbox_xyxy": [
+        227,
+        157,
+        412,
+        190
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 2272
+    }
+  ],
+  "ocr_stage": {
+    "status": "complete",
+    "engine": "vidtrace-paddleocr-gpu-0",
+    "detail": "29 text spans from up to 12 frames."
+  }
+}

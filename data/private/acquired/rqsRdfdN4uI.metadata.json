@@ -1,0 +1,30 @@
+{
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "rqsRdfdN4uI",
+    "canonical_url": "https://www.youtube.com/shorts/rqsRdfdN4uI",
+    "title": "Guess The Animal",
+    "description": "Filming with these animals was so fun! We had the American Humane Society on set throughout filming to make sure all the animals were safe and cared for. They gave us their official “No Animals Were Harmed®” stamp of approval.",
+    "creator": "MrBeast",
+    "view_count": 1000311982,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 46.0,
+    "upload_date": "2026-05-05T09:00:02-07:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-22T12:00:25.389460Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "listed_views_hint": 1000000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  },
+  "downloaded_at": "2026-11-23T08:29:45.184257+00:00"
+}

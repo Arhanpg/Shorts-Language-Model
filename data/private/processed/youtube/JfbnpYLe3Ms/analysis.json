@@ -1,0 +1,1240 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-11-23T08:07:12.431711Z",
+  "project": "Shorts Language Model",
+  "phase": "phase-1-single-video-telemetry",
+  "source_type": "local_file",
+  "rights": null,
+  "video": {
+    "file_name": "JfbnpYLe3Ms.mp4",
+    "sha256": "a2cc46266baf5b25e52a1f33fbd53f5b61abbae7e360c0840d6b29c0969534a2",
+    "file_size_bytes": 22811657,
+    "duration_seconds": 36.867,
+    "width": 1080,
+    "height": 1920,
+    "fps": 29.999728754712887,
+    "frame_count": 1106,
+    "video_codec": "vp9",
+    "audio_present": true,
+    "audio_codec": "opus",
+    "aspect_ratio": "9:16"
+  },
+  "hook_window": {
+    "start_seconds": 0.0,
+    "end_seconds": 3.0,
+    "frame_count": 8,
+    "cut_candidate_count": 1,
+    "mean_motion_score": 1.8171333285669486,
+    "note": "Descriptive signals only; hook quality is not inferred in Phase 1."
+  },
+  "frame_evidence": [
+    {
+      "timestamp_seconds": 0.0,
+      "frame_index": 0,
+      "reason": [
+        "hook_window"
+      ],
+      "motion_score": 0.0,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.26666907775768534,
+      "frame_index": 8,
+      "reason": [
+        "hook_window"
+      ],
+      "motion_score": 0.3098756670951843,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.5333381555153707,
+      "frame_index": 16,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 4.021069049835205,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.800007233273056,
+      "frame_index": 24,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 3.4329586029052734,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.0666763110307413,
+      "frame_index": 32,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 1.8211405277252197,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.3333453887884268,
+      "frame_index": 40,
+      "reason": [
+        "hook_window"
+      ],
+      "motion_score": 1.0244848728179932,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.600014466546112,
+      "frame_index": 48,
+      "reason": [
+        "hook_window"
+      ],
+      "motion_score": 0.25314590334892273,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.8666835443037975,
+      "frame_index": 56,
+      "reason": [
+        "hook_window",
+        "cut_candidate",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 5.840260028839111,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 4.800043399638336,
+      "frame_index": 144,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.976621627807617,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 6.666726943942134,
+      "frame_index": 200,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.887487411499023,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 7.733403254972875,
+      "frame_index": 232,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.75350284576416,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 11.200101265822784,
+      "frame_index": 336,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 2.995762348175049,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 12.800115732368896,
+      "frame_index": 384,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 3.670780897140503,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 14.93346835443038,
+      "frame_index": 448,
+      "reason": [
+        "temporal_bin"
+      ],
+      "motion_score": 0.8976014256477356,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 17.06682097649186,
+      "frame_index": 512,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.7935943603515625,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 19.200173598553345,
+      "frame_index": 576,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.1900858879089355,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 21.8668643761302,
+      "frame_index": 656,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.3155598640441895,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 22.93354068716094,
+      "frame_index": 688,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.682239055633545,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 25.066893309222422,
+      "frame_index": 752,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 2.7771220207214355,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 26.40023869801085,
+      "frame_index": 792,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.599387168884277,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 30.133605786618446,
+      "frame_index": 904,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 2.745600938796997,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 30.666943942133816,
+      "frame_index": 920,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 2.3028564453125,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 34.13364195298372,
+      "frame_index": 1024,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 3.7782161235809326,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 36.53366365280289,
+      "frame_index": 1096,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 3.4388277530670166,
+      "image_path": null
+    }
+  ],
+  "cut_candidates": [
+    {
+      "timestamp_seconds": 1.8666835443037975,
+      "visual_difference": 0.5766748381209355,
+      "confidence": 0.5766748381209355,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 4.800043399638336,
+      "visual_difference": 0.5592995276896546,
+      "confidence": 0.5592995276896546,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 6.133388788426763,
+      "visual_difference": 0.3555531167147327,
+      "confidence": 0.3555531167147327,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 6.400057866184448,
+      "visual_difference": 0.40631040465461415,
+      "confidence": 0.40631040465461415,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 6.666726943942134,
+      "visual_difference": 0.5711113004192501,
+      "confidence": 0.5711113004192501,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 6.933396021699819,
+      "visual_difference": 0.33687509379977454,
+      "confidence": 0.33687509379977454,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 7.200065099457505,
+      "visual_difference": 0.3815078152871819,
+      "confidence": 0.3815078152871819,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 7.46673417721519,
+      "visual_difference": 0.34618185704468885,
+      "confidence": 0.34618185704468885,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 7.733403254972875,
+      "visual_difference": 0.5393207912977972,
+      "confidence": 0.5393207912977972,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 12.800115732368896,
+      "visual_difference": 0.39517409542453913,
+      "confidence": 0.39517409542453913,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 17.06682097649186,
+      "visual_difference": 0.5149222710285508,
+      "confidence": 0.5149222710285508,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 19.200173598553345,
+      "visual_difference": 0.8033552354029659,
+      "confidence": 0.8033552354029659,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 21.8668643761302,
+      "visual_difference": 0.28189957631485985,
+      "confidence": 0.28189957631485985,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 22.93354068716094,
+      "visual_difference": 0.5281922120737217,
+      "confidence": 0.5281922120737217,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 26.40023869801085,
+      "visual_difference": 0.6427364002236102,
+      "confidence": 0.6427364002236102,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    }
+  ],
+  "motion": {
+    "sample_count": 139,
+    "mean_flow_magnitude": 1.8246914148330688,
+    "p95_flow_magnitude": 4.766900062561035,
+    "peak_timestamp_seconds": 17.06682097649186,
+    "samples": [
+      {
+        "timestamp_seconds": 0.0,
+        "mean_flow_magnitude": 0.0
+      },
+      {
+        "timestamp_seconds": 0.26666907775768534,
+        "mean_flow_magnitude": 0.3098756670951843
+      },
+      {
+        "timestamp_seconds": 0.5333381555153707,
+        "mean_flow_magnitude": 4.021069049835205
+      },
+      {
+        "timestamp_seconds": 0.800007233273056,
+        "mean_flow_magnitude": 3.4329586029052734
+      },
+      {
+        "timestamp_seconds": 1.0666763110307413,
+        "mean_flow_magnitude": 1.8211405277252197
+      },
+      {
+        "timestamp_seconds": 1.3333453887884268,
+        "mean_flow_magnitude": 1.0244848728179932
+      },
+      {
+        "timestamp_seconds": 1.600014466546112,
+        "mean_flow_magnitude": 0.25314590334892273
+      },
+      {
+        "timestamp_seconds": 1.8666835443037975,
+        "mean_flow_magnitude": 5.840260028839111
+      },
+      {
+        "timestamp_seconds": 2.1333526220614827,
+        "mean_flow_magnitude": 0.20235393941402435
+      },
+      {
+        "timestamp_seconds": 2.400021699819168,
+        "mean_flow_magnitude": 1.0490301847457886
+      },
+      {
+        "timestamp_seconds": 2.6666907775768536,
+        "mean_flow_magnitude": 1.999028205871582
+      },
+      {
+        "timestamp_seconds": 2.933359855334539,
+        "mean_flow_magnitude": 1.8522529602050781
+      },
+      {
+        "timestamp_seconds": 3.200028933092224,
+        "mean_flow_magnitude": 1.7333548069000244
+      },
+      {
+        "timestamp_seconds": 3.4666980108499095,
+        "mean_flow_magnitude": 0.9443135857582092
+      },
+      {
+        "timestamp_seconds": 3.733367088607595,
+        "mean_flow_magnitude": 0.4820544123649597
+      },
+      {
+        "timestamp_seconds": 4.00003616636528,
+        "mean_flow_magnitude": 0.1537426859140396
+      },
+      {
+        "timestamp_seconds": 4.266705244122965,
+        "mean_flow_magnitude": 0.1185491606593132
+      },
+      {
+        "timestamp_seconds": 4.533374321880651,
+        "mean_flow_magnitude": 0.058555494993925095
+      },
+      {
+        "timestamp_seconds": 4.800043399638336,
+        "mean_flow_magnitude": 5.976621627807617
+      },
+      {
+        "timestamp_seconds": 5.066712477396021,
+        "mean_flow_magnitude": 1.2419605255126953
+      },
+      {
+        "timestamp_seconds": 5.333381555153707,
+        "mean_flow_magnitude": 0.7611721754074097
+      },
+      {
+        "timestamp_seconds": 5.600050632911392,
+        "mean_flow_magnitude": 1.3833543062210083
+      },
+      {
+        "timestamp_seconds": 5.866719710669078,
+        "mean_flow_magnitude": 1.7673879861831665
+      },
+      {
+        "timestamp_seconds": 6.133388788426763,
+        "mean_flow_magnitude": 4.312251091003418
+      },
+      {
+        "timestamp_seconds": 6.400057866184448,
+        "mean_flow_magnitude": 5.541863441467285
+      },
+      {
+        "timestamp_seconds": 6.666726943942134,
+        "mean_flow_magnitude": 4.887487411499023
+      },
+      {
+        "timestamp_seconds": 6.933396021699819,
+        "mean_flow_magnitude": 5.696095943450928
+      },
+      {
+        "timestamp_seconds": 7.200065099457505,
+        "mean_flow_magnitude": 3.582632064819336
+      },
+      {
+        "timestamp_seconds": 7.46673417721519,
+        "mean_flow_magnitude": 1.1542036533355713
+      },
+      {
+        "timestamp_seconds": 7.733403254972875,
+        "mean_flow_magnitude": 4.75350284576416
+      },
+      {
+        "timestamp_seconds": 8.00007233273056,
+        "mean_flow_magnitude": 0.35287171602249146
+      },
+      {
+        "timestamp_seconds": 8.266741410488246,
+        "mean_flow_magnitude": 0.5867823958396912
+      },
+      {
+        "timestamp_seconds": 8.53341048824593,
+        "mean_flow_magnitude": 1.3004863262176514
+      },
+      {
+        "timestamp_seconds": 8.800079566003616,
+        "mean_flow_magnitude": 0.831728994846344
+      },
+      {
+        "timestamp_seconds": 9.066748643761303,
+        "mean_flow_magnitude": 1.017336130142212
+      },
+      {
+        "timestamp_seconds": 9.333417721518988,
+        "mean_flow_magnitude": 0.5492769479751587
+      },
+      {
+        "timestamp_seconds": 9.600086799276673,
+        "mean_flow_magnitude": 0.24256329238414764
+      },
+      {
+        "timestamp_seconds": 9.866755877034358,
+        "mean_flow_magnitude": 0.74992436170578
+      },
+      {
+        "timestamp_seconds": 10.133424954792043,
+        "mean_flow_magnitude": 1.0120075941085815
+      },
+      {
+        "timestamp_seconds": 10.40009403254973,
+        "mean_flow_magnitude": 1.0291996002197266
+      },
+      {
+        "timestamp_seconds": 10.666763110307414,
+        "mean_flow_magnitude": 1.2462154626846313
+      },
+      {
+        "timestamp_seconds": 10.9334321880651,
+        "mean_flow_magnitude": 2.3530519008636475
+      },
+      {
+        "timestamp_seconds": 11.200101265822784,
+        "mean_flow_magnitude": 2.995762348175049
+      },
+      {
+        "timestamp_seconds": 11.46677034358047,
+        "mean_flow_magnitude": 3.538140296936035
+      },
+      {
+        "timestamp_seconds": 11.733439421338156,
+        "mean_flow_magnitude": 2.3597633838653564
+      },
+      {
+        "timestamp_seconds": 12.000108499095841,
+        "mean_flow_magnitude": 1.0188319683074951
+      },
+      {
+        "timestamp_seconds": 12.266777576853526,
+        "mean_flow_magnitude": 0.8371585607528687
+      },
+      {
+        "timestamp_seconds": 12.533446654611211,
+        "mean_flow_magnitude": 0.1976962834596634
+      },
+      {
+        "timestamp_seconds": 12.800115732368896,
+        "mean_flow_magnitude": 3.670780897140503
+      },
+      {
+        "timestamp_seconds": 13.066784810126583,
+        "mean_flow_magnitude": 0.08962490409612656
+      },
+      {
+        "timestamp_seconds": 13.333453887884268,
+        "mean_flow_magnitude": 0.2843831777572632
+      },
+      {
+        "timestamp_seconds": 13.600122965641953,
+        "mean_flow_magnitude": 0.3188723027706146
+      },
+      {
+        "timestamp_seconds": 13.866792043399638,
+        "mean_flow_magnitude": 0.8881341814994812
+      },
+      {
+        "timestamp_seconds": 14.133461121157323,
+        "mean_flow_magnitude": 1.21840238571167
+      },
+      {
+        "timestamp_seconds": 14.40013019891501,
+        "mean_flow_magnitude": 1.2864196300506592
+      },
+      {
+        "timestamp_seconds": 14.666799276672695,
+        "mean_flow_magnitude": 1.2545604705810547
+      },
+      {
+        "timestamp_seconds": 14.93346835443038,
+        "mean_flow_magnitude": 0.8976014256477356
+      },
+      {
+        "timestamp_seconds": 15.200137432188065,
+        "mean_flow_magnitude": 1.586132526397705
+      },
+      {
+        "timestamp_seconds": 15.46680650994575,
+        "mean_flow_magnitude": 1.33995521068573
+      },
+      {
+        "timestamp_seconds": 15.733475587703436,
+        "mean_flow_magnitude": 3.7091715335845947
+      },
+      {
+        "timestamp_seconds": 16.00014466546112,
+        "mean_flow_magnitude": 1.2310068607330322
+      },
+      {
+        "timestamp_seconds": 16.266813743218805,
+        "mean_flow_magnitude": 0.927547812461853
+      },
+      {
+        "timestamp_seconds": 16.53348282097649,
+        "mean_flow_magnitude": 3.4609010219573975
+      },
+      {
+        "timestamp_seconds": 16.80015189873418,
+        "mean_flow_magnitude": 1.386793851852417
+      },
+      {
+        "timestamp_seconds": 17.06682097649186,
+        "mean_flow_magnitude": 6.7935943603515625
+      },
+      {
+        "timestamp_seconds": 17.33349005424955,
+        "mean_flow_magnitude": 0.5063009262084961
+      },
+      {
+        "timestamp_seconds": 17.60015913200723,
+        "mean_flow_magnitude": 0.7326210737228394
+      },
+      {
+        "timestamp_seconds": 17.86682820976492,
+        "mean_flow_magnitude": 0.9816896319389343
+      },
+      {
+        "timestamp_seconds": 18.133497287522605,
+        "mean_flow_magnitude": 1.4085352420806885
+      },
+      {
+        "timestamp_seconds": 18.40016636528029,
+        "mean_flow_magnitude": 1.2208069562911987
+      },
+      {
+        "timestamp_seconds": 18.666835443037975,
+        "mean_flow_magnitude": 0.6815220713615417
+      },
+      {
+        "timestamp_seconds": 18.93350452079566,
+        "mean_flow_magnitude": 0.2713991105556488
+      },
+      {
+        "timestamp_seconds": 19.200173598553345,
+        "mean_flow_magnitude": 5.1900858879089355
+      },
+      {
+        "timestamp_seconds": 19.466842676311032,
+        "mean_flow_magnitude": 0.4590776562690735
+      },
+      {
+        "timestamp_seconds": 19.733511754068715,
+        "mean_flow_magnitude": 1.0903633832931519
+      },
+      {
+        "timestamp_seconds": 20.000180831826402,
+        "mean_flow_magnitude": 2.7120680809020996
+      },
+      {
+        "timestamp_seconds": 20.266849909584085,
+        "mean_flow_magnitude": 1.889143705368042
+      },
+      {
+        "timestamp_seconds": 20.533518987341772,
+        "mean_flow_magnitude": 2.0162296295166016
+      },
+      {
+        "timestamp_seconds": 20.80018806509946,
+        "mean_flow_magnitude": 2.6371309757232666
+      },
+      {
+        "timestamp_seconds": 21.066857142857142,
+        "mean_flow_magnitude": 2.7376902103424072
+      },
+      {
+        "timestamp_seconds": 21.33352622061483,
+        "mean_flow_magnitude": 2.127438545227051
+      },
+      {
+        "timestamp_seconds": 21.600195298372512,
+        "mean_flow_magnitude": 3.82712984085083
+      },
+      {
+        "timestamp_seconds": 21.8668643761302,
+        "mean_flow_magnitude": 4.3155598640441895
+      },
+      {
+        "timestamp_seconds": 22.133533453887885,
+        "mean_flow_magnitude": 2.3365237712860107
+      },
+      {
+        "timestamp_seconds": 22.40020253164557,
+        "mean_flow_magnitude": 2.000408411026001
+      },
+      {
+        "timestamp_seconds": 22.666871609403255,
+        "mean_flow_magnitude": 1.2825675010681152
+      },
+      {
+        "timestamp_seconds": 22.93354068716094,
+        "mean_flow_magnitude": 4.682239055633545
+      },
+      {
+        "timestamp_seconds": 23.200209764918625,
+        "mean_flow_magnitude": 0.29461929202079773
+      },
+      {
+        "timestamp_seconds": 23.466878842676312,
+        "mean_flow_magnitude": 0.18479034304618835
+      },
+      {
+        "timestamp_seconds": 23.733547920433995,
+        "mean_flow_magnitude": 0.5636841058731079
+      },
+      {
+        "timestamp_seconds": 24.000216998191682,
+        "mean_flow_magnitude": 1.1697909832000732
+      },
+      {
+        "timestamp_seconds": 24.266886075949365,
+        "mean_flow_magnitude": 4.034428119659424
+      },
+      {
+        "timestamp_seconds": 24.533555153707052,
+        "mean_flow_magnitude": 1.2579982280731201
+      },
+      {
+        "timestamp_seconds": 24.80022423146474,
+        "mean_flow_magnitude": 2.554141044616699
+      },
+      {
+        "timestamp_seconds": 25.066893309222422,
+        "mean_flow_magnitude": 2.7771220207214355
+      },
+      {
+        "timestamp_seconds": 25.33356238698011,
+        "mean_flow_magnitude": 1.1498470306396484
+      },
+      {
+        "timestamp_seconds": 25.600231464737792,
+        "mean_flow_magnitude": 0.4693368375301361
+      },
+      {
+        "timestamp_seconds": 25.86690054249548,
+        "mean_flow_magnitude": 0.8253564834594727
+      },
+      {
+        "timestamp_seconds": 26.133569620253166,
+        "mean_flow_magnitude": 0.21962593495845795
+      },
+      {
+        "timestamp_seconds": 26.40023869801085,
+        "mean_flow_magnitude": 4.599387168884277
+      },
+      {
+        "timestamp_seconds": 26.666907775768536,
+        "mean_flow_magnitude": 1.135188102722168
+      },
+      {
+        "timestamp_seconds": 26.93357685352622,
+        "mean_flow_magnitude": 2.5421576499938965
+      },
+      {
+        "timestamp_seconds": 27.200245931283906,
+        "mean_flow_magnitude": 1.7227572202682495
+      },
+      {
+        "timestamp_seconds": 27.466915009041593,
+        "mean_flow_magnitude": 0.7889937162399292
+      },
+      {
+        "timestamp_seconds": 27.733584086799276,
+        "mean_flow_magnitude": 0.3437437415122986
+      },
+      {
+        "timestamp_seconds": 28.000253164556963,
+        "mean_flow_magnitude": 0.25400954484939575
+      },
+      {
+        "timestamp_seconds": 28.266922242314646,
+        "mean_flow_magnitude": 0.2904333770275116
+      },
+      {
+        "timestamp_seconds": 28.533591320072333,
+        "mean_flow_magnitude": 0.36753809452056885
+      },
+      {
+        "timestamp_seconds": 28.80026039783002,
+        "mean_flow_magnitude": 0.4856770634651184
+      },
+      {
+        "timestamp_seconds": 29.066929475587703,
+        "mean_flow_magnitude": 1.2703633308410645
+      },
+      {
+        "timestamp_seconds": 29.33359855334539,
+        "mean_flow_magnitude": 1.6492663621902466
+      },
+      {
+        "timestamp_seconds": 29.600267631103073,
+        "mean_flow_magnitude": 1.7277268171310425
+      },
+      {
+        "timestamp_seconds": 29.86693670886076,
+        "mean_flow_magnitude": 2.202665090560913
+      },
+      {
+        "timestamp_seconds": 30.133605786618446,
+        "mean_flow_magnitude": 2.745600938796997
+      },
+      {
+        "timestamp_seconds": 30.40027486437613,
+        "mean_flow_magnitude": 2.463080883026123
+      },
+      {
+        "timestamp_seconds": 30.666943942133816,
+        "mean_flow_magnitude": 2.3028564453125
+      },
+      {
+        "timestamp_seconds": 30.9336130198915,
+        "mean_flow_magnitude": 1.1689305305480957
+      },
+      {
+        "timestamp_seconds": 31.200282097649186,
+        "mean_flow_magnitude": 1.848976731300354
+      },
+      {
+        "timestamp_seconds": 31.466951175406873,
+        "mean_flow_magnitude": 1.2477144002914429
+      },
+      {
+        "timestamp_seconds": 31.733620253164556,
+        "mean_flow_magnitude": 1.406270980834961
+      },
+      {
+        "timestamp_seconds": 32.00028933092224,
+        "mean_flow_magnitude": 1.2814081907272339
+      },
+      {
+        "timestamp_seconds": 32.266958408679926,
+        "mean_flow_magnitude": 1.550580382347107
+      },
+      {
+        "timestamp_seconds": 32.53362748643761,
+        "mean_flow_magnitude": 0.5953975915908813
+      },
+      {
+        "timestamp_seconds": 32.8002965641953,
+        "mean_flow_magnitude": 0.4819049537181854
+      },
+      {
+        "timestamp_seconds": 33.06696564195298,
+        "mean_flow_magnitude": 0.9524793028831482
+      },
+      {
+        "timestamp_seconds": 33.333634719710666,
+        "mean_flow_magnitude": 1.932215690612793
+      },
+      {
+        "timestamp_seconds": 33.60030379746836,
+        "mean_flow_magnitude": 1.171761393547058
+      },
+      {
+        "timestamp_seconds": 33.86697287522604,
+        "mean_flow_magnitude": 2.95072078704834
+      },
+      {
+        "timestamp_seconds": 34.13364195298372,
+        "mean_flow_magnitude": 3.7782161235809326
+      },
+      {
+        "timestamp_seconds": 34.40031103074141,
+        "mean_flow_magnitude": 2.541799306869507
+      },
+      {
+        "timestamp_seconds": 34.6669801084991,
+        "mean_flow_magnitude": 1.282366156578064
+      },
+      {
+        "timestamp_seconds": 34.93364918625678,
+        "mean_flow_magnitude": 2.3709933757781982
+      },
+      {
+        "timestamp_seconds": 35.20031826401446,
+        "mean_flow_magnitude": 2.7147347927093506
+      },
+      {
+        "timestamp_seconds": 35.46698734177215,
+        "mean_flow_magnitude": 3.5903031826019287
+      },
+      {
+        "timestamp_seconds": 35.73365641952984,
+        "mean_flow_magnitude": 2.5373919010162354
+      },
+      {
+        "timestamp_seconds": 36.00032549728752,
+        "mean_flow_magnitude": 1.3179975748062134
+      },
+      {
+        "timestamp_seconds": 36.26699457504521,
+        "mean_flow_magnitude": 3.554072380065918
+      },
+      {
+        "timestamp_seconds": 36.53366365280289,
+        "mean_flow_magnitude": 3.4388277530670166
+      },
+      {
+        "timestamp_seconds": 36.80033273056058,
+        "mean_flow_magnitude": 3.500950813293457
+      }
+    ],
+    "method": "opencv-farneback-on-sampled-frames"
+  },
+  "transcript_segments": [],
+  "ocr_spans": [],
+  "audio": {
+    "analyzed": true,
+    "duration_seconds": 36.87301587301587,
+    "sample_rate": 22050,
+    "rms_mean": 0.08868353068828583,
+    "silence_ratio": 0.03589420654911839,
+    "estimated_tempo_bpm": 107.666015625,
+    "beat_times_seconds": [
+      0.4876190476190476,
+      1.0681179138321995,
+      1.6486167800453515,
+      2.2058956916099772,
+      2.809614512471655,
+      3.3901133786848074,
+      4.040272108843538,
+      4.620770975056689,
+      5.178049886621316,
+      5.758548752834467,
+      6.2693877551020405,
+      6.826666666666667,
+      7.360725623582766,
+      7.964444444444444,
+      8.544943310657596,
+      9.148662131519274,
+      9.7059410430839,
+      10.286439909297052,
+      10.843718820861678,
+      11.377777777777778,
+      11.911836734693878,
+      12.445895691609977,
+      13.003174603174603,
+      13.583673469387755,
+      14.187392290249432,
+      14.744671201814059,
+      15.301950113378684,
+      15.81278911564626,
+      16.300408163265306,
+      16.880907029478458,
+      17.41496598639456,
+      18.018684807256236,
+      18.64562358276644,
+      19.13324263038549,
+      19.620861678004534,
+      20.085260770975058,
+      20.572879818594103,
+      21.083718820861677,
+      21.66421768707483,
+      22.244716553287983,
+      22.84843537414966,
+      23.42893424036281,
+      24.102312925170068,
+      24.659591836734695,
+      25.26331065759637,
+      25.820589569160997,
+      26.40108843537415,
+      26.93514739229025,
+      27.46920634920635,
+      28.0497052154195,
+      28.560544217687074,
+      29.048163265306123,
+      29.559002267573696,
+      30.06984126984127,
+      30.55746031746032,
+      31.091519274376417,
+      31.672018140589568,
+      32.229297052154195,
+      32.78657596371882,
+      33.34385487528345,
+      33.8314739229025,
+      34.319092970521545,
+      34.76027210884354,
+      35.22467120181406,
+      35.735510204081635,
+      36.29278911564626
+    ],
+    "onset_times_seconds": [
+      0.11609977324263039,
+      0.301859410430839,
+      0.34829931972789113,
+      0.46439909297052157,
+      0.626938775510204,
+      0.7662585034013606,
+      0.905578231292517,
+      1.0681179138321995,
+      1.230657596371882,
+      1.2770975056689342,
+      1.4396371882086167,
+      1.7182766439909296,
+      2.182675736961451,
+      2.693514739229025,
+      2.809614512471655,
+      2.9024943310657596,
+      2.972154195011338,
+      3.111473922902494,
+      3.2275736961451247,
+      3.3901133786848074,
+      3.7848526077097504,
+      4.040272108843538,
+      4.20281179138322,
+      4.481451247165533,
+      4.597551020408163,
+      4.783310657596372,
+      4.992290249433107,
+      5.178049886621316,
+      5.410249433106576,
+      5.758548752834467,
+      5.804988662131519,
+      6.106848072562358,
+      6.246167800453515,
+      6.594467120181406,
+      6.826666666666667,
+      6.989206349206349,
+      7.151746031746032,
+      7.360725623582766,
+      7.546485260770975,
+      7.801904761904762,
+      8.057324263038549,
+      8.289523809523809,
+      8.428843537414966,
+      8.52172335600907,
+      8.986122448979591,
+      9.148662131519274,
+      9.427301587301587,
+      9.7059410430839,
+      9.914920634920636,
+      10.12390022675737,
+      10.866938775510205,
+      11.029478458049887,
+      11.19201814058957,
+      11.656417233560092,
+      11.911836734693878,
+      12.19047619047619,
+      12.30657596371882,
+      12.422675736961452,
+      12.60843537414966,
+      12.747755102040816,
+      12.979954648526077,
+      13.235374149659863,
+      13.467573696145125,
+      13.583673469387755,
+      13.746213151927437,
+      14.466031746031746,
+      14.651791383219955,
+      14.907210884353741,
+      15.046530612244897,
+      15.301950113378684,
+      15.534149659863946,
+      15.85922902494331,
+      16.068208616780044,
+      16.207528344671204,
+      16.300408163265306,
+      16.416507936507937,
+      16.555827664399093,
+      16.671927437641724,
+      16.718367346938777,
+      16.857687074829933,
+      17.04344671201814,
+      17.182766439909297,
+      17.2756462585034,
+      17.41496598639456,
+      17.531065759637187,
+      17.69360544217687,
+      18.018684807256236,
+      18.11156462585034,
+      18.390204081632653,
+      18.45986394557823,
+      18.64562358276644,
+      18.83138321995465,
+      18.970702947845805,
+      19.504761904761907,
+      19.620861678004534,
+      19.806621315192743,
+      20.085260770975058,
+      20.572879818594103,
+      21.083718820861677,
+      21.339138321995463,
+      21.571337868480725,
+      22.151836734693877,
+      22.360816326530614,
+      22.523356009070294,
+      23.359274376417233,
+      23.405714285714286,
+      23.684353741496597,
+      24.079092970521543,
+      24.589931972789117,
+      24.845351473922904,
+      24.961451247165535,
+      25.077551020408162,
+      25.2865306122449,
+      25.356190476190477,
+      25.472290249433108,
+      25.541950113378686,
+      25.820589569160997,
+      26.05278911564626,
+      26.377868480725624,
+      26.540408163265305,
+      26.749387755102042,
+      27.445986394557824,
+      27.77106575963719,
+      28.0497052154195,
+      28.16580498866213,
+      28.444444444444443,
+      28.560544217687074,
+      28.723083900226758,
+      28.792743764172336,
+      28.83918367346939,
+      29.024943310657598,
+      29.23392290249433,
+      29.373242630385487,
+      29.53578231292517,
+      29.58222222222222,
+      29.72154195011338,
+      30.00018140589569,
+      30.06984126984127,
+      30.1859410430839,
+      30.278820861678003,
+      30.55746031746032,
+      30.65034013605442,
+      30.882539682539683,
+      31.091519274376417,
+      31.2540589569161,
+      31.393378684807256,
+      31.463038548752834,
+      31.648798185941043,
+      31.811337868480727,
+      31.997097505668933,
+      32.3221768707483,
+      32.78657596371882,
+      33.041995464852604,
+      33.34385487528345,
+      33.483174603174604,
+      33.66893424036281,
+      33.8314739229025,
+      34.34231292517007,
+      34.644172335600906,
+      34.76027210884354,
+      34.89959183673469,
+      35.015691609977324,
+      35.085351473922906,
+      35.22467120181406,
+      35.41043083900227,
+      35.735510204081635,
+      35.898049886621315,
+      36.08380952380952,
+      36.17668934240363,
+      36.29278911564626,
+      36.501768707482995,
+      36.664308390022676,
+      36.826848072562356
+    ],
+    "method": "librosa-0.11.0",
+    "warning": null
+  },
+  "stages": {
+    "media_validation": {
+      "status": "complete",
+      "engine": "ffprobe",
+      "detail": null
+    },
+    "frame_sampling": {
+      "status": "complete",
+      "engine": "opencv",
+      "detail": null
+    },
+    "asr": {
+      "status": "partial",
+      "engine": "vidtrace-faster-whisper",
+      "detail": "Detected language: en; 0 segments."
+    },
+    "ocr": {
+      "status": "skipped",
+      "engine": "paddleocr/vidtrace",
+      "detail": "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+    },
+    "audio_features": {
+      "status": "complete",
+      "engine": "librosa-0.11.0",
+      "detail": null
+    }
+  },
+  "warnings": [
+    "ASR completed but returned no speech segments; this may be a music-only or silent clip.",
+    "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+  ],
+  "limitations": [
+    "Phase 1 extracts evidence; it does not yet run a fine-tuned VLM.",
+    "Cut, motion and beat events are algorithmic candidates, not ground truth.",
+    "This report does not predict views or establish causal virality drivers."
+  ]
+}

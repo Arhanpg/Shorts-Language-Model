@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "L5ihmu87xTE",
+    "canonical_url": "https://www.youtube.com/shorts/L5ihmu87xTE",
+    "title": "Find This Stranger, Win $10,000",
+    "description": "",
+    "creator": "MrBeast",
+    "view_count": 923231520,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 60.0,
+    "upload_date": "2025-02-19T10:00:00-08:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-22T12:00:25.389460Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "listed_views_hint": 923000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  },
+  "media_path": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\acquired\\L5ihmu87xTE.mp4",
+  "media_sha256": "e2e3020133832a3c88a0ad438b0ed41ae47a132dd61438a60d059fb97eaf0f92",
+  "video": {
+    "file_name": "L5ihmu87xTE.mp4",
+    "sha256": "e2e3020133832a3c88a0ad438b0ed41ae47a132dd61438a60d059fb97eaf0f92",
+    "file_size_bytes": 87484995,
+    "duration_seconds": 60.033333,
+    "width": 2160,
+    "height": 3840,
+    "fps": 30.0,
+    "frame_count": 1801,
+    "video_codec": "av1",
+    "audio_present": true,
+    "audio_codec": "opus",
+    "aspect_ratio": "9:16"
+  },
+  "analysis_report": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\L5ihmu87xTE\\analysis.json",
+  "transcript": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\L5ihmu87xTE\\transcript.json",
+  "ocr": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\L5ihmu87xTE\\ocr.json"
+}

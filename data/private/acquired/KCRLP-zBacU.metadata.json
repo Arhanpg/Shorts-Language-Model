@@ -1,0 +1,30 @@
+{
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "KCRLP-zBacU",
+    "canonical_url": "https://www.youtube.com/shorts/KCRLP-zBacU",
+    "title": "Can I Teach a Penguin To Subscribe?",
+    "description": "",
+    "creator": "MrBeast",
+    "view_count": 951864606,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 9.0,
+    "upload_date": "2025-05-31T09:10:27-07:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-22T12:00:25.389460Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "listed_views_hint": 951000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  },
+  "downloaded_at": "2026-11-23T08:32:46.897855+00:00"
+}

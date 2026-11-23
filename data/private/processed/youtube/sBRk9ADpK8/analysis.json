@@ -1,0 +1,2366 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-11-23T08:16:10.859661Z",
+  "project": "Shorts Language Model",
+  "phase": "phase-1-single-video-telemetry",
+  "source_type": "local_file",
+  "rights": null,
+  "video": {
+    "file_name": "_sBRk9ADpK8.mp4",
+    "sha256": "80590f3c2a36b5f24cb9f1a608f01fa3abd98c8cf253b930c3015166736f8ca0",
+    "file_size_bytes": 78818164,
+    "duration_seconds": 46.4,
+    "width": 2160,
+    "height": 3840,
+    "fps": 30.0,
+    "frame_count": 1392,
+    "video_codec": "av1",
+    "audio_present": true,
+    "audio_codec": "opus",
+    "aspect_ratio": "9:16"
+  },
+  "hook_window": {
+    "start_seconds": 0.0,
+    "end_seconds": 3.0,
+    "frame_count": 8,
+    "cut_candidate_count": 3,
+    "mean_motion_score": 5.206686854362488,
+    "note": "Descriptive signals only; hook quality is not inferred in Phase 1."
+  },
+  "frame_evidence": [
+    {
+      "timestamp_seconds": 0.0,
+      "frame_index": 0,
+      "reason": [
+        "hook_window"
+      ],
+      "motion_score": 0.0,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.26666666666666666,
+      "frame_index": 8,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 6.432178974151611,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.5333333333333333,
+      "frame_index": 16,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 5.889718532562256,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.8,
+      "frame_index": 24,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 5.180269718170166,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.0666666666666667,
+      "frame_index": 32,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 6.715816020965576,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.3333333333333333,
+      "frame_index": 40,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 5.998928070068359,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.6,
+      "frame_index": 48,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 4.226649761199951,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "frame_index": 56,
+      "reason": [
+        "hook_window",
+        "cut_candidate",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 7.343528747558594,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 5.066666666666666,
+      "frame_index": 152,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 3.8194878101348877,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 7.466666666666667,
+      "frame_index": 224,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.790369033813477,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 10.666666666666666,
+      "frame_index": 320,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 11.873137474060059,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 12.8,
+      "frame_index": 384,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 8.660783767700195,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 15.466666666666667,
+      "frame_index": 464,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 8.962328910827637,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 19.2,
+      "frame_index": 576,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.509361267089844,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 20.533333333333335,
+      "frame_index": 616,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.0447821617126465,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 24.533333333333335,
+      "frame_index": 736,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.495378494262695,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 26.933333333333334,
+      "frame_index": 808,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.228050231933594,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 28.0,
+      "frame_index": 840,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.578096866607666,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 32.8,
+      "frame_index": 984,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.819488525390625,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 33.6,
+      "frame_index": 1008,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.570871829986572,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 36.8,
+      "frame_index": 1104,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.475764274597168,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 39.733333333333334,
+      "frame_index": 1192,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.875686168670654,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 41.86666666666667,
+      "frame_index": 1256,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.864968776702881,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 43.733333333333334,
+      "frame_index": 1312,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.2300286293029785,
+      "image_path": null
+    }
+  ],
+  "cut_candidates": [
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "visual_difference": 0.49758869958744134,
+      "confidence": 0.49758869958744134,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 2.1333333333333333,
+      "visual_difference": 0.3033293931441311,
+      "confidence": 0.3033293931441311,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 2.933333333333333,
+      "visual_difference": 0.5734794258167796,
+      "confidence": 0.5734794258167796,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 4.0,
+      "visual_difference": 0.5095688611239992,
+      "confidence": 0.5095688611239992,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 5.066666666666666,
+      "visual_difference": 0.6645567276655665,
+      "confidence": 0.6645567276655665,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 6.133333333333334,
+      "visual_difference": 0.7126046578253252,
+      "confidence": 0.7126046578253252,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 7.466666666666667,
+      "visual_difference": 0.8186409060556622,
+      "confidence": 0.8186409060556622,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 8.8,
+      "visual_difference": 0.3543809846454096,
+      "confidence": 0.3543809846454096,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 11.466666666666667,
+      "visual_difference": 0.33206064458431,
+      "confidence": 0.33206064458431,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 12.8,
+      "visual_difference": 0.40680544007417646,
+      "confidence": 0.40680544007417646,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 13.6,
+      "visual_difference": 0.4017632991957692,
+      "confidence": 0.4017632991957692,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 15.466666666666667,
+      "visual_difference": 0.43721903621290287,
+      "confidence": 0.43721903621290287,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 16.0,
+      "visual_difference": 0.30353547636626316,
+      "confidence": 0.30353547636626316,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 16.8,
+      "visual_difference": 0.4153834267083777,
+      "confidence": 0.4153834267083777,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 18.133333333333333,
+      "visual_difference": 0.3628116091588168,
+      "confidence": 0.3628116091588168,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 19.2,
+      "visual_difference": 0.8332208910476847,
+      "confidence": 0.8332208910476847,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 20.533333333333335,
+      "visual_difference": 0.3505135830003726,
+      "confidence": 0.3505135830003726,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 21.333333333333332,
+      "visual_difference": 0.3821961757295249,
+      "confidence": 0.3821961757295249,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 22.4,
+      "visual_difference": 0.6014216006124495,
+      "confidence": 0.6014216006124495,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 23.2,
+      "visual_difference": 0.6866657537367372,
+      "confidence": 0.6866657537367372,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 24.0,
+      "visual_difference": 0.5032443660151794,
+      "confidence": 0.5032443660151794,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 24.533333333333335,
+      "visual_difference": 0.7615249724897966,
+      "confidence": 0.7615249724897966,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 30.133333333333333,
+      "visual_difference": 0.5771246055866587,
+      "confidence": 0.5771246055866587,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 31.2,
+      "visual_difference": 0.666576826623613,
+      "confidence": 0.666576826623613,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 32.8,
+      "visual_difference": 0.7833763227561804,
+      "confidence": 0.7833763227561804,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 33.6,
+      "visual_difference": 0.8111296658716974,
+      "confidence": 0.8111296658716974,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 34.666666666666664,
+      "visual_difference": 0.7546162638789035,
+      "confidence": 0.7546162638789035,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 35.2,
+      "visual_difference": 0.7510006547295738,
+      "confidence": 0.7510006547295738,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 36.8,
+      "visual_difference": 0.28998210756404463,
+      "confidence": 0.28998210756404463,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 38.4,
+      "visual_difference": 0.5579603127366072,
+      "confidence": 0.5579603127366072,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 39.733333333333334,
+      "visual_difference": 0.5291000508504236,
+      "confidence": 0.5291000508504236,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 41.86666666666667,
+      "visual_difference": 0.8577767777979299,
+      "confidence": 0.8577767777979299,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 43.733333333333334,
+      "visual_difference": 0.511406428657465,
+      "confidence": 0.511406428657465,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 45.6,
+      "visual_difference": 0.4278426174998803,
+      "confidence": 0.4278426174998803,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    }
+  ],
+  "motion": {
+    "sample_count": 174,
+    "mean_flow_magnitude": 4.904386043548584,
+    "p95_flow_magnitude": 9.376097679138184,
+    "peak_timestamp_seconds": 10.666666666666666,
+    "samples": [
+      {
+        "timestamp_seconds": 0.0,
+        "mean_flow_magnitude": 0.0
+      },
+      {
+        "timestamp_seconds": 0.26666666666666666,
+        "mean_flow_magnitude": 6.432178974151611
+      },
+      {
+        "timestamp_seconds": 0.5333333333333333,
+        "mean_flow_magnitude": 5.889718532562256
+      },
+      {
+        "timestamp_seconds": 0.8,
+        "mean_flow_magnitude": 5.180269718170166
+      },
+      {
+        "timestamp_seconds": 1.0666666666666667,
+        "mean_flow_magnitude": 6.715816020965576
+      },
+      {
+        "timestamp_seconds": 1.3333333333333333,
+        "mean_flow_magnitude": 5.998928070068359
+      },
+      {
+        "timestamp_seconds": 1.6,
+        "mean_flow_magnitude": 4.226649761199951
+      },
+      {
+        "timestamp_seconds": 1.8666666666666667,
+        "mean_flow_magnitude": 7.343528747558594
+      },
+      {
+        "timestamp_seconds": 2.1333333333333333,
+        "mean_flow_magnitude": 5.057640552520752
+      },
+      {
+        "timestamp_seconds": 2.4,
+        "mean_flow_magnitude": 5.74910831451416
+      },
+      {
+        "timestamp_seconds": 2.6666666666666665,
+        "mean_flow_magnitude": 4.683983325958252
+      },
+      {
+        "timestamp_seconds": 2.933333333333333,
+        "mean_flow_magnitude": 5.202420234680176
+      },
+      {
+        "timestamp_seconds": 3.2,
+        "mean_flow_magnitude": 8.827855110168457
+      },
+      {
+        "timestamp_seconds": 3.466666666666667,
+        "mean_flow_magnitude": 8.648401260375977
+      },
+      {
+        "timestamp_seconds": 3.7333333333333334,
+        "mean_flow_magnitude": 9.615172386169434
+      },
+      {
+        "timestamp_seconds": 4.0,
+        "mean_flow_magnitude": 5.573460578918457
+      },
+      {
+        "timestamp_seconds": 4.266666666666667,
+        "mean_flow_magnitude": 6.168354511260986
+      },
+      {
+        "timestamp_seconds": 4.533333333333333,
+        "mean_flow_magnitude": 4.739064693450928
+      },
+      {
+        "timestamp_seconds": 4.8,
+        "mean_flow_magnitude": 7.058058738708496
+      },
+      {
+        "timestamp_seconds": 5.066666666666666,
+        "mean_flow_magnitude": 3.8194878101348877
+      },
+      {
+        "timestamp_seconds": 5.333333333333333,
+        "mean_flow_magnitude": 1.8172067403793335
+      },
+      {
+        "timestamp_seconds": 5.6,
+        "mean_flow_magnitude": 1.2484909296035767
+      },
+      {
+        "timestamp_seconds": 5.866666666666666,
+        "mean_flow_magnitude": 0.9215134382247925
+      },
+      {
+        "timestamp_seconds": 6.133333333333334,
+        "mean_flow_magnitude": 4.498530387878418
+      },
+      {
+        "timestamp_seconds": 6.4,
+        "mean_flow_magnitude": 4.993027687072754
+      },
+      {
+        "timestamp_seconds": 6.666666666666667,
+        "mean_flow_magnitude": 4.32625150680542
+      },
+      {
+        "timestamp_seconds": 6.933333333333334,
+        "mean_flow_magnitude": 3.9296836853027344
+      },
+      {
+        "timestamp_seconds": 7.2,
+        "mean_flow_magnitude": 4.710867404937744
+      },
+      {
+        "timestamp_seconds": 7.466666666666667,
+        "mean_flow_magnitude": 4.790369033813477
+      },
+      {
+        "timestamp_seconds": 7.733333333333333,
+        "mean_flow_magnitude": 9.309062957763672
+      },
+      {
+        "timestamp_seconds": 8.0,
+        "mean_flow_magnitude": 8.229377746582031
+      },
+      {
+        "timestamp_seconds": 8.266666666666667,
+        "mean_flow_magnitude": 9.29244613647461
+      },
+      {
+        "timestamp_seconds": 8.533333333333333,
+        "mean_flow_magnitude": 8.003053665161133
+      },
+      {
+        "timestamp_seconds": 8.8,
+        "mean_flow_magnitude": 5.595164775848389
+      },
+      {
+        "timestamp_seconds": 9.066666666666666,
+        "mean_flow_magnitude": 4.727752685546875
+      },
+      {
+        "timestamp_seconds": 9.333333333333334,
+        "mean_flow_magnitude": 4.676435470581055
+      },
+      {
+        "timestamp_seconds": 9.6,
+        "mean_flow_magnitude": 3.982637882232666
+      },
+      {
+        "timestamp_seconds": 9.866666666666667,
+        "mean_flow_magnitude": 10.77436351776123
+      },
+      {
+        "timestamp_seconds": 10.133333333333333,
+        "mean_flow_magnitude": 5.67514705657959
+      },
+      {
+        "timestamp_seconds": 10.4,
+        "mean_flow_magnitude": 9.50059700012207
+      },
+      {
+        "timestamp_seconds": 10.666666666666666,
+        "mean_flow_magnitude": 11.873137474060059
+      },
+      {
+        "timestamp_seconds": 10.933333333333334,
+        "mean_flow_magnitude": 5.024924278259277
+      },
+      {
+        "timestamp_seconds": 11.2,
+        "mean_flow_magnitude": 1.8913993835449219
+      },
+      {
+        "timestamp_seconds": 11.466666666666667,
+        "mean_flow_magnitude": 9.018989562988281
+      },
+      {
+        "timestamp_seconds": 11.733333333333333,
+        "mean_flow_magnitude": 1.299180269241333
+      },
+      {
+        "timestamp_seconds": 12.0,
+        "mean_flow_magnitude": 1.5532405376434326
+      },
+      {
+        "timestamp_seconds": 12.266666666666667,
+        "mean_flow_magnitude": 2.53822922706604
+      },
+      {
+        "timestamp_seconds": 12.533333333333333,
+        "mean_flow_magnitude": 5.797493934631348
+      },
+      {
+        "timestamp_seconds": 12.8,
+        "mean_flow_magnitude": 8.660783767700195
+      },
+      {
+        "timestamp_seconds": 13.066666666666666,
+        "mean_flow_magnitude": 2.063764810562134
+      },
+      {
+        "timestamp_seconds": 13.333333333333334,
+        "mean_flow_magnitude": 4.674478530883789
+      },
+      {
+        "timestamp_seconds": 13.6,
+        "mean_flow_magnitude": 6.774286270141602
+      },
+      {
+        "timestamp_seconds": 13.866666666666667,
+        "mean_flow_magnitude": 1.8252623081207275
+      },
+      {
+        "timestamp_seconds": 14.133333333333333,
+        "mean_flow_magnitude": 1.5279957056045532
+      },
+      {
+        "timestamp_seconds": 14.4,
+        "mean_flow_magnitude": 0.8881536722183228
+      },
+      {
+        "timestamp_seconds": 14.666666666666666,
+        "mean_flow_magnitude": 1.4241677522659302
+      },
+      {
+        "timestamp_seconds": 14.933333333333334,
+        "mean_flow_magnitude": 1.6052215099334717
+      },
+      {
+        "timestamp_seconds": 15.2,
+        "mean_flow_magnitude": 1.7649976015090942
+      },
+      {
+        "timestamp_seconds": 15.466666666666667,
+        "mean_flow_magnitude": 8.962328910827637
+      },
+      {
+        "timestamp_seconds": 15.733333333333333,
+        "mean_flow_magnitude": 7.448315620422363
+      },
+      {
+        "timestamp_seconds": 16.0,
+        "mean_flow_magnitude": 4.517095565795898
+      },
+      {
+        "timestamp_seconds": 16.266666666666666,
+        "mean_flow_magnitude": 4.544159889221191
+      },
+      {
+        "timestamp_seconds": 16.533333333333335,
+        "mean_flow_magnitude": 3.2235536575317383
+      },
+      {
+        "timestamp_seconds": 16.8,
+        "mean_flow_magnitude": 5.743502616882324
+      },
+      {
+        "timestamp_seconds": 17.066666666666666,
+        "mean_flow_magnitude": 2.7194716930389404
+      },
+      {
+        "timestamp_seconds": 17.333333333333332,
+        "mean_flow_magnitude": 2.521937847137451
+      },
+      {
+        "timestamp_seconds": 17.6,
+        "mean_flow_magnitude": 2.343261480331421
+      },
+      {
+        "timestamp_seconds": 17.866666666666667,
+        "mean_flow_magnitude": 2.0352513790130615
+      },
+      {
+        "timestamp_seconds": 18.133333333333333,
+        "mean_flow_magnitude": 6.420283794403076
+      },
+      {
+        "timestamp_seconds": 18.4,
+        "mean_flow_magnitude": 1.779858946800232
+      },
+      {
+        "timestamp_seconds": 18.666666666666668,
+        "mean_flow_magnitude": 2.218348979949951
+      },
+      {
+        "timestamp_seconds": 18.933333333333334,
+        "mean_flow_magnitude": 2.175107479095459
+      },
+      {
+        "timestamp_seconds": 19.2,
+        "mean_flow_magnitude": 4.509361267089844
+      },
+      {
+        "timestamp_seconds": 19.466666666666665,
+        "mean_flow_magnitude": 7.744849681854248
+      },
+      {
+        "timestamp_seconds": 19.733333333333334,
+        "mean_flow_magnitude": 8.87797737121582
+      },
+      {
+        "timestamp_seconds": 20.0,
+        "mean_flow_magnitude": 9.809925079345703
+      },
+      {
+        "timestamp_seconds": 20.266666666666666,
+        "mean_flow_magnitude": 10.760909080505371
+      },
+      {
+        "timestamp_seconds": 20.533333333333335,
+        "mean_flow_magnitude": 5.0447821617126465
+      },
+      {
+        "timestamp_seconds": 20.8,
+        "mean_flow_magnitude": 7.079065799713135
+      },
+      {
+        "timestamp_seconds": 21.066666666666666,
+        "mean_flow_magnitude": 5.7151947021484375
+      },
+      {
+        "timestamp_seconds": 21.333333333333332,
+        "mean_flow_magnitude": 3.7272226810455322
+      },
+      {
+        "timestamp_seconds": 21.6,
+        "mean_flow_magnitude": 9.17778205871582
+      },
+      {
+        "timestamp_seconds": 21.866666666666667,
+        "mean_flow_magnitude": 9.097902297973633
+      },
+      {
+        "timestamp_seconds": 22.133333333333333,
+        "mean_flow_magnitude": 8.053722381591797
+      },
+      {
+        "timestamp_seconds": 22.4,
+        "mean_flow_magnitude": 6.396510601043701
+      },
+      {
+        "timestamp_seconds": 22.666666666666668,
+        "mean_flow_magnitude": 5.804723739624023
+      },
+      {
+        "timestamp_seconds": 22.933333333333334,
+        "mean_flow_magnitude": 5.140940189361572
+      },
+      {
+        "timestamp_seconds": 23.2,
+        "mean_flow_magnitude": 5.114467144012451
+      },
+      {
+        "timestamp_seconds": 23.466666666666665,
+        "mean_flow_magnitude": 2.7039167881011963
+      },
+      {
+        "timestamp_seconds": 23.733333333333334,
+        "mean_flow_magnitude": 2.501967668533325
+      },
+      {
+        "timestamp_seconds": 24.0,
+        "mean_flow_magnitude": 6.344841957092285
+      },
+      {
+        "timestamp_seconds": 24.266666666666666,
+        "mean_flow_magnitude": 10.838765144348145
+      },
+      {
+        "timestamp_seconds": 24.533333333333335,
+        "mean_flow_magnitude": 5.495378494262695
+      },
+      {
+        "timestamp_seconds": 24.8,
+        "mean_flow_magnitude": 2.1920621395111084
+      },
+      {
+        "timestamp_seconds": 25.066666666666666,
+        "mean_flow_magnitude": 3.262585163116455
+      },
+      {
+        "timestamp_seconds": 25.333333333333332,
+        "mean_flow_magnitude": 3.5985186100006104
+      },
+      {
+        "timestamp_seconds": 25.6,
+        "mean_flow_magnitude": 3.601393938064575
+      },
+      {
+        "timestamp_seconds": 25.866666666666667,
+        "mean_flow_magnitude": 4.32356595993042
+      },
+      {
+        "timestamp_seconds": 26.133333333333333,
+        "mean_flow_magnitude": 4.6786932945251465
+      },
+      {
+        "timestamp_seconds": 26.4,
+        "mean_flow_magnitude": 5.312495708465576
+      },
+      {
+        "timestamp_seconds": 26.666666666666668,
+        "mean_flow_magnitude": 4.64947509765625
+      },
+      {
+        "timestamp_seconds": 26.933333333333334,
+        "mean_flow_magnitude": 4.228050231933594
+      },
+      {
+        "timestamp_seconds": 27.2,
+        "mean_flow_magnitude": 4.522343158721924
+      },
+      {
+        "timestamp_seconds": 27.466666666666665,
+        "mean_flow_magnitude": 2.9208905696868896
+      },
+      {
+        "timestamp_seconds": 27.733333333333334,
+        "mean_flow_magnitude": 2.9459128379821777
+      },
+      {
+        "timestamp_seconds": 28.0,
+        "mean_flow_magnitude": 5.578096866607666
+      },
+      {
+        "timestamp_seconds": 28.266666666666666,
+        "mean_flow_magnitude": 2.4696812629699707
+      },
+      {
+        "timestamp_seconds": 28.533333333333335,
+        "mean_flow_magnitude": 2.4365365505218506
+      },
+      {
+        "timestamp_seconds": 28.8,
+        "mean_flow_magnitude": 1.5538811683654785
+      },
+      {
+        "timestamp_seconds": 29.066666666666666,
+        "mean_flow_magnitude": 1.527695894241333
+      },
+      {
+        "timestamp_seconds": 29.333333333333332,
+        "mean_flow_magnitude": 2.2333290576934814
+      },
+      {
+        "timestamp_seconds": 29.6,
+        "mean_flow_magnitude": 1.9616416692733765
+      },
+      {
+        "timestamp_seconds": 29.866666666666667,
+        "mean_flow_magnitude": 3.1853721141815186
+      },
+      {
+        "timestamp_seconds": 30.133333333333333,
+        "mean_flow_magnitude": 6.478115558624268
+      },
+      {
+        "timestamp_seconds": 30.4,
+        "mean_flow_magnitude": 3.243988275527954
+      },
+      {
+        "timestamp_seconds": 30.666666666666668,
+        "mean_flow_magnitude": 4.307827472686768
+      },
+      {
+        "timestamp_seconds": 30.933333333333334,
+        "mean_flow_magnitude": 5.108922004699707
+      },
+      {
+        "timestamp_seconds": 31.2,
+        "mean_flow_magnitude": 5.142094135284424
+      },
+      {
+        "timestamp_seconds": 31.466666666666665,
+        "mean_flow_magnitude": 3.886887311935425
+      },
+      {
+        "timestamp_seconds": 31.733333333333334,
+        "mean_flow_magnitude": 3.802523136138916
+      },
+      {
+        "timestamp_seconds": 32.0,
+        "mean_flow_magnitude": 2.860257625579834
+      },
+      {
+        "timestamp_seconds": 32.266666666666666,
+        "mean_flow_magnitude": 5.544826507568359
+      },
+      {
+        "timestamp_seconds": 32.53333333333333,
+        "mean_flow_magnitude": 6.932351112365723
+      },
+      {
+        "timestamp_seconds": 32.8,
+        "mean_flow_magnitude": 4.819488525390625
+      },
+      {
+        "timestamp_seconds": 33.06666666666667,
+        "mean_flow_magnitude": 2.086756944656372
+      },
+      {
+        "timestamp_seconds": 33.333333333333336,
+        "mean_flow_magnitude": 2.5002472400665283
+      },
+      {
+        "timestamp_seconds": 33.6,
+        "mean_flow_magnitude": 4.570871829986572
+      },
+      {
+        "timestamp_seconds": 33.86666666666667,
+        "mean_flow_magnitude": 4.075389862060547
+      },
+      {
+        "timestamp_seconds": 34.13333333333333,
+        "mean_flow_magnitude": 2.850785732269287
+      },
+      {
+        "timestamp_seconds": 34.4,
+        "mean_flow_magnitude": 2.359630823135376
+      },
+      {
+        "timestamp_seconds": 34.666666666666664,
+        "mean_flow_magnitude": 5.38602876663208
+      },
+      {
+        "timestamp_seconds": 34.93333333333333,
+        "mean_flow_magnitude": 4.689231872558594
+      },
+      {
+        "timestamp_seconds": 35.2,
+        "mean_flow_magnitude": 4.770141124725342
+      },
+      {
+        "timestamp_seconds": 35.46666666666667,
+        "mean_flow_magnitude": 5.450130462646484
+      },
+      {
+        "timestamp_seconds": 35.733333333333334,
+        "mean_flow_magnitude": 3.004997730255127
+      },
+      {
+        "timestamp_seconds": 36.0,
+        "mean_flow_magnitude": 6.029146194458008
+      },
+      {
+        "timestamp_seconds": 36.266666666666666,
+        "mean_flow_magnitude": 5.876546859741211
+      },
+      {
+        "timestamp_seconds": 36.53333333333333,
+        "mean_flow_magnitude": 5.790403366088867
+      },
+      {
+        "timestamp_seconds": 36.8,
+        "mean_flow_magnitude": 6.475764274597168
+      },
+      {
+        "timestamp_seconds": 37.06666666666667,
+        "mean_flow_magnitude": 6.017239093780518
+      },
+      {
+        "timestamp_seconds": 37.333333333333336,
+        "mean_flow_magnitude": 8.469186782836914
+      },
+      {
+        "timestamp_seconds": 37.6,
+        "mean_flow_magnitude": 9.269174575805664
+      },
+      {
+        "timestamp_seconds": 37.86666666666667,
+        "mean_flow_magnitude": 1.1736950874328613
+      },
+      {
+        "timestamp_seconds": 38.13333333333333,
+        "mean_flow_magnitude": 1.286487102508545
+      },
+      {
+        "timestamp_seconds": 38.4,
+        "mean_flow_magnitude": 5.301820755004883
+      },
+      {
+        "timestamp_seconds": 38.666666666666664,
+        "mean_flow_magnitude": 2.301039218902588
+      },
+      {
+        "timestamp_seconds": 38.93333333333333,
+        "mean_flow_magnitude": 7.733123302459717
+      },
+      {
+        "timestamp_seconds": 39.2,
+        "mean_flow_magnitude": 8.902850151062012
+      },
+      {
+        "timestamp_seconds": 39.46666666666667,
+        "mean_flow_magnitude": 9.848409652709961
+      },
+      {
+        "timestamp_seconds": 39.733333333333334,
+        "mean_flow_magnitude": 6.875686168670654
+      },
+      {
+        "timestamp_seconds": 40.0,
+        "mean_flow_magnitude": 7.236306190490723
+      },
+      {
+        "timestamp_seconds": 40.266666666666666,
+        "mean_flow_magnitude": 6.456860065460205
+      },
+      {
+        "timestamp_seconds": 40.53333333333333,
+        "mean_flow_magnitude": 6.256846904754639
+      },
+      {
+        "timestamp_seconds": 40.8,
+        "mean_flow_magnitude": 4.7411017417907715
+      },
+      {
+        "timestamp_seconds": 41.06666666666667,
+        "mean_flow_magnitude": 5.210934162139893
+      },
+      {
+        "timestamp_seconds": 41.333333333333336,
+        "mean_flow_magnitude": 4.824563026428223
+      },
+      {
+        "timestamp_seconds": 41.6,
+        "mean_flow_magnitude": 7.1385817527771
+      },
+      {
+        "timestamp_seconds": 41.86666666666667,
+        "mean_flow_magnitude": 5.864968776702881
+      },
+      {
+        "timestamp_seconds": 42.13333333333333,
+        "mean_flow_magnitude": 1.811639666557312
+      },
+      {
+        "timestamp_seconds": 42.4,
+        "mean_flow_magnitude": 1.9492409229278564
+      },
+      {
+        "timestamp_seconds": 42.666666666666664,
+        "mean_flow_magnitude": 4.087002277374268
+      },
+      {
+        "timestamp_seconds": 42.93333333333333,
+        "mean_flow_magnitude": 0.5609461069107056
+      },
+      {
+        "timestamp_seconds": 43.2,
+        "mean_flow_magnitude": 0.7033276557922363
+      },
+      {
+        "timestamp_seconds": 43.46666666666667,
+        "mean_flow_magnitude": 0.7669717073440552
+      },
+      {
+        "timestamp_seconds": 43.733333333333334,
+        "mean_flow_magnitude": 5.2300286293029785
+      },
+      {
+        "timestamp_seconds": 44.0,
+        "mean_flow_magnitude": 9.712451934814453
+      },
+      {
+        "timestamp_seconds": 44.266666666666666,
+        "mean_flow_magnitude": 6.978569030761719
+      },
+      {
+        "timestamp_seconds": 44.53333333333333,
+        "mean_flow_magnitude": 5.517950057983398
+      },
+      {
+        "timestamp_seconds": 44.8,
+        "mean_flow_magnitude": 4.860686302185059
+      },
+      {
+        "timestamp_seconds": 45.06666666666667,
+        "mean_flow_magnitude": 3.509413480758667
+      },
+      {
+        "timestamp_seconds": 45.333333333333336,
+        "mean_flow_magnitude": 2.3220975399017334
+      },
+      {
+        "timestamp_seconds": 45.6,
+        "mean_flow_magnitude": 5.788398742675781
+      },
+      {
+        "timestamp_seconds": 45.86666666666667,
+        "mean_flow_magnitude": 2.0472536087036133
+      },
+      {
+        "timestamp_seconds": 46.13333333333333,
+        "mean_flow_magnitude": 2.652345895767212
+      }
+    ],
+    "method": "opencv-farneback-on-sampled-frames"
+  },
+  "transcript_segments": [
+    {
+      "start_seconds": 0.0,
+      "end_seconds": 1.72,
+      "text": "I'm about to surprise the college classroom.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 1.9,
+      "end_seconds": 2.86,
+      "text": "How's it going everybody?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 3.28,
+      "end_seconds": 3.3,
+      "text": "What?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 4.48,
+      "end_seconds": 7.1,
+      "text": "All right, if you guys subscribe to MrBeast, come on down.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 7.24,
+      "end_seconds": 8.36,
+      "text": "Okay, he is subscribed.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 8.6,
+      "end_seconds": 11.16,
+      "text": "If you flip this coin and it lands on the money symbol,",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 11.3,
+      "end_seconds": 12.92,
+      "text": "I will give you $30,000.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 13.24,
+      "end_seconds": 16.12,
+      "text": "But if it lands on the tiger symbol, you get nothing.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 16.4,
+      "end_seconds": 18.06,
+      "text": "And I'll split the money with everyone here,",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 18.14,
+      "end_seconds": 19.6,
+      "text": "which is roughly $700.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 20.14,
+      "end_seconds": 22.25,
+      "text": "Come on, bring in the money.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 24.19,
+      "end_seconds": 26.01,
+      "text": "Okay, you gotta flip it really high.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 26.11,
+      "end_seconds": 27.45,
+      "text": "I need a bunch of spins.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 27.93,
+      "end_seconds": 42.36,
+      "text": "Is this gonna make things awkward for you",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 42.36,
+      "end_seconds": 45.76,
+      "text": "That he won all the money and to be honest. I don't really talk to anyone. Oh",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "ocr_spans": [],
+  "audio": {
+    "analyzed": true,
+    "duration_seconds": 46.41301587301587,
+    "sample_rate": 22050,
+    "rms_mean": 0.14864052832126617,
+    "silence_ratio": 0.0005002501250625312,
+    "estimated_tempo_bpm": 123.046875,
+    "beat_times_seconds": [
+      0.06965986394557823,
+      0.5340589569160997,
+      1.0216780045351475,
+      1.509297052154195,
+      1.9969160997732427,
+      2.507755102040816,
+      3.0418140589569163,
+      3.575873015873016,
+      4.08671201814059,
+      4.620770975056689,
+      5.131609977324263,
+      5.596009070294785,
+      6.130068027210885,
+      6.617687074829932,
+      7.012426303854875,
+      7.430385487528345,
+      7.87156462585034,
+      8.289523809523809,
+      8.800362811791382,
+      9.334421768707482,
+      9.845260770975056,
+      10.379319727891156,
+      10.843718820861678,
+      11.3081179138322,
+      11.72607709750567,
+      12.167256235827665,
+      12.60843537414966,
+      13.119274376417234,
+      13.676553287981859,
+      14.187392290249432,
+      14.675011337868481,
+      15.185850340136055,
+      15.650249433106575,
+      16.16108843537415,
+      16.602267573696146,
+      17.066666666666666,
+      17.507845804988662,
+      17.972244897959182,
+      18.436643990929706,
+      18.901043083900227,
+      19.388662131519276,
+      19.853061224489796,
+      20.317460317460316,
+      20.78185941043084,
+      21.269478458049885,
+      21.73387755102041,
+      22.19827664399093,
+      22.66267573696145,
+      23.1502947845805,
+      23.637913832199548,
+      24.125532879818593,
+      24.61315192743764,
+      25.054331065759637,
+      25.518730158730158,
+      25.98312925170068,
+      26.447528344671202,
+      26.958367346938775,
+      27.445986394557824,
+      27.93360544217687,
+      28.444444444444443,
+      28.93206349206349,
+      29.396462585034012,
+      29.90730158730159,
+      30.394920634920634,
+      30.905759637188208,
+      31.41659863945578,
+      31.90421768707483,
+      32.391836734693875,
+      32.8562358276644,
+      33.32063492063492,
+      33.78503401360544,
+      34.249433106575964,
+      34.71383219954649,
+      35.178231292517005,
+      35.64263038548753,
+      36.08380952380952,
+      36.594648526077094,
+      37.10548752834467,
+      37.61632653061225,
+      38.12716553287982,
+      38.61478458049886,
+      39.12562358276644,
+      39.613242630385486,
+      40.100861678004534,
+      40.61170068027211,
+      41.145759637188206,
+      41.633378684807255,
+      42.05133786848072,
+      42.49251700680272,
+      42.956916099773245,
+      43.39809523809524,
+      43.86249433106576,
+      44.32689342403628
+    ],
+    "onset_times_seconds": [
+      0.06965986394557823,
+      0.23219954648526078,
+      0.37151927437641724,
+      0.5340589569160997,
+      0.6733786848072563,
+      0.7894784580498866,
+      0.9984580498866213,
+      1.1145578231292517,
+      1.3003174603174603,
+      1.3699773242630386,
+      1.509297052154195,
+      1.6253968253968254,
+      1.9969160997732427,
+      2.2058956916099772,
+      2.345215419501134,
+      2.6006349206349206,
+      2.8792743764172335,
+      4.08671201814059,
+      4.272471655328798,
+      4.481451247165533,
+      4.597551020408163,
+      4.85297052154195,
+      5.015510204081632,
+      5.131609977324263,
+      5.2477097505668935,
+      5.38702947845805,
+      5.50312925170068,
+      5.572789115646258,
+      5.758548752834467,
+      5.874648526077097,
+      6.013968253968254,
+      6.130068027210885,
+      6.292607709750567,
+      6.431927437641724,
+      6.617687074829932,
+      6.826666666666667,
+      6.965986394557823,
+      7.291065759637188,
+      7.4071655328798185,
+      7.685804988662132,
+      7.801904761904762,
+      8.057324263038549,
+      8.289523809523809,
+      8.452063492063493,
+      8.614603174603175,
+      8.777142857142858,
+      9.05578231292517,
+      9.125442176870749,
+      9.311201814058958,
+      9.566621315192744,
+      9.7059410430839,
+      9.798820861678005,
+      9.984580498866213,
+      10.12390022675737,
+      10.356099773242631,
+      10.541859410430838,
+      10.681179138321996,
+      10.820498866213152,
+      10.983038548752834,
+      11.168798185941043,
+      11.3081179138322,
+      11.586757369614512,
+      11.702857142857143,
+      11.842176870748299,
+      12.004716553287983,
+      12.167256235827665,
+      12.26013605442177,
+      12.376235827664399,
+      12.585215419501134,
+      12.84063492063492,
+      12.979954648526077,
+      13.119274376417234,
+      13.281814058956916,
+      13.351473922902494,
+      13.676553287981859,
+      13.862312925170068,
+      14.187392290249432,
+      14.303492063492063,
+      14.535691609977324,
+      14.675011337868481,
+      15.000090702947846,
+      15.185850340136055,
+      15.371609977324264,
+      15.62702947845805,
+      15.766349206349206,
+      15.952108843537415,
+      16.16108843537415,
+      16.439727891156462,
+      16.69514739229025,
+      16.788027210884355,
+      16.880907029478458,
+      17.04344671201814,
+      17.159546485260773,
+      17.22920634920635,
+      17.41496598639456,
+      17.507845804988662,
+      17.69360544217687,
+      17.786485260770974,
+      17.972244897959182,
+      18.018684807256236,
+      18.250884353741498,
+      18.3437641723356,
+      18.854603174603174,
+      18.901043083900227,
+      19.06358276643991,
+      19.4118820861678,
+      19.620861678004534,
+      19.71374149659864,
+      19.922721088435374,
+      20.619319727891156,
+      20.78185941043084,
+      21.13015873015873,
+      21.269478458049885,
+      21.73387755102041,
+      21.989297052154196,
+      22.105396825396827,
+      22.267936507936508,
+      23.754013605442175,
+      23.939773242630384,
+      24.38095238095238,
+      24.61315192743764,
+      24.91501133786848,
+      25.031111111111112,
+      25.26331065759637,
+      25.425850340136055,
+      25.495510204081633,
+      25.611609977324264,
+      25.820589569160997,
+      25.86702947845805,
+      26.02956916099773,
+      26.16888888888889,
+      26.377868480725624,
+      26.70294784580499,
+      26.958367346938775,
+      27.144126984126984,
+      27.353106575963718,
+      28.93206349206349,
+      29.373242630385487,
+      30.046621315192745,
+      31.509478458049887,
+      33.45995464852608,
+      36.08380952380952,
+      37.384126984126986,
+      37.593106575963716,
+      37.73242630385487,
+      37.802086167800454,
+      38.22004535147392,
+      38.33614512471655,
+      38.846984126984125,
+      39.24172335600907,
+      40.47238095238095,
+      40.61170068027211,
+      40.89034013605442,
+      41.00643990929705,
+      41.145759637188206,
+      41.308299319727894,
+      41.470839002267574,
+      41.633378684807255,
+      41.795918367346935,
+      41.9352380952381,
+      42.05133786848072,
+      42.237097505668935,
+      42.49251700680272,
+      42.74793650793651,
+      42.93369614512471,
+      43.049795918367344,
+      43.23555555555556,
+      43.32843537414966,
+      43.46775510204082,
+      43.53741496598639,
+      43.769614512471655,
+      44.02503401360544,
+      44.1643537414966,
+      44.32689342403628,
+      44.67519274376417,
+      44.860952380952384,
+      45.00027210884354,
+      45.186031746031745,
+      45.37179138321996,
+      45.51111111111111,
+      45.627210884353744,
+      45.905850340136055,
+      46.021950113378686,
+      46.300589569161
+    ],
+    "method": "librosa-0.11.0",
+    "warning": null
+  },
+  "stages": {
+    "media_validation": {
+      "status": "complete",
+      "engine": "ffprobe",
+      "detail": null
+    },
+    "frame_sampling": {
+      "status": "complete",
+      "engine": "opencv",
+      "detail": null
+    },
+    "asr": {
+      "status": "complete",
+      "engine": "vidtrace-faster-whisper",
+      "detail": "Detected language: en; 15 segments."
+    },
+    "ocr": {
+      "status": "skipped",
+      "engine": "paddleocr/vidtrace",
+      "detail": "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+    },
+    "audio_features": {
+      "status": "complete",
+      "engine": "librosa-0.11.0",
+      "detail": null
+    }
+  },
+  "warnings": [
+    "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+  ],
+  "limitations": [
+    "Phase 1 extracts evidence; it does not yet run a fine-tuned VLM.",
+    "Cut, motion and beat events are algorithmic candidates, not ground truth.",
+    "This report does not predict views or establish causal virality drivers."
+  ]
+}

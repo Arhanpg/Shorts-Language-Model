@@ -1,0 +1,663 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "instagram",
+  "source_id": "DdB26tLiCgh",
+  "span_count": 50,
+  "spans": [
+    {
+      "timestamp_seconds": 0.0,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9999463558197021,
+      "bbox_xyxy": [
+        178,
+        135,
+        461,
+        190
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 0
+    },
+    {
+      "timestamp_seconds": 0.0,
+      "text": "Morning Routine",
+      "confidence": 0.9999963641166687,
+      "bbox_xyxy": [
+        181,
+        179,
+        459,
+        229
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 0
+    },
+    {
+      "timestamp_seconds": 0.26666666666666666,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9816453456878662,
+      "bbox_xyxy": [
+        178,
+        136,
+        460,
+        189
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 8
+    },
+    {
+      "timestamp_seconds": 0.26666666666666666,
+      "text": "Morning Routine",
+      "confidence": 0.9999963641166687,
+      "bbox_xyxy": [
+        181,
+        179,
+        459,
+        229
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 8
+    },
+    {
+      "timestamp_seconds": 0.5333333333333333,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9999644756317139,
+      "bbox_xyxy": [
+        179,
+        137,
+        460,
+        188
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 16
+    },
+    {
+      "timestamp_seconds": 0.5333333333333333,
+      "text": "Morning Routine",
+      "confidence": 0.999994695186615,
+      "bbox_xyxy": [
+        182,
+        180,
+        458,
+        228
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 16
+    },
+    {
+      "timestamp_seconds": 0.5333333333333333,
+      "text": "First ride free",
+      "confidence": 0.9999896883964539,
+      "bbox_xyxy": [
+        208,
+        785,
+        431,
+        831
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 16
+    },
+    {
+      "timestamp_seconds": 0.5333333333333333,
+      "text": "(*T&C Apply)",
+      "confidence": 0.9995860457420349,
+      "bbox_xyxy": [
+        82,
+        883,
+        207,
+        913
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 16
+    },
+    {
+      "timestamp_seconds": 1.0666666666666667,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9999620914459229,
+      "bbox_xyxy": [
+        179,
+        137,
+        460,
+        188
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 32
+    },
+    {
+      "timestamp_seconds": 1.0666666666666667,
+      "text": "Morning Routine",
+      "confidence": 0.9999945163726807,
+      "bbox_xyxy": [
+        182,
+        180,
+        458,
+        228
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 32
+    },
+    {
+      "timestamp_seconds": 1.0666666666666667,
+      "text": "First ride free",
+      "confidence": 0.9999905824661255,
+      "bbox_xyxy": [
+        208,
+        785,
+        431,
+        831
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 32
+    },
+    {
+      "timestamp_seconds": 1.0666666666666667,
+      "text": "(*T&C Apply)",
+      "confidence": 0.9997432827949524,
+      "bbox_xyxy": [
+        82,
+        883,
+        208,
+        913
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 32
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.998889148235321,
+      "bbox_xyxy": [
+        177,
+        131,
+        463,
+        195
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "Morning Routine",
+      "confidence": 0.9999791383743286,
+      "bbox_xyxy": [
+        181,
+        178,
+        460,
+        233
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "Airtel",
+      "confidence": 0.999840497970581,
+      "bbox_xyxy": [
+        313,
+        280,
+        356,
+        309
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "6:23",
+      "confidence": 0.9998679161071777,
+      "bbox_xyxy": [
+        253,
+        357,
+        503,
+        542
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "22% Charged · Slow Charger",
+      "confidence": 0.9748096466064453,
+      "bbox_xyxy": [
+        284,
+        329,
+        534,
+        443
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "ufldol",
+      "confidence": 0.6829071044921875,
+      "bbox_xyxy": [
+        150,
+        541,
+        455,
+        719
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "Uber",
+      "confidence": 0.9522950053215027,
+      "bbox_xyxy": [
+        193,
+        514,
+        239,
+        552
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "Offer vald on cars autos and bakes",
+      "confidence": 0.9181927442550659,
+      "bbox_xyxy": [
+        235,
+        542,
+        391,
+        611
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "Your first ride is now FREE",
+      "confidence": 0.9998477697372437,
+      "bbox_xyxy": [
+        237,
+        516,
+        434,
+        610
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "3",
+      "confidence": 0.5456860065460205,
+      "bbox_xyxy": [
+        143,
+        687,
+        356,
+        815
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "text": "eeer",
+      "confidence": 0.5553662776947021,
+      "bbox_xyxy": [
+        172,
+        622,
+        379,
+        757
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 56
+    },
+    {
+      "timestamp_seconds": 3.466666666666667,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9571636319160461,
+      "bbox_xyxy": [
+        182,
+        140,
+        461,
+        187
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 104
+    },
+    {
+      "timestamp_seconds": 3.466666666666667,
+      "text": "Morning Routine",
+      "confidence": 0.9979069232940674,
+      "bbox_xyxy": [
+        178,
+        180,
+        458,
+        231
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 104
+    },
+    {
+      "timestamp_seconds": 3.466666666666667,
+      "text": "Uber Auto",
+      "confidence": 0.9753333330154419,
+      "bbox_xyxy": [
+        330,
+        569,
+        529,
+        608
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 104
+    },
+    {
+      "timestamp_seconds": 3.466666666666667,
+      "text": "Maxima",
+      "confidence": 0.9416639804840088,
+      "bbox_xyxy": [
+        388,
+        773,
+        454,
+        788
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 104
+    },
+    {
+      "timestamp_seconds": 3.466666666666667,
+      "text": "sooraj ki lo",
+      "confidence": 0.9920120239257812,
+      "bbox_xyxy": [
+        228,
+        787,
+        412,
+        833
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 104
+    },
+    {
+      "timestamp_seconds": 3.466666666666667,
+      "text": "HR68C",
+      "confidence": 0.9992847442626953,
+      "bbox_xyxy": [
+        401,
+        848,
+        440,
+        863
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 104
+    },
+    {
+      "timestamp_seconds": 3.466666666666667,
+      "text": "CNG",
+      "confidence": 0.9998452663421631,
+      "bbox_xyxy": [
+        279,
+        869,
+        299,
+        880
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 104
+    },
+    {
+      "timestamp_seconds": 3.466666666666667,
+      "text": "5942",
+      "confidence": 0.9868444204330444,
+      "bbox_xyxy": [
+        406,
+        860,
+        438,
+        875
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 104
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9997403621673584,
+      "bbox_xyxy": [
+        180,
+        139,
+        462,
+        188
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 192
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "text": "Morning Routine",
+      "confidence": 0.9999396800994873,
+      "bbox_xyxy": [
+        182,
+        179,
+        459,
+        231
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 192
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "text": "Uber Auto",
+      "confidence": 0.9343212842941284,
+      "bbox_xyxy": [
+        347,
+        560,
+        549,
+        603
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 192
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "text": "Maxima",
+      "confidence": 0.9390471577644348,
+      "bbox_xyxy": [
+        405,
+        766,
+        474,
+        780
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 192
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "text": "BAJAU",
+      "confidence": 0.806073009967804,
+      "bbox_xyxy": [
+        428,
+        762,
+        451,
+        768
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 192
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "text": "chale ji?",
+      "confidence": 0.9622409343719482,
+      "bbox_xyxy": [
+        249,
+        785,
+        393,
+        835
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 192
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "text": "HR68C",
+      "confidence": 0.9995371699333191,
+      "bbox_xyxy": [
+        418,
+        841,
+        458,
+        856
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 192
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "text": "CNG",
+      "confidence": 0.9998294711112976,
+      "bbox_xyxy": [
+        296,
+        860,
+        316,
+        872
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 192
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "text": "5942",
+      "confidence": 0.9993932247161865,
+      "bbox_xyxy": [
+        422,
+        852,
+        456,
+        868
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 192
+    },
+    {
+      "timestamp_seconds": 6.666666666666667,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9874834418296814,
+      "bbox_xyxy": [
+        176,
+        132,
+        461,
+        192
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 200
+    },
+    {
+      "timestamp_seconds": 6.666666666666667,
+      "text": "Morning Routine",
+      "confidence": 0.9999882578849792,
+      "bbox_xyxy": [
+        180,
+        177,
+        461,
+        231
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 200
+    },
+    {
+      "timestamp_seconds": 8.533333333333333,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9999640583992004,
+      "bbox_xyxy": [
+        179,
+        136,
+        458,
+        188
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 256
+    },
+    {
+      "timestamp_seconds": 8.533333333333333,
+      "text": "Morning Routine",
+      "confidence": 0.9999955892562866,
+      "bbox_xyxy": [
+        182,
+        180,
+        457,
+        227
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 256
+    },
+    {
+      "timestamp_seconds": 8.533333333333333,
+      "text": "tussi vi haslo",
+      "confidence": 0.966572642326355,
+      "bbox_xyxy": [
+        213,
+        786,
+        427,
+        831
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 256
+    },
+    {
+      "timestamp_seconds": 10.4,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9999721646308899,
+      "bbox_xyxy": [
+        178,
+        136,
+        462,
+        188
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 312
+    },
+    {
+      "timestamp_seconds": 10.4,
+      "text": "Morning Routine",
+      "confidence": 0.9999952912330627,
+      "bbox_xyxy": [
+        181,
+        180,
+        460,
+        229
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 312
+    },
+    {
+      "timestamp_seconds": 15.2,
+      "text": "Desi Dad Sunday",
+      "confidence": 0.9989418387413025,
+      "bbox_xyxy": [
+        178,
+        137,
+        464,
+        191
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 456
+    },
+    {
+      "timestamp_seconds": 15.2,
+      "text": "Morning Routine",
+      "confidence": 0.9999856352806091,
+      "bbox_xyxy": [
+        181,
+        179,
+        461,
+        231
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 456
+    },
+    {
+      "timestamp_seconds": 20.8,
+      "text": "Uber",
+      "confidence": 0.9764591455459595,
+      "bbox_xyxy": [
+        166,
+        490,
+        472,
+        644
+      ],
+      "engine": "vidtrace-paddleocr",
+      "frame_index": 624
+    }
+  ],
+  "ocr_stage": {
+    "status": "complete",
+    "engine": "vidtrace-paddleocr-gpu-0",
+    "detail": "50 text spans from up to 12 frames."
+  }
+}

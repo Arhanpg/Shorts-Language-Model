@@ -1,0 +1,2472 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-11-23T08:32:11.196561Z",
+  "project": "Shorts Language Model",
+  "phase": "phase-1-single-video-telemetry",
+  "source_type": "local_file",
+  "rights": null,
+  "video": {
+    "file_name": "rqsRdfdN4uI.mp4",
+    "sha256": "e7b2b079f75ac53d68bd1179106deb09508bca3cb2c92bd6642e9da45853a33c",
+    "file_size_bytes": 59940128,
+    "duration_seconds": 46.033333,
+    "width": 2160,
+    "height": 3840,
+    "fps": 30.0,
+    "frame_count": 1381,
+    "video_codec": "av1",
+    "audio_present": true,
+    "audio_codec": "opus",
+    "aspect_ratio": "9:16"
+  },
+  "hook_window": {
+    "start_seconds": 0.0,
+    "end_seconds": 3.0,
+    "frame_count": 8,
+    "cut_candidate_count": 0,
+    "mean_motion_score": 2.1592424313227334,
+    "note": "Descriptive signals only; hook quality is not inferred in Phase 1."
+  },
+  "frame_evidence": [
+    {
+      "timestamp_seconds": 0.0,
+      "frame_index": 0,
+      "reason": [
+        "hook_window"
+      ],
+      "motion_score": 0.0,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.26666666666666666,
+      "frame_index": 8,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 2.9068007469177246,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.5333333333333333,
+      "frame_index": 16,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 2.751002788543701,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.8,
+      "frame_index": 24,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 2.652182102203369,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.0666666666666667,
+      "frame_index": 32,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 2.5300991535186768,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.3333333333333333,
+      "frame_index": 40,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 6.391429424285889,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.6,
+      "frame_index": 48,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 4.4437103271484375,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "frame_index": 56,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 1.5560914278030396,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 4.533333333333333,
+      "frame_index": 136,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.662805080413818,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "frame_index": 192,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.048398017883301,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 10.133333333333333,
+      "frame_index": 304,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 3.524376153945923,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 11.466666666666667,
+      "frame_index": 344,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 2.869732141494751,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 16.0,
+      "frame_index": 480,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.188518524169922,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 17.866666666666667,
+      "frame_index": 536,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.412281513214111,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 19.2,
+      "frame_index": 576,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.17744255065918,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 21.866666666666667,
+      "frame_index": 656,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 8.506829261779785,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 26.133333333333333,
+      "frame_index": 784,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.141794681549072,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 27.466666666666665,
+      "frame_index": 824,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.533256530761719,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 32.53333333333333,
+      "frame_index": 976,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.83483362197876,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 34.93333333333333,
+      "frame_index": 1048,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 3.5059170722961426,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 36.0,
+      "frame_index": 1080,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.139916896820068,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 39.2,
+      "frame_index": 1176,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.0872883796691895,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 41.86666666666667,
+      "frame_index": 1256,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.95456600189209,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 44.8,
+      "frame_index": 1344,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.34256649017334,
+      "image_path": null
+    }
+  ],
+  "cut_candidates": [
+    {
+      "timestamp_seconds": 4.533333333333333,
+      "visual_difference": 0.3043714824219028,
+      "confidence": 0.3043714824219028,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 6.4,
+      "visual_difference": 0.5723072693564527,
+      "confidence": 0.5723072693564527,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 8.8,
+      "visual_difference": 0.42180280393950037,
+      "confidence": 0.42180280393950037,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 10.133333333333333,
+      "visual_difference": 0.6630218349466693,
+      "confidence": 0.6630218349466693,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 14.933333333333334,
+      "visual_difference": 0.37693476740229265,
+      "confidence": 0.37693476740229265,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 16.0,
+      "visual_difference": 0.6767017918151598,
+      "confidence": 0.6767017918151598,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 17.866666666666667,
+      "visual_difference": 0.6298647700040771,
+      "confidence": 0.6298647700040771,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 19.2,
+      "visual_difference": 0.6441286309036608,
+      "confidence": 0.6441286309036608,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 20.266666666666666,
+      "visual_difference": 0.3847040216735224,
+      "confidence": 0.3847040216735224,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 21.866666666666667,
+      "visual_difference": 0.3995792270606948,
+      "confidence": 0.3995792270606948,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 26.133333333333333,
+      "visual_difference": 0.6301662369190559,
+      "confidence": 0.6301662369190559,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 27.466666666666665,
+      "visual_difference": 0.581834047789816,
+      "confidence": 0.581834047789816,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 30.933333333333334,
+      "visual_difference": 0.4325991263882088,
+      "confidence": 0.4325991263882088,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 32.53333333333333,
+      "visual_difference": 0.4591032763922902,
+      "confidence": 0.4591032763922902,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 34.93333333333333,
+      "visual_difference": 0.43207400435760684,
+      "confidence": 0.43207400435760684,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 36.0,
+      "visual_difference": 0.3661465712108039,
+      "confidence": 0.3661465712108039,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 38.13333333333333,
+      "visual_difference": 0.47268627784940415,
+      "confidence": 0.47268627784940415,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 39.2,
+      "visual_difference": 0.4691919500096705,
+      "confidence": 0.4691919500096705,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 40.0,
+      "visual_difference": 0.3183902866522257,
+      "confidence": 0.3183902866522257,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 40.8,
+      "visual_difference": 0.4486034826454619,
+      "confidence": 0.4486034826454619,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 41.86666666666667,
+      "visual_difference": 0.46307261795866583,
+      "confidence": 0.46307261795866583,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 44.8,
+      "visual_difference": 0.2853712116396856,
+      "confidence": 0.2853712116396856,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    }
+  ],
+  "motion": {
+    "sample_count": 173,
+    "mean_flow_magnitude": 1.8289604187011719,
+    "p95_flow_magnitude": 6.043214797973633,
+    "peak_timestamp_seconds": 21.866666666666667,
+    "samples": [
+      {
+        "timestamp_seconds": 0.0,
+        "mean_flow_magnitude": 0.0
+      },
+      {
+        "timestamp_seconds": 0.26666666666666666,
+        "mean_flow_magnitude": 2.9068007469177246
+      },
+      {
+        "timestamp_seconds": 0.5333333333333333,
+        "mean_flow_magnitude": 2.751002788543701
+      },
+      {
+        "timestamp_seconds": 0.8,
+        "mean_flow_magnitude": 2.652182102203369
+      },
+      {
+        "timestamp_seconds": 1.0666666666666667,
+        "mean_flow_magnitude": 2.5300991535186768
+      },
+      {
+        "timestamp_seconds": 1.3333333333333333,
+        "mean_flow_magnitude": 6.391429424285889
+      },
+      {
+        "timestamp_seconds": 1.6,
+        "mean_flow_magnitude": 4.4437103271484375
+      },
+      {
+        "timestamp_seconds": 1.8666666666666667,
+        "mean_flow_magnitude": 1.5560914278030396
+      },
+      {
+        "timestamp_seconds": 2.1333333333333333,
+        "mean_flow_magnitude": 0.7524330615997314
+      },
+      {
+        "timestamp_seconds": 2.4,
+        "mean_flow_magnitude": 0.8894214630126953
+      },
+      {
+        "timestamp_seconds": 2.6666666666666665,
+        "mean_flow_magnitude": 0.45377403497695923
+      },
+      {
+        "timestamp_seconds": 2.933333333333333,
+        "mean_flow_magnitude": 0.5839646458625793
+      },
+      {
+        "timestamp_seconds": 3.2,
+        "mean_flow_magnitude": 0.742334246635437
+      },
+      {
+        "timestamp_seconds": 3.466666666666667,
+        "mean_flow_magnitude": 0.2775523066520691
+      },
+      {
+        "timestamp_seconds": 3.7333333333333334,
+        "mean_flow_magnitude": 4.8375983238220215
+      },
+      {
+        "timestamp_seconds": 4.0,
+        "mean_flow_magnitude": 0.5242633819580078
+      },
+      {
+        "timestamp_seconds": 4.266666666666667,
+        "mean_flow_magnitude": 0.48175370693206787
+      },
+      {
+        "timestamp_seconds": 4.533333333333333,
+        "mean_flow_magnitude": 4.662805080413818
+      },
+      {
+        "timestamp_seconds": 4.8,
+        "mean_flow_magnitude": 0.09819973260164261
+      },
+      {
+        "timestamp_seconds": 5.066666666666666,
+        "mean_flow_magnitude": 0.169882133603096
+      },
+      {
+        "timestamp_seconds": 5.333333333333333,
+        "mean_flow_magnitude": 0.04389430955052376
+      },
+      {
+        "timestamp_seconds": 5.6,
+        "mean_flow_magnitude": 0.05975310504436493
+      },
+      {
+        "timestamp_seconds": 5.866666666666666,
+        "mean_flow_magnitude": 0.20515523850917816
+      },
+      {
+        "timestamp_seconds": 6.133333333333334,
+        "mean_flow_magnitude": 0.11726218461990356
+      },
+      {
+        "timestamp_seconds": 6.4,
+        "mean_flow_magnitude": 4.048398017883301
+      },
+      {
+        "timestamp_seconds": 6.666666666666667,
+        "mean_flow_magnitude": 6.719003200531006
+      },
+      {
+        "timestamp_seconds": 6.933333333333334,
+        "mean_flow_magnitude": 6.013833522796631
+      },
+      {
+        "timestamp_seconds": 7.2,
+        "mean_flow_magnitude": 4.18502950668335
+      },
+      {
+        "timestamp_seconds": 7.466666666666667,
+        "mean_flow_magnitude": 1.654335379600525
+      },
+      {
+        "timestamp_seconds": 7.733333333333333,
+        "mean_flow_magnitude": 1.030002474784851
+      },
+      {
+        "timestamp_seconds": 8.0,
+        "mean_flow_magnitude": 0.4946134388446808
+      },
+      {
+        "timestamp_seconds": 8.266666666666667,
+        "mean_flow_magnitude": 0.5095509886741638
+      },
+      {
+        "timestamp_seconds": 8.533333333333333,
+        "mean_flow_magnitude": 0.6736878156661987
+      },
+      {
+        "timestamp_seconds": 8.8,
+        "mean_flow_magnitude": 3.7962684631347656
+      },
+      {
+        "timestamp_seconds": 9.066666666666666,
+        "mean_flow_magnitude": 1.7246863842010498
+      },
+      {
+        "timestamp_seconds": 9.333333333333334,
+        "mean_flow_magnitude": 1.4387867450714111
+      },
+      {
+        "timestamp_seconds": 9.6,
+        "mean_flow_magnitude": 1.3785815238952637
+      },
+      {
+        "timestamp_seconds": 9.866666666666667,
+        "mean_flow_magnitude": 1.608394980430603
+      },
+      {
+        "timestamp_seconds": 10.133333333333333,
+        "mean_flow_magnitude": 3.524376153945923
+      },
+      {
+        "timestamp_seconds": 10.4,
+        "mean_flow_magnitude": 0.6741259098052979
+      },
+      {
+        "timestamp_seconds": 10.666666666666666,
+        "mean_flow_magnitude": 0.6213674545288086
+      },
+      {
+        "timestamp_seconds": 10.933333333333334,
+        "mean_flow_magnitude": 0.758059024810791
+      },
+      {
+        "timestamp_seconds": 11.2,
+        "mean_flow_magnitude": 1.1084774732589722
+      },
+      {
+        "timestamp_seconds": 11.466666666666667,
+        "mean_flow_magnitude": 2.869732141494751
+      },
+      {
+        "timestamp_seconds": 11.733333333333333,
+        "mean_flow_magnitude": 0.7146835327148438
+      },
+      {
+        "timestamp_seconds": 12.0,
+        "mean_flow_magnitude": 0.7387535572052002
+      },
+      {
+        "timestamp_seconds": 12.266666666666667,
+        "mean_flow_magnitude": 0.19764301180839539
+      },
+      {
+        "timestamp_seconds": 12.533333333333333,
+        "mean_flow_magnitude": 0.5544833540916443
+      },
+      {
+        "timestamp_seconds": 12.8,
+        "mean_flow_magnitude": 0.5420258641242981
+      },
+      {
+        "timestamp_seconds": 13.066666666666666,
+        "mean_flow_magnitude": 1.0123207569122314
+      },
+      {
+        "timestamp_seconds": 13.333333333333334,
+        "mean_flow_magnitude": 0.8633001446723938
+      },
+      {
+        "timestamp_seconds": 13.6,
+        "mean_flow_magnitude": 0.48198413848876953
+      },
+      {
+        "timestamp_seconds": 13.866666666666667,
+        "mean_flow_magnitude": 0.8758148550987244
+      },
+      {
+        "timestamp_seconds": 14.133333333333333,
+        "mean_flow_magnitude": 4.3686347007751465
+      },
+      {
+        "timestamp_seconds": 14.4,
+        "mean_flow_magnitude": 1.9806421995162964
+      },
+      {
+        "timestamp_seconds": 14.666666666666666,
+        "mean_flow_magnitude": 1.8298476934432983
+      },
+      {
+        "timestamp_seconds": 14.933333333333334,
+        "mean_flow_magnitude": 3.2044150829315186
+      },
+      {
+        "timestamp_seconds": 15.2,
+        "mean_flow_magnitude": 2.6013710498809814
+      },
+      {
+        "timestamp_seconds": 15.466666666666667,
+        "mean_flow_magnitude": 3.6590476036071777
+      },
+      {
+        "timestamp_seconds": 15.733333333333333,
+        "mean_flow_magnitude": 5.015866756439209
+      },
+      {
+        "timestamp_seconds": 16.0,
+        "mean_flow_magnitude": 4.188518524169922
+      },
+      {
+        "timestamp_seconds": 16.266666666666666,
+        "mean_flow_magnitude": 1.3656216859817505
+      },
+      {
+        "timestamp_seconds": 16.533333333333335,
+        "mean_flow_magnitude": 0.9629501700401306
+      },
+      {
+        "timestamp_seconds": 16.8,
+        "mean_flow_magnitude": 0.9019314646720886
+      },
+      {
+        "timestamp_seconds": 17.066666666666666,
+        "mean_flow_magnitude": 0.794407308101654
+      },
+      {
+        "timestamp_seconds": 17.333333333333332,
+        "mean_flow_magnitude": 0.579654335975647
+      },
+      {
+        "timestamp_seconds": 17.6,
+        "mean_flow_magnitude": 0.5586199760437012
+      },
+      {
+        "timestamp_seconds": 17.866666666666667,
+        "mean_flow_magnitude": 5.412281513214111
+      },
+      {
+        "timestamp_seconds": 18.133333333333333,
+        "mean_flow_magnitude": 2.375256061553955
+      },
+      {
+        "timestamp_seconds": 18.4,
+        "mean_flow_magnitude": 2.036996841430664
+      },
+      {
+        "timestamp_seconds": 18.666666666666668,
+        "mean_flow_magnitude": 2.443868398666382
+      },
+      {
+        "timestamp_seconds": 18.933333333333334,
+        "mean_flow_magnitude": 4.249167442321777
+      },
+      {
+        "timestamp_seconds": 19.2,
+        "mean_flow_magnitude": 6.17744255065918
+      },
+      {
+        "timestamp_seconds": 19.466666666666665,
+        "mean_flow_magnitude": 0.11839425563812256
+      },
+      {
+        "timestamp_seconds": 19.733333333333334,
+        "mean_flow_magnitude": 0.13956309854984283
+      },
+      {
+        "timestamp_seconds": 20.0,
+        "mean_flow_magnitude": 0.15986762940883636
+      },
+      {
+        "timestamp_seconds": 20.266666666666666,
+        "mean_flow_magnitude": 7.030294895172119
+      },
+      {
+        "timestamp_seconds": 20.533333333333335,
+        "mean_flow_magnitude": 0.9379960894584656
+      },
+      {
+        "timestamp_seconds": 20.8,
+        "mean_flow_magnitude": 1.0442043542861938
+      },
+      {
+        "timestamp_seconds": 21.066666666666666,
+        "mean_flow_magnitude": 1.2967333793640137
+      },
+      {
+        "timestamp_seconds": 21.333333333333332,
+        "mean_flow_magnitude": 0.23083651065826416
+      },
+      {
+        "timestamp_seconds": 21.6,
+        "mean_flow_magnitude": 1.3121670484542847
+      },
+      {
+        "timestamp_seconds": 21.866666666666667,
+        "mean_flow_magnitude": 8.506829261779785
+      },
+      {
+        "timestamp_seconds": 22.133333333333333,
+        "mean_flow_magnitude": 0.23802141845226288
+      },
+      {
+        "timestamp_seconds": 22.4,
+        "mean_flow_magnitude": 0.15492065250873566
+      },
+      {
+        "timestamp_seconds": 22.666666666666668,
+        "mean_flow_magnitude": 0.12075895071029663
+      },
+      {
+        "timestamp_seconds": 22.933333333333334,
+        "mean_flow_magnitude": 0.15647700428962708
+      },
+      {
+        "timestamp_seconds": 23.2,
+        "mean_flow_magnitude": 0.14185038208961487
+      },
+      {
+        "timestamp_seconds": 23.466666666666665,
+        "mean_flow_magnitude": 0.3136225640773773
+      },
+      {
+        "timestamp_seconds": 23.733333333333334,
+        "mean_flow_magnitude": 0.3032330572605133
+      },
+      {
+        "timestamp_seconds": 24.0,
+        "mean_flow_magnitude": 0.47766903042793274
+      },
+      {
+        "timestamp_seconds": 24.266666666666666,
+        "mean_flow_magnitude": 0.43177515268325806
+      },
+      {
+        "timestamp_seconds": 24.533333333333335,
+        "mean_flow_magnitude": 0.37295395135879517
+      },
+      {
+        "timestamp_seconds": 24.8,
+        "mean_flow_magnitude": 1.2047585248947144
+      },
+      {
+        "timestamp_seconds": 25.066666666666666,
+        "mean_flow_magnitude": 0.3364548683166504
+      },
+      {
+        "timestamp_seconds": 25.333333333333332,
+        "mean_flow_magnitude": 0.45012399554252625
+      },
+      {
+        "timestamp_seconds": 25.6,
+        "mean_flow_magnitude": 0.8318179845809937
+      },
+      {
+        "timestamp_seconds": 25.866666666666667,
+        "mean_flow_magnitude": 0.661220133304596
+      },
+      {
+        "timestamp_seconds": 26.133333333333333,
+        "mean_flow_magnitude": 6.141794681549072
+      },
+      {
+        "timestamp_seconds": 26.4,
+        "mean_flow_magnitude": 3.189366102218628
+      },
+      {
+        "timestamp_seconds": 26.666666666666668,
+        "mean_flow_magnitude": 2.2789101600646973
+      },
+      {
+        "timestamp_seconds": 26.933333333333334,
+        "mean_flow_magnitude": 1.81765878200531
+      },
+      {
+        "timestamp_seconds": 27.2,
+        "mean_flow_magnitude": 2.446058750152588
+      },
+      {
+        "timestamp_seconds": 27.466666666666665,
+        "mean_flow_magnitude": 4.533256530761719
+      },
+      {
+        "timestamp_seconds": 27.733333333333334,
+        "mean_flow_magnitude": 1.433847427368164
+      },
+      {
+        "timestamp_seconds": 28.0,
+        "mean_flow_magnitude": 1.3868980407714844
+      },
+      {
+        "timestamp_seconds": 28.266666666666666,
+        "mean_flow_magnitude": 1.782057523727417
+      },
+      {
+        "timestamp_seconds": 28.533333333333335,
+        "mean_flow_magnitude": 1.8953348398208618
+      },
+      {
+        "timestamp_seconds": 28.8,
+        "mean_flow_magnitude": 0.6604843139648438
+      },
+      {
+        "timestamp_seconds": 29.066666666666666,
+        "mean_flow_magnitude": 6.090061187744141
+      },
+      {
+        "timestamp_seconds": 29.333333333333332,
+        "mean_flow_magnitude": 5.494175434112549
+      },
+      {
+        "timestamp_seconds": 29.6,
+        "mean_flow_magnitude": 3.0931973457336426
+      },
+      {
+        "timestamp_seconds": 29.866666666666667,
+        "mean_flow_magnitude": 2.269561529159546
+      },
+      {
+        "timestamp_seconds": 30.133333333333333,
+        "mean_flow_magnitude": 2.823633909225464
+      },
+      {
+        "timestamp_seconds": 30.4,
+        "mean_flow_magnitude": 2.402895927429199
+      },
+      {
+        "timestamp_seconds": 30.666666666666668,
+        "mean_flow_magnitude": 1.0258641242980957
+      },
+      {
+        "timestamp_seconds": 30.933333333333334,
+        "mean_flow_magnitude": 5.0210723876953125
+      },
+      {
+        "timestamp_seconds": 31.2,
+        "mean_flow_magnitude": 2.0696988105773926
+      },
+      {
+        "timestamp_seconds": 31.466666666666665,
+        "mean_flow_magnitude": 1.4056708812713623
+      },
+      {
+        "timestamp_seconds": 31.733333333333334,
+        "mean_flow_magnitude": 1.6060048341751099
+      },
+      {
+        "timestamp_seconds": 32.0,
+        "mean_flow_magnitude": 1.9835320711135864
+      },
+      {
+        "timestamp_seconds": 32.266666666666666,
+        "mean_flow_magnitude": 2.734858751296997
+      },
+      {
+        "timestamp_seconds": 32.53333333333333,
+        "mean_flow_magnitude": 5.83483362197876
+      },
+      {
+        "timestamp_seconds": 32.8,
+        "mean_flow_magnitude": 0.5075355172157288
+      },
+      {
+        "timestamp_seconds": 33.06666666666667,
+        "mean_flow_magnitude": 0.27913081645965576
+      },
+      {
+        "timestamp_seconds": 33.333333333333336,
+        "mean_flow_magnitude": 0.11819343268871307
+      },
+      {
+        "timestamp_seconds": 33.6,
+        "mean_flow_magnitude": 0.12261823564767838
+      },
+      {
+        "timestamp_seconds": 33.86666666666667,
+        "mean_flow_magnitude": 0.17408916354179382
+      },
+      {
+        "timestamp_seconds": 34.13333333333333,
+        "mean_flow_magnitude": 0.29520732164382935
+      },
+      {
+        "timestamp_seconds": 34.4,
+        "mean_flow_magnitude": 0.5558619499206543
+      },
+      {
+        "timestamp_seconds": 34.666666666666664,
+        "mean_flow_magnitude": 0.48001915216445923
+      },
+      {
+        "timestamp_seconds": 34.93333333333333,
+        "mean_flow_magnitude": 3.5059170722961426
+      },
+      {
+        "timestamp_seconds": 35.2,
+        "mean_flow_magnitude": 1.6241626739501953
+      },
+      {
+        "timestamp_seconds": 35.46666666666667,
+        "mean_flow_magnitude": 1.8290159702301025
+      },
+      {
+        "timestamp_seconds": 35.733333333333334,
+        "mean_flow_magnitude": 1.5872328281402588
+      },
+      {
+        "timestamp_seconds": 36.0,
+        "mean_flow_magnitude": 5.139916896820068
+      },
+      {
+        "timestamp_seconds": 36.266666666666666,
+        "mean_flow_magnitude": 6.227199554443359
+      },
+      {
+        "timestamp_seconds": 36.53333333333333,
+        "mean_flow_magnitude": 2.249752998352051
+      },
+      {
+        "timestamp_seconds": 36.8,
+        "mean_flow_magnitude": 0.6312487721443176
+      },
+      {
+        "timestamp_seconds": 37.06666666666667,
+        "mean_flow_magnitude": 0.6997854113578796
+      },
+      {
+        "timestamp_seconds": 37.333333333333336,
+        "mean_flow_magnitude": 0.6516838669776917
+      },
+      {
+        "timestamp_seconds": 37.6,
+        "mean_flow_magnitude": 0.47160670161247253
+      },
+      {
+        "timestamp_seconds": 37.86666666666667,
+        "mean_flow_magnitude": 0.7849083542823792
+      },
+      {
+        "timestamp_seconds": 38.13333333333333,
+        "mean_flow_magnitude": 5.159976005554199
+      },
+      {
+        "timestamp_seconds": 38.4,
+        "mean_flow_magnitude": 1.1900709867477417
+      },
+      {
+        "timestamp_seconds": 38.666666666666664,
+        "mean_flow_magnitude": 1.1932483911514282
+      },
+      {
+        "timestamp_seconds": 38.93333333333333,
+        "mean_flow_magnitude": 1.7250832319259644
+      },
+      {
+        "timestamp_seconds": 39.2,
+        "mean_flow_magnitude": 6.0872883796691895
+      },
+      {
+        "timestamp_seconds": 39.46666666666667,
+        "mean_flow_magnitude": 1.2330536842346191
+      },
+      {
+        "timestamp_seconds": 39.733333333333334,
+        "mean_flow_magnitude": 0.46814215183258057
+      },
+      {
+        "timestamp_seconds": 40.0,
+        "mean_flow_magnitude": 5.405167579650879
+      },
+      {
+        "timestamp_seconds": 40.266666666666666,
+        "mean_flow_magnitude": 0.07829093188047409
+      },
+      {
+        "timestamp_seconds": 40.53333333333333,
+        "mean_flow_magnitude": 0.07271406799554825
+      },
+      {
+        "timestamp_seconds": 40.8,
+        "mean_flow_magnitude": 5.617067337036133
+      },
+      {
+        "timestamp_seconds": 41.06666666666667,
+        "mean_flow_magnitude": 1.4720567464828491
+      },
+      {
+        "timestamp_seconds": 41.333333333333336,
+        "mean_flow_magnitude": 1.7107163667678833
+      },
+      {
+        "timestamp_seconds": 41.6,
+        "mean_flow_magnitude": 1.5593180656433105
+      },
+      {
+        "timestamp_seconds": 41.86666666666667,
+        "mean_flow_magnitude": 5.95456600189209
+      },
+      {
+        "timestamp_seconds": 42.13333333333333,
+        "mean_flow_magnitude": 0.2191861867904663
+      },
+      {
+        "timestamp_seconds": 42.4,
+        "mean_flow_magnitude": 0.17360487580299377
+      },
+      {
+        "timestamp_seconds": 42.666666666666664,
+        "mean_flow_magnitude": 0.16774873435497284
+      },
+      {
+        "timestamp_seconds": 42.93333333333333,
+        "mean_flow_magnitude": 0.10766502469778061
+      },
+      {
+        "timestamp_seconds": 43.2,
+        "mean_flow_magnitude": 0.10485212504863739
+      },
+      {
+        "timestamp_seconds": 43.46666666666667,
+        "mean_flow_magnitude": 0.26140090823173523
+      },
+      {
+        "timestamp_seconds": 43.733333333333334,
+        "mean_flow_magnitude": 0.14919094741344452
+      },
+      {
+        "timestamp_seconds": 44.0,
+        "mean_flow_magnitude": 0.13335953652858734
+      },
+      {
+        "timestamp_seconds": 44.266666666666666,
+        "mean_flow_magnitude": 0.07594289630651474
+      },
+      {
+        "timestamp_seconds": 44.53333333333333,
+        "mean_flow_magnitude": 0.05020279064774513
+      },
+      {
+        "timestamp_seconds": 44.8,
+        "mean_flow_magnitude": 5.34256649017334
+      },
+      {
+        "timestamp_seconds": 45.06666666666667,
+        "mean_flow_magnitude": 0.252816379070282
+      },
+      {
+        "timestamp_seconds": 45.333333333333336,
+        "mean_flow_magnitude": 0.15207050740718842
+      },
+      {
+        "timestamp_seconds": 45.6,
+        "mean_flow_magnitude": 0.16312898695468903
+      },
+      {
+        "timestamp_seconds": 45.86666666666667,
+        "mean_flow_magnitude": 0.15104275941848755
+      }
+    ],
+    "method": "opencv-farneback-on-sampled-frames"
+  },
+  "transcript_segments": [
+    {
+      "start_seconds": 0.33,
+      "end_seconds": 1.95,
+      "text": "Ha! Ow!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 3.89,
+      "end_seconds": 4.67,
+      "text": "It's a penguin.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 5.05,
+      "end_seconds": 5.37,
+      "text": "No.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 5.73,
+      "end_seconds": 6.23,
+      "text": "Come on.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 6.51,
+      "end_seconds": 7.05,
+      "text": "Chevy's scared.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 7.45,
+      "end_seconds": 9.49,
+      "text": "Oh, wait, wait, that's sharp.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 9.77,
+      "end_seconds": 10.99,
+      "text": "Whoa, it's like a little dinosaur.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 11.29,
+      "end_seconds": 11.59,
+      "text": "Alligator?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 11.89,
+      "end_seconds": 12.37,
+      "text": "You got it.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 12.41,
+      "end_seconds": 13.25,
+      "text": "Yeah, that's an alligator.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 13.73,
+      "end_seconds": 13.97,
+      "text": "Look at that.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 14.01,
+      "end_seconds": 14.53,
+      "text": "Oh, whoa!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 14.89,
+      "end_seconds": 15.65,
+      "text": "Hey, good job.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 17.35,
+      "end_seconds": 18.11,
+      "text": "Sounds like a bird.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 18.47,
+      "end_seconds": 19.07,
+      "text": "That's so cool.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 19.17,
+      "end_seconds": 19.73,
+      "text": "Can I weigh it?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 20.09,
+      "end_seconds": 21.03,
+      "text": "They're likes being held.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 21.35,
+      "end_seconds": 22.19,
+      "text": "Is it an otter?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 22.83,
+      "end_seconds": 23.93,
+      "text": "Yes, it's an otter.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 24.01,
+      "end_seconds": 24.45,
+      "text": "Right.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 25.35,
+      "end_seconds": 28.36,
+      "text": "This is probably the most dangerous animal so far.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 28.9,
+      "end_seconds": 30.14,
+      "text": "Oh my god, it hit me.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 30.24,
+      "end_seconds": 30.72,
+      "text": "It bit you?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 31.02,
+      "end_seconds": 31.8,
+      "text": "Slender neck.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 32.47,
+      "end_seconds": 33.25,
+      "text": "Is it a peacock?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 33.25,
+      "end_seconds": 34.57,
+      "text": "Yes! Very good!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 35.09,
+      "end_seconds": 35.39,
+      "text": "Bro!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 36.07,
+      "end_seconds": 37.69,
+      "text": "Subscribe if you think she'll get it right.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 39.5,
+      "end_seconds": 40.52,
+      "text": "Is it a mini horse?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 41.06,
+      "end_seconds": 41.38,
+      "text": "Close.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 42.0,
+      "end_seconds": 43.92,
+      "text": "What is happening? Is this Jimmy?",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 44.4,
+      "end_seconds": 45.7,
+      "text": "Yeah, good boy.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "ocr_spans": [],
+  "audio": {
+    "analyzed": true,
+    "duration_seconds": 46.05301587301587,
+    "sample_rate": 22050,
+    "rms_mean": 0.06544450670480728,
+    "silence_ratio": 0.007056451612903226,
+    "estimated_tempo_bpm": 129.19921875,
+    "beat_times_seconds": [
+      0.06965986394557823,
+      0.4876190476190476,
+      0.9287981859410431,
+      1.3699773242630386,
+      1.7647165532879818,
+      2.182675736961451,
+      2.647074829931973,
+      3.0882539682539685,
+      3.5526530612244898,
+      3.9938321995464854,
+      4.481451247165533,
+      4.9458503401360545,
+      5.340589569160998,
+      5.7817687074829935,
+      6.222947845804988,
+      6.640907029478458,
+      7.082086167800454,
+      7.523265306122449,
+      7.964444444444444,
+      8.382403628117913,
+      8.870022675736962,
+      9.311201814058958,
+      9.752380952380953,
+      10.170340136054422,
+      10.65795918367347,
+      11.122358276643991,
+      11.609977324263038,
+      12.120816326530612,
+      12.538775510204081,
+      12.956734693877552,
+      13.444353741496599,
+      13.908752834467121,
+      14.349931972789115,
+      14.79111111111111,
+      15.232290249433106,
+      15.673469387755102,
+      16.091428571428573,
+      16.532607709750568,
+      17.020226757369613,
+      17.484625850340137,
+      17.949024943310658,
+      18.413424036281178,
+      18.877823129251702,
+      19.342222222222222,
+      19.82984126984127,
+      20.224580498866214,
+      20.66575963718821,
+      21.106938775510205,
+      21.5481179138322,
+      21.942857142857143,
+      22.407256235827663,
+      22.871655328798187,
+      23.336054421768708,
+      23.777233560090703,
+      24.19519274376417,
+      24.61315192743764,
+      25.031111111111112,
+      25.495510204081633,
+      25.959909297052153,
+      26.40108843537415,
+      26.865487528344673,
+      27.376326530612246,
+      27.794285714285714,
+      28.258684807256238,
+      28.723083900226758,
+      29.210702947845807,
+      29.60544217687075,
+      30.06984126984127,
+      30.464580498866212,
+      30.95219954648526,
+      31.43981859410431,
+      31.927437641723355,
+      32.345396825396826,
+      32.76335600907029,
+      33.18131519274377,
+      33.66893424036281,
+      34.15655328798186,
+      34.62095238095238,
+      35.10857142857143,
+      35.57297052154195,
+      36.03736961451247,
+      36.47854875283447,
+      36.89650793650794,
+      37.384126984126986,
+      37.89496598639456,
+      38.38258503401361,
+      38.846984126984125,
+      39.334603174603174,
+      39.84544217687075,
+      40.30984126984127,
+      40.79746031746032,
+      41.26185941043084,
+      41.81913832199547,
+      42.283537414965984,
+      42.79437641723356,
+      43.30521541950113,
+      43.769614512471655,
+      44.28045351473923
+    ],
+    "onset_times_seconds": [
+      0.06965986394557823,
+      0.25541950113378686,
+      0.46439909297052157,
+      0.9287981859410431,
+      1.3699773242630386,
+      1.509297052154195,
+      1.7182766439909296,
+      1.8808163265306121,
+      2.159455782312925,
+      2.2755555555555556,
+      2.647074829931973,
+      3.297233560090703,
+      3.877732426303855,
+      3.9706122448979593,
+      4.179591836734694,
+      4.2260317460317465,
+      4.31891156462585,
+      4.481451247165533,
+      4.667210884353741,
+      4.783310657596372,
+      4.922630385487528,
+      5.154829931972789,
+      5.340589569160998,
+      5.7817687074829935,
+      6.03718820861678,
+      6.222947845804988,
+      6.617687074829932,
+      6.780226757369615,
+      6.965986394557823,
+      7.848344671201814,
+      8.359183673469389,
+      8.614603174603175,
+      8.730702947845804,
+      8.870022675736962,
+      9.079002267573696,
+      9.404081632653062,
+      9.566621315192744,
+      9.752380952380953,
+      9.822040816326531,
+      10.077460317460318,
+      10.170340136054422,
+      10.309659863945578,
+      10.425759637188209,
+      10.541859410430838,
+      10.65795918367347,
+      10.866938775510205,
+      11.331337868480725,
+      11.888616780045352,
+      11.981496598639456,
+      12.120816326530612,
+      12.283356009070294,
+      12.329795918367347,
+      12.654875283446712,
+      12.770975056689343,
+      12.933514739229025,
+      13.096054421768708,
+      13.235374149659863,
+      13.444353741496599,
+      13.653333333333334,
+      13.955192743764172,
+      14.187392290249432,
+      14.349931972789115,
+      14.489251700680272,
+      14.55891156462585,
+      14.767891156462586,
+      15.487709750566893,
+      15.673469387755102,
+      15.975328798185942,
+      16.091428571428573,
+      16.300408163265306,
+      16.532607709750568,
+      16.671927437641724,
+      16.788027210884355,
+      17.020226757369613,
+      17.136326530612244,
+      17.252426303854875,
+      17.322086167800453,
+      17.46140589569161,
+      17.69360544217687,
+      17.856145124716555,
+      17.949024943310658,
+      18.18122448979592,
+      18.390204081632653,
+      18.52952380952381,
+      18.64562358276644,
+      18.877823129251702,
+      18.970702947845805,
+      19.11002267573696,
+      19.342222222222222,
+      19.574421768707484,
+      19.806621315192743,
+      20.038820861678005,
+      20.201360544217685,
+      20.66575963718821,
+      20.897959183673468,
+      21.106938775510205,
+      21.223038548752836,
+      21.36235827664399,
+      21.455238095238094,
+      21.571337868480725,
+      21.687437641723356,
+      21.803537414965987,
+      21.91963718820862,
+      22.0821768707483,
+      22.267936507936508,
+      22.639455782312925,
+      22.77877551020408,
+      22.871655328798187,
+      23.034195011337868,
+      23.173514739229024,
+      23.962993197278912,
+      24.19519274376417,
+      24.473832199546486,
+      24.636371882086166,
+      24.752471655328797,
+      25.007891156462584,
+      25.33297052154195,
+      25.68126984126984,
+      26.21532879818594,
+      26.51718820861678,
+      26.70294784580499,
+      26.865487528344673,
+      27.00480725623583,
+      27.12090702947846,
+      27.213786848072562,
+      27.376326530612246,
+      27.562086167800455,
+      27.74784580498866,
+      28.23546485260771,
+      28.723083900226758,
+      28.955283446712016,
+      29.210702947845807,
+      29.41968253968254,
+      29.60544217687075,
+      29.814421768707483,
+      30.06984126984127,
+      30.30204081632653,
+      30.464580498866212,
+      30.67356009070295,
+      30.72,
+      31.091519274376417,
+      31.277278911564625,
+      31.43981859410431,
+      31.672018140589568,
+      31.927437641723355,
+      32.113197278911564,
+      32.182857142857145,
+      32.41505668934241,
+      32.57759637188209,
+      32.71691609977324,
+      32.78657596371882,
+      32.879455782312924,
+      33.01877551020408,
+      33.158095238095235,
+      33.3902947845805,
+      33.45995464852608,
+      33.62249433106576,
+      33.66893424036281,
+      33.80825396825397,
+      33.90113378684807,
+      33.99401360544218,
+      34.15655328798186,
+      34.319092970521545,
+      34.481632653061226,
+      34.690612244897956,
+      34.9924716553288,
+      36.24634920634921,
+      36.31600907029478,
+      36.47854875283447,
+      36.80362811791383,
+      36.87328798185941,
+      37.03582766439909,
+      37.17514739229025,
+      37.24480725623583,
+      37.36090702947846,
+      37.593106575963716,
+      37.871746031746035,
+      38.05750566893424,
+      38.22004535147392,
+      38.54512471655329,
+      39.21850340136054,
+      39.334603174603174,
+      39.54358276643991,
+      39.84544217687075,
+      40.03120181405896,
+      40.170521541950116,
+      40.49560090702948,
+      40.542040816326534,
+      40.79746031746032,
+      41.09931972789116,
+      41.26185941043084,
+      41.35473922902494,
+      41.56371882086168,
+      41.72625850340136,
+      41.795918367346935,
+      42.09777777777778,
+      42.26031746031746,
+      42.60861678004535,
+      42.79437641723356,
+      42.887256235827664,
+      43.0962358276644,
+      43.30521541950113,
+      43.56063492063492,
+      43.74639455782313,
+      43.97859410430839,
+      44.02503401360544,
+      44.28045351473923,
+      44.39655328798186,
+      44.46621315192744,
+      44.51265306122449,
+      44.72163265306123,
+      44.93061224489796,
+      45.04671201814059,
+      45.186031746031745,
+      45.302131519274376,
+      45.39501133786848,
+      45.51111111111111,
+      45.743310657596375,
+      45.905850340136055
+    ],
+    "method": "librosa-0.11.0",
+    "warning": null
+  },
+  "stages": {
+    "media_validation": {
+      "status": "complete",
+      "engine": "ffprobe",
+      "detail": null
+    },
+    "frame_sampling": {
+      "status": "complete",
+      "engine": "opencv",
+      "detail": null
+    },
+    "asr": {
+      "status": "complete",
+      "engine": "vidtrace-faster-whisper",
+      "detail": "Detected language: en; 32 segments."
+    },
+    "ocr": {
+      "status": "skipped",
+      "engine": "paddleocr/vidtrace",
+      "detail": "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+    },
+    "audio_features": {
+      "status": "complete",
+      "engine": "librosa-0.11.0",
+      "detail": null
+    }
+  },
+  "warnings": [
+    "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+  ],
+  "limitations": [
+    "Phase 1 extracts evidence; it does not yet run a fine-tuned VLM.",
+    "Cut, motion and beat events are algorithmic candidates, not ground truth.",
+    "This report does not predict views or establish causal virality drivers."
+  ]
+}

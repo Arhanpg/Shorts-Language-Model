@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "youtube",
+  "source_id": "R1Ehb3JA-cM",
+  "language": "en",
+  "segment_count": 1,
+  "segments": [
+    {
+      "start_seconds": 1.99,
+      "end_seconds": 2.41,
+      "text": "You",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "asr_stage": {
+    "status": "complete",
+    "engine": "vidtrace-faster-whisper",
+    "detail": "Detected language: en; 1 segments."
+  }
+}

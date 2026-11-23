@@ -1,0 +1,1274 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-11-23T08:20:04.098586Z",
+  "project": "Shorts Language Model",
+  "phase": "phase-1-single-video-telemetry",
+  "source_type": "local_file",
+  "rights": null,
+  "video": {
+    "file_name": "IJkB-oapuks.mp4",
+    "sha256": "b5e648aacb2f474e365a8640ee60ba97a68d83bd7c9445ce5fec2ae927aa8cd9",
+    "file_size_bytes": 31278561,
+    "duration_seconds": 18.566667,
+    "width": 2160,
+    "height": 3840,
+    "fps": 30.0,
+    "frame_count": 557,
+    "video_codec": "av1",
+    "audio_present": true,
+    "audio_codec": "opus",
+    "aspect_ratio": "9:16"
+  },
+  "hook_window": {
+    "start_seconds": 0.0,
+    "end_seconds": 3.0,
+    "frame_count": 8,
+    "cut_candidate_count": 0,
+    "mean_motion_score": 4.440787394841512,
+    "note": "Descriptive signals only; hook quality is not inferred in Phase 1."
+  },
+  "frame_evidence": [
+    {
+      "timestamp_seconds": 0.0,
+      "frame_index": 0,
+      "reason": [
+        "hook_window"
+      ],
+      "motion_score": 0.0,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.26666666666666666,
+      "frame_index": 8,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 4.459877014160156,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.5333333333333333,
+      "frame_index": 16,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 3.0029213428497314,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.8,
+      "frame_index": 24,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 5.827356338500977,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.0666666666666667,
+      "frame_index": 32,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 6.765244007110596,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.3333333333333333,
+      "frame_index": 40,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 3.860671281814575,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.6,
+      "frame_index": 48,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 5.584928512573242,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.8666666666666667,
+      "frame_index": 56,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 4.0658183097839355,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 3.2,
+      "frame_index": 96,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.886964797973633,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 4.266666666666667,
+      "frame_index": 128,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.872443199157715,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 5.866666666666666,
+      "frame_index": 176,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 2.476876974105835,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 6.666666666666667,
+      "frame_index": 200,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.996131420135498,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 7.466666666666667,
+      "frame_index": 224,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.02961540222168,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 8.0,
+      "frame_index": 240,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 2.3353564739227295,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 9.066666666666666,
+      "frame_index": 272,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.0546040534973145,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 10.133333333333333,
+      "frame_index": 304,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 3.3230957984924316,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 11.733333333333333,
+      "frame_index": 352,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.2709879875183105,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 12.0,
+      "frame_index": 360,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.395648956298828,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 13.066666666666666,
+      "frame_index": 392,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 2.6759748458862305,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 14.666666666666666,
+      "frame_index": 440,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 3.7779033184051514,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 15.466666666666667,
+      "frame_index": 464,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.9381327629089355,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 15.733333333333333,
+      "frame_index": 472,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.522252082824707,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 17.333333333333332,
+      "frame_index": 520,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.61654806137085,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 17.866666666666667,
+      "frame_index": 536,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 2.8080711364746094,
+      "image_path": null
+    }
+  ],
+  "cut_candidates": [
+    {
+      "timestamp_seconds": 6.666666666666667,
+      "visual_difference": 0.3046024708456676,
+      "confidence": 0.3046024708456676,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 14.666666666666666,
+      "visual_difference": 0.3532620315110288,
+      "confidence": 0.3532620315110288,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 14.933333333333334,
+      "visual_difference": 0.381609337587584,
+      "confidence": 0.381609337587584,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 15.2,
+      "visual_difference": 0.36757386987750473,
+      "confidence": 0.36757386987750473,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 15.466666666666667,
+      "visual_difference": 0.39049078942095033,
+      "confidence": 0.39049078942095033,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    }
+  ],
+  "motion": {
+    "sample_count": 70,
+    "mean_flow_magnitude": 4.041935443878174,
+    "p95_flow_magnitude": 6.114308834075928,
+    "peak_timestamp_seconds": 1.0666666666666667,
+    "samples": [
+      {
+        "timestamp_seconds": 0.0,
+        "mean_flow_magnitude": 0.0
+      },
+      {
+        "timestamp_seconds": 0.26666666666666666,
+        "mean_flow_magnitude": 4.459877014160156
+      },
+      {
+        "timestamp_seconds": 0.5333333333333333,
+        "mean_flow_magnitude": 3.0029213428497314
+      },
+      {
+        "timestamp_seconds": 0.8,
+        "mean_flow_magnitude": 5.827356338500977
+      },
+      {
+        "timestamp_seconds": 1.0666666666666667,
+        "mean_flow_magnitude": 6.765244007110596
+      },
+      {
+        "timestamp_seconds": 1.3333333333333333,
+        "mean_flow_magnitude": 3.860671281814575
+      },
+      {
+        "timestamp_seconds": 1.6,
+        "mean_flow_magnitude": 5.584928512573242
+      },
+      {
+        "timestamp_seconds": 1.8666666666666667,
+        "mean_flow_magnitude": 4.0658183097839355
+      },
+      {
+        "timestamp_seconds": 2.1333333333333333,
+        "mean_flow_magnitude": 4.052318096160889
+      },
+      {
+        "timestamp_seconds": 2.4,
+        "mean_flow_magnitude": 4.121556758880615
+      },
+      {
+        "timestamp_seconds": 2.6666666666666665,
+        "mean_flow_magnitude": 5.385598182678223
+      },
+      {
+        "timestamp_seconds": 2.933333333333333,
+        "mean_flow_magnitude": 6.163158893585205
+      },
+      {
+        "timestamp_seconds": 3.2,
+        "mean_flow_magnitude": 5.886964797973633
+      },
+      {
+        "timestamp_seconds": 3.466666666666667,
+        "mean_flow_magnitude": 5.752875328063965
+      },
+      {
+        "timestamp_seconds": 3.7333333333333334,
+        "mean_flow_magnitude": 4.630455493927002
+      },
+      {
+        "timestamp_seconds": 4.0,
+        "mean_flow_magnitude": 5.293729782104492
+      },
+      {
+        "timestamp_seconds": 4.266666666666667,
+        "mean_flow_magnitude": 4.872443199157715
+      },
+      {
+        "timestamp_seconds": 4.533333333333333,
+        "mean_flow_magnitude": 3.43830943107605
+      },
+      {
+        "timestamp_seconds": 4.8,
+        "mean_flow_magnitude": 2.8235599994659424
+      },
+      {
+        "timestamp_seconds": 5.066666666666666,
+        "mean_flow_magnitude": 2.0188279151916504
+      },
+      {
+        "timestamp_seconds": 5.333333333333333,
+        "mean_flow_magnitude": 0.7521123290061951
+      },
+      {
+        "timestamp_seconds": 5.6,
+        "mean_flow_magnitude": 1.3917756080627441
+      },
+      {
+        "timestamp_seconds": 5.866666666666666,
+        "mean_flow_magnitude": 2.476876974105835
+      },
+      {
+        "timestamp_seconds": 6.133333333333334,
+        "mean_flow_magnitude": 3.748265504837036
+      },
+      {
+        "timestamp_seconds": 6.4,
+        "mean_flow_magnitude": 4.344239711761475
+      },
+      {
+        "timestamp_seconds": 6.666666666666667,
+        "mean_flow_magnitude": 4.996131420135498
+      },
+      {
+        "timestamp_seconds": 6.933333333333334,
+        "mean_flow_magnitude": 5.151010036468506
+      },
+      {
+        "timestamp_seconds": 7.2,
+        "mean_flow_magnitude": 4.612152576446533
+      },
+      {
+        "timestamp_seconds": 7.466666666666667,
+        "mean_flow_magnitude": 4.02961540222168
+      },
+      {
+        "timestamp_seconds": 7.733333333333333,
+        "mean_flow_magnitude": 4.0576300621032715
+      },
+      {
+        "timestamp_seconds": 8.0,
+        "mean_flow_magnitude": 2.3353564739227295
+      },
+      {
+        "timestamp_seconds": 8.266666666666667,
+        "mean_flow_magnitude": 4.077887058258057
+      },
+      {
+        "timestamp_seconds": 8.533333333333333,
+        "mean_flow_magnitude": 4.47924280166626
+      },
+      {
+        "timestamp_seconds": 8.8,
+        "mean_flow_magnitude": 6.620876312255859
+      },
+      {
+        "timestamp_seconds": 9.066666666666666,
+        "mean_flow_magnitude": 6.0546040534973145
+      },
+      {
+        "timestamp_seconds": 9.333333333333334,
+        "mean_flow_magnitude": 4.927319526672363
+      },
+      {
+        "timestamp_seconds": 9.6,
+        "mean_flow_magnitude": 5.153347015380859
+      },
+      {
+        "timestamp_seconds": 9.866666666666667,
+        "mean_flow_magnitude": 3.3550608158111572
+      },
+      {
+        "timestamp_seconds": 10.133333333333333,
+        "mean_flow_magnitude": 3.3230957984924316
+      },
+      {
+        "timestamp_seconds": 10.4,
+        "mean_flow_magnitude": 4.054093837738037
+      },
+      {
+        "timestamp_seconds": 10.666666666666666,
+        "mean_flow_magnitude": 2.6026108264923096
+      },
+      {
+        "timestamp_seconds": 10.933333333333334,
+        "mean_flow_magnitude": 2.755244493484497
+      },
+      {
+        "timestamp_seconds": 11.2,
+        "mean_flow_magnitude": 4.508414268493652
+      },
+      {
+        "timestamp_seconds": 11.466666666666667,
+        "mean_flow_magnitude": 5.409188270568848
+      },
+      {
+        "timestamp_seconds": 11.733333333333333,
+        "mean_flow_magnitude": 6.2709879875183105
+      },
+      {
+        "timestamp_seconds": 12.0,
+        "mean_flow_magnitude": 4.395648956298828
+      },
+      {
+        "timestamp_seconds": 12.266666666666667,
+        "mean_flow_magnitude": 2.698753595352173
+      },
+      {
+        "timestamp_seconds": 12.533333333333333,
+        "mean_flow_magnitude": 3.3125033378601074
+      },
+      {
+        "timestamp_seconds": 12.8,
+        "mean_flow_magnitude": 3.205415725708008
+      },
+      {
+        "timestamp_seconds": 13.066666666666666,
+        "mean_flow_magnitude": 2.6759748458862305
+      },
+      {
+        "timestamp_seconds": 13.333333333333334,
+        "mean_flow_magnitude": 3.3613569736480713
+      },
+      {
+        "timestamp_seconds": 13.6,
+        "mean_flow_magnitude": 2.400113821029663
+      },
+      {
+        "timestamp_seconds": 13.866666666666667,
+        "mean_flow_magnitude": 2.1588144302368164
+      },
+      {
+        "timestamp_seconds": 14.133333333333333,
+        "mean_flow_magnitude": 3.6509878635406494
+      },
+      {
+        "timestamp_seconds": 14.4,
+        "mean_flow_magnitude": 4.652926921844482
+      },
+      {
+        "timestamp_seconds": 14.666666666666666,
+        "mean_flow_magnitude": 3.7779033184051514
+      },
+      {
+        "timestamp_seconds": 14.933333333333334,
+        "mean_flow_magnitude": 3.7448630332946777
+      },
+      {
+        "timestamp_seconds": 15.2,
+        "mean_flow_magnitude": 3.7886264324188232
+      },
+      {
+        "timestamp_seconds": 15.466666666666667,
+        "mean_flow_magnitude": 4.9381327629089355
+      },
+      {
+        "timestamp_seconds": 15.733333333333333,
+        "mean_flow_magnitude": 5.522252082824707
+      },
+      {
+        "timestamp_seconds": 16.0,
+        "mean_flow_magnitude": 3.6333584785461426
+      },
+      {
+        "timestamp_seconds": 16.266666666666666,
+        "mean_flow_magnitude": 4.4731621742248535
+      },
+      {
+        "timestamp_seconds": 16.533333333333335,
+        "mean_flow_magnitude": 4.440201282501221
+      },
+      {
+        "timestamp_seconds": 16.8,
+        "mean_flow_magnitude": 3.6919963359832764
+      },
+      {
+        "timestamp_seconds": 17.066666666666666,
+        "mean_flow_magnitude": 4.268679618835449
+      },
+      {
+        "timestamp_seconds": 17.333333333333332,
+        "mean_flow_magnitude": 4.61654806137085
+      },
+      {
+        "timestamp_seconds": 17.6,
+        "mean_flow_magnitude": 3.2922418117523193
+      },
+      {
+        "timestamp_seconds": 17.866666666666667,
+        "mean_flow_magnitude": 2.8080711364746094
+      },
+      {
+        "timestamp_seconds": 18.133333333333333,
+        "mean_flow_magnitude": 3.7431771755218506
+      },
+      {
+        "timestamp_seconds": 18.4,
+        "mean_flow_magnitude": 4.1900787353515625
+      }
+    ],
+    "method": "opencv-farneback-on-sampled-frames"
+  },
+  "transcript_segments": [
+    {
+      "start_seconds": 0.2,
+      "end_seconds": 2.48,
+      "text": "Happy holidays to celebrate working away",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 2.48,
+      "end_seconds": 4.1,
+      "text": "over a million dollars worth of gifts",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 4.1,
+      "end_seconds": 5.8,
+      "text": "to random people that subscribe,",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 6.06,
+      "end_seconds": 7.6,
+      "text": "like this Avinston E-Bike.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 8.0,
+      "end_seconds": 8.86,
+      "text": "Or, oh, hold up, hold up.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 9.08,
+      "end_seconds": 10.98,
+      "text": "Or, these Lenovo VR glasses",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 10.98,
+      "end_seconds": 12.76,
+      "text": "and this Canon PowerShot camera,",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 12.96,
+      "end_seconds": 15.28,
+      "text": "these are just some of over one million dollars worth",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 15.28,
+      "end_seconds": 16.86,
+      "text": "of gifts we are giving to people that subscribe.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 17.22,
+      "end_seconds": 18.44,
+      "text": "So press the button right now.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "ocr_spans": [],
+  "audio": {
+    "analyzed": true,
+    "duration_seconds": 18.573015873015873,
+    "sample_rate": 22050,
+    "rms_mean": 0.09162865579128265,
+    "silence_ratio": 0.0,
+    "estimated_tempo_bpm": 129.19921875,
+    "beat_times_seconds": [
+      0.06965986394557823,
+      0.626938775510204,
+      1.1145578231292517,
+      1.6486167800453515,
+      2.136235827664399,
+      2.6238548752834467,
+      3.111473922902494,
+      3.575873015873016,
+      4.017052154195011,
+      4.458231292517007,
+      4.9458503401360545,
+      5.340589569160998,
+      5.758548752834467,
+      6.222947845804988,
+      6.710566893424036,
+      7.151746031746032,
+      7.592925170068027,
+      8.034104308390022,
+      8.498503401360544,
+      8.962902494331066,
+      9.450521541950113,
+      9.914920634920636,
+      10.356099773242631,
+      10.7740589569161,
+      11.215238095238096,
+      11.702857142857143,
+      12.144036281179138,
+      12.60843537414966,
+      13.072834467120181,
+      13.514013605442177,
+      13.955192743764172,
+      14.396371882086168,
+      14.837551020408164,
+      15.301950113378684,
+      15.789569160997733,
+      16.23074829931973,
+      16.718367346938777,
+      17.205986394557822,
+      17.647165532879818,
+      18.134784580498867
+    ],
+    "onset_times_seconds": [
+      0.06965986394557823,
+      0.34829931972789113,
+      0.4876190476190476,
+      0.626938775510204,
+      0.8126984126984127,
+      1.0216780045351475,
+      1.0913378684807256,
+      1.207437641723356,
+      1.4628571428571429,
+      1.5325170068027212,
+      1.6253968253968254,
+      1.9040362811791383,
+      2.089795918367347,
+      2.136235827664399,
+      2.461315192743764,
+      2.809614512471655,
+      3.111473922902494,
+      3.320453514739229,
+      3.4597732426303853,
+      3.7848526077097504,
+      3.877732426303855,
+      3.9938321995464854,
+      4.272471655328798,
+      4.435011337868481,
+      4.574331065759637,
+      4.690430839002268,
+      4.73687074829932,
+      4.9458503401360545,
+      5.154829931972789,
+      5.340589569160998,
+      5.50312925170068,
+      5.758548752834467,
+      6.199727891156463,
+      6.3854875283446715,
+      6.617687074829932,
+      6.710566893424036,
+      6.826666666666667,
+      6.965986394557823,
+      7.128526077097506,
+      7.244625850340136,
+      7.500045351473923,
+      7.75546485260771,
+      7.848344671201814,
+      8.010884353741497,
+      8.196643990929704,
+      8.498503401360544,
+      8.730702947845804,
+      8.962902494331066,
+      9.102222222222222,
+      9.241541950113378,
+      9.566621315192744,
+      9.729160997732427,
+      9.914920634920636,
+      9.961360544217687,
+      10.12390022675737,
+      10.24,
+      10.379319727891156,
+      10.47219954648526,
+      10.588299319727891,
+      10.727619047619047,
+      11.075918367346938,
+      11.215238095238096,
+      11.470657596371883,
+      11.679637188208616,
+      11.77251700680272,
+      11.935056689342403,
+      12.120816326530612,
+      12.26013605442177,
+      12.376235827664399,
+      12.60843537414966,
+      12.747755102040816,
+      13.072834467120181,
+      13.188934240362812,
+      13.328253968253968,
+      13.397913832199546,
+      13.514013605442177,
+      13.653333333333334,
+      13.769433106575963,
+      13.908752834467121,
+      13.955192743764172,
+      14.233832199546486,
+      14.280272108843537,
+      14.396371882086168,
+      14.628571428571428,
+      14.675011337868481,
+      14.837551020408164,
+      14.953650793650795,
+      15.09297052154195,
+      15.255510204081633,
+      15.371609977324264,
+      15.487709750566893,
+      15.62702947845805,
+      15.766349206349206,
+      16.021768707482995,
+      16.207528344671204,
+      16.34684807256236,
+      16.46294784580499,
+      16.62548752834467,
+      16.718367346938777,
+      16.81124716553288,
+      17.182766439909297,
+      17.2756462585034,
+      17.438185941043084,
+      17.647165532879818,
+      17.76326530612245,
+      17.949024943310658,
+      18.134784580498867,
+      18.3437641723356
+    ],
+    "method": "librosa-0.11.0",
+    "warning": null
+  },
+  "stages": {
+    "media_validation": {
+      "status": "complete",
+      "engine": "ffprobe",
+      "detail": null
+    },
+    "frame_sampling": {
+      "status": "complete",
+      "engine": "opencv",
+      "detail": null
+    },
+    "asr": {
+      "status": "complete",
+      "engine": "vidtrace-faster-whisper",
+      "detail": "Detected language: en; 10 segments."
+    },
+    "ocr": {
+      "status": "skipped",
+      "engine": "paddleocr/vidtrace",
+      "detail": "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+    },
+    "audio_features": {
+      "status": "complete",
+      "engine": "librosa-0.11.0",
+      "detail": null
+    }
+  },
+  "warnings": [
+    "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+  ],
+  "limitations": [
+    "Phase 1 extracts evidence; it does not yet run a fine-tuned VLM.",
+    "Cut, motion and beat events are algorithmic candidates, not ground truth.",
+    "This report does not predict views or establish causal virality drivers."
+  ]
+}

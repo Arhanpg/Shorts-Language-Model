@@ -11,11 +11,11 @@ venv/
 !.env.example
 
 # Private user data and acquisition artifacts
-/data/
-/data/private/
-/raw/
-/processed/
-/outputs/
+# /data/
+# /data/private/
+# /raw/
+# /processed/
+# /outputs/
 /checkpoints/
 /runs/
 /wandb/
@@ -33,13 +33,13 @@ venv/
 *.wav
 *.mp3
 *.flac
-*.jsonl.private
+# *.jsonl.private
 *session*
 *cookie*
 *token*.json
 *.session
 *.session-journal
-*.metadata.json
+# *.metadata.json
 
 # Model artifacts and temporary files
 *.gguf

@@ -1,0 +1,1240 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-11-23T08:08:33.013723Z",
+  "project": "Shorts Language Model",
+  "phase": "phase-1-single-video-telemetry",
+  "source_type": "local_file",
+  "rights": null,
+  "video": {
+    "file_name": "T8jU3J_xyw8.mp4",
+    "sha256": "2d5de3c1d273ed7fb1175b467ffba1a9de8916426016bdd34854e52efb9e7760",
+    "file_size_bytes": 10608895,
+    "duration_seconds": 26.142783,
+    "width": 1080,
+    "height": 1920,
+    "fps": 59.94005994005994,
+    "frame_count": 1567,
+    "video_codec": "av1",
+    "audio_present": true,
+    "audio_codec": "opus",
+    "aspect_ratio": "9:16"
+  },
+  "hook_window": {
+    "start_seconds": 0.0,
+    "end_seconds": 3.0,
+    "frame_count": 8,
+    "cut_candidate_count": 1,
+    "mean_motion_score": 6.069461901982625,
+    "note": "Descriptive signals only; hook quality is not inferred in Phase 1."
+  },
+  "frame_evidence": [
+    {
+      "timestamp_seconds": 0.0,
+      "frame_index": 0,
+      "reason": [
+        "hook_window"
+      ],
+      "motion_score": 0.0,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.25025000000000003,
+      "frame_index": 15,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 2.5320591926574707,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.5005000000000001,
+      "frame_index": 30,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 5.82696533203125,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 0.75075,
+      "frame_index": 45,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 9.198001861572266,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.0010000000000001,
+      "frame_index": 60,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 6.494241237640381,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.25125,
+      "frame_index": 75,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 6.197811603546143,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.5015,
+      "frame_index": 90,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 5.545506477355957,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 1.7517500000000001,
+      "frame_index": 105,
+      "reason": [
+        "hook_window",
+        "motion_peak_candidate"
+      ],
+      "motion_score": 6.4726386070251465,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 3.75375,
+      "frame_index": 225,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.905162334442139,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 4.7547500000000005,
+      "frame_index": 285,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.989185810089111,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 7.25725,
+      "frame_index": 435,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.023195266723633,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 8.758750000000001,
+      "frame_index": 525,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.473779201507568,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 10.01,
+      "frame_index": 600,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.59235954284668,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 11.26125,
+      "frame_index": 675,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.41813850402832,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 12.512500000000001,
+      "frame_index": 750,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.871056079864502,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 14.5145,
+      "frame_index": 870,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 6.499654769897461,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 16.016000000000002,
+      "frame_index": 960,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 9.097224235534668,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 16.26625,
+      "frame_index": 975,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 7.1486992835998535,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 18.76875,
+      "frame_index": 1125,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.51455545425415,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 19.5195,
+      "frame_index": 1170,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 8.264286994934082,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 21.021,
+      "frame_index": 1260,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.4044976234436035,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 22.5225,
+      "frame_index": 1350,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 7.840372085571289,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 23.523500000000002,
+      "frame_index": 1410,
+      "reason": [
+        "cut_candidate",
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 5.000544548034668,
+      "image_path": null
+    },
+    {
+      "timestamp_seconds": 25.27525,
+      "frame_index": 1515,
+      "reason": [
+        "motion_peak_candidate",
+        "temporal_bin"
+      ],
+      "motion_score": 4.365581035614014,
+      "image_path": null
+    }
+  ],
+  "cut_candidates": [
+    {
+      "timestamp_seconds": 2.7527500000000003,
+      "visual_difference": 0.6682345240531357,
+      "confidence": 0.6682345240531357,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 4.7547500000000005,
+      "visual_difference": 0.6161393439292067,
+      "confidence": 0.6161393439292067,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 7.25725,
+      "visual_difference": 0.48550130614166737,
+      "confidence": 0.48550130614166737,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 10.01,
+      "visual_difference": 0.6301483230367703,
+      "confidence": 0.6301483230367703,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 11.761750000000001,
+      "visual_difference": 0.2807518057363738,
+      "confidence": 0.2807518057363738,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 12.512500000000001,
+      "visual_difference": 0.685264994304349,
+      "confidence": 0.685264994304349,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 14.5145,
+      "visual_difference": 0.3642773590810697,
+      "confidence": 0.3642773590810697,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 17.76775,
+      "visual_difference": 0.3251792204581118,
+      "confidence": 0.3251792204581118,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 18.76875,
+      "visual_difference": 0.6300392609152214,
+      "confidence": 0.6300392609152214,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 21.021,
+      "visual_difference": 0.44188057118216295,
+      "confidence": 0.44188057118216295,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    },
+    {
+      "timestamp_seconds": 23.523500000000002,
+      "visual_difference": 0.5046028400713896,
+      "confidence": 0.5046028400713896,
+      "detector": "opencv-histogram-difference",
+      "note": "Candidate boundary; not a human-verified edit label."
+    }
+  ],
+  "motion": {
+    "sample_count": 105,
+    "mean_flow_magnitude": 5.646712779998779,
+    "p95_flow_magnitude": 9.502326011657715,
+    "peak_timestamp_seconds": 2.25225,
+    "samples": [
+      {
+        "timestamp_seconds": 0.0,
+        "mean_flow_magnitude": 0.0
+      },
+      {
+        "timestamp_seconds": 0.25025000000000003,
+        "mean_flow_magnitude": 2.5320591926574707
+      },
+      {
+        "timestamp_seconds": 0.5005000000000001,
+        "mean_flow_magnitude": 5.82696533203125
+      },
+      {
+        "timestamp_seconds": 0.75075,
+        "mean_flow_magnitude": 9.198001861572266
+      },
+      {
+        "timestamp_seconds": 1.0010000000000001,
+        "mean_flow_magnitude": 6.494241237640381
+      },
+      {
+        "timestamp_seconds": 1.25125,
+        "mean_flow_magnitude": 6.197811603546143
+      },
+      {
+        "timestamp_seconds": 1.5015,
+        "mean_flow_magnitude": 5.545506477355957
+      },
+      {
+        "timestamp_seconds": 1.7517500000000001,
+        "mean_flow_magnitude": 6.4726386070251465
+      },
+      {
+        "timestamp_seconds": 2.0020000000000002,
+        "mean_flow_magnitude": 9.752513885498047
+      },
+      {
+        "timestamp_seconds": 2.25225,
+        "mean_flow_magnitude": 10.159111022949219
+      },
+      {
+        "timestamp_seconds": 2.5025,
+        "mean_flow_magnitude": 5.651767253875732
+      },
+      {
+        "timestamp_seconds": 2.7527500000000003,
+        "mean_flow_magnitude": 5.002926349639893
+      },
+      {
+        "timestamp_seconds": 3.003,
+        "mean_flow_magnitude": 6.131881237030029
+      },
+      {
+        "timestamp_seconds": 3.25325,
+        "mean_flow_magnitude": 5.778178691864014
+      },
+      {
+        "timestamp_seconds": 3.5035000000000003,
+        "mean_flow_magnitude": 5.181153774261475
+      },
+      {
+        "timestamp_seconds": 3.75375,
+        "mean_flow_magnitude": 4.905162334442139
+      },
+      {
+        "timestamp_seconds": 4.0040000000000004,
+        "mean_flow_magnitude": 8.478521347045898
+      },
+      {
+        "timestamp_seconds": 4.25425,
+        "mean_flow_magnitude": 4.213290691375732
+      },
+      {
+        "timestamp_seconds": 4.5045,
+        "mean_flow_magnitude": 3.9915032386779785
+      },
+      {
+        "timestamp_seconds": 4.7547500000000005,
+        "mean_flow_magnitude": 5.989185810089111
+      },
+      {
+        "timestamp_seconds": 5.005,
+        "mean_flow_magnitude": 6.643646240234375
+      },
+      {
+        "timestamp_seconds": 5.25525,
+        "mean_flow_magnitude": 6.812271595001221
+      },
+      {
+        "timestamp_seconds": 5.5055000000000005,
+        "mean_flow_magnitude": 6.940554618835449
+      },
+      {
+        "timestamp_seconds": 5.75575,
+        "mean_flow_magnitude": 8.110368728637695
+      },
+      {
+        "timestamp_seconds": 6.006,
+        "mean_flow_magnitude": 9.64858627319336
+      },
+      {
+        "timestamp_seconds": 6.2562500000000005,
+        "mean_flow_magnitude": 6.846410751342773
+      },
+      {
+        "timestamp_seconds": 6.5065,
+        "mean_flow_magnitude": 5.992565631866455
+      },
+      {
+        "timestamp_seconds": 6.75675,
+        "mean_flow_magnitude": 6.262674808502197
+      },
+      {
+        "timestamp_seconds": 7.007000000000001,
+        "mean_flow_magnitude": 6.974161624908447
+      },
+      {
+        "timestamp_seconds": 7.25725,
+        "mean_flow_magnitude": 6.023195266723633
+      },
+      {
+        "timestamp_seconds": 7.5075,
+        "mean_flow_magnitude": 5.191389083862305
+      },
+      {
+        "timestamp_seconds": 7.75775,
+        "mean_flow_magnitude": 5.468428134918213
+      },
+      {
+        "timestamp_seconds": 8.008000000000001,
+        "mean_flow_magnitude": 7.007579326629639
+      },
+      {
+        "timestamp_seconds": 8.25825,
+        "mean_flow_magnitude": 6.450798988342285
+      },
+      {
+        "timestamp_seconds": 8.5085,
+        "mean_flow_magnitude": 5.4290900230407715
+      },
+      {
+        "timestamp_seconds": 8.758750000000001,
+        "mean_flow_magnitude": 5.473779201507568
+      },
+      {
+        "timestamp_seconds": 9.009,
+        "mean_flow_magnitude": 5.404520511627197
+      },
+      {
+        "timestamp_seconds": 9.25925,
+        "mean_flow_magnitude": 5.651680946350098
+      },
+      {
+        "timestamp_seconds": 9.509500000000001,
+        "mean_flow_magnitude": 9.578301429748535
+      },
+      {
+        "timestamp_seconds": 9.75975,
+        "mean_flow_magnitude": 9.216196060180664
+      },
+      {
+        "timestamp_seconds": 10.01,
+        "mean_flow_magnitude": 4.59235954284668
+      },
+      {
+        "timestamp_seconds": 10.260250000000001,
+        "mean_flow_magnitude": 8.084888458251953
+      },
+      {
+        "timestamp_seconds": 10.5105,
+        "mean_flow_magnitude": 6.447272300720215
+      },
+      {
+        "timestamp_seconds": 10.76075,
+        "mean_flow_magnitude": 4.294399738311768
+      },
+      {
+        "timestamp_seconds": 11.011000000000001,
+        "mean_flow_magnitude": 4.5145440101623535
+      },
+      {
+        "timestamp_seconds": 11.26125,
+        "mean_flow_magnitude": 4.41813850402832
+      },
+      {
+        "timestamp_seconds": 11.5115,
+        "mean_flow_magnitude": 4.8662614822387695
+      },
+      {
+        "timestamp_seconds": 11.761750000000001,
+        "mean_flow_magnitude": 6.171970367431641
+      },
+      {
+        "timestamp_seconds": 12.012,
+        "mean_flow_magnitude": 5.2967209815979
+      },
+      {
+        "timestamp_seconds": 12.26225,
+        "mean_flow_magnitude": 6.924896717071533
+      },
+      {
+        "timestamp_seconds": 12.512500000000001,
+        "mean_flow_magnitude": 4.871056079864502
+      },
+      {
+        "timestamp_seconds": 12.76275,
+        "mean_flow_magnitude": 7.4289422035217285
+      },
+      {
+        "timestamp_seconds": 13.013,
+        "mean_flow_magnitude": 6.445100784301758
+      },
+      {
+        "timestamp_seconds": 13.263250000000001,
+        "mean_flow_magnitude": 5.246838569641113
+      },
+      {
+        "timestamp_seconds": 13.5135,
+        "mean_flow_magnitude": 4.195091724395752
+      },
+      {
+        "timestamp_seconds": 13.76375,
+        "mean_flow_magnitude": 9.300301551818848
+      },
+      {
+        "timestamp_seconds": 14.014000000000001,
+        "mean_flow_magnitude": 9.552833557128906
+      },
+      {
+        "timestamp_seconds": 14.26425,
+        "mean_flow_magnitude": 9.88007926940918
+      },
+      {
+        "timestamp_seconds": 14.5145,
+        "mean_flow_magnitude": 6.499654769897461
+      },
+      {
+        "timestamp_seconds": 14.764750000000001,
+        "mean_flow_magnitude": 1.6823467016220093
+      },
+      {
+        "timestamp_seconds": 15.015,
+        "mean_flow_magnitude": 1.6840077638626099
+      },
+      {
+        "timestamp_seconds": 15.26525,
+        "mean_flow_magnitude": 1.969682216644287
+      },
+      {
+        "timestamp_seconds": 15.5155,
+        "mean_flow_magnitude": 3.091165542602539
+      },
+      {
+        "timestamp_seconds": 15.76575,
+        "mean_flow_magnitude": 5.874331474304199
+      },
+      {
+        "timestamp_seconds": 16.016000000000002,
+        "mean_flow_magnitude": 9.097224235534668
+      },
+      {
+        "timestamp_seconds": 16.26625,
+        "mean_flow_magnitude": 7.1486992835998535
+      },
+      {
+        "timestamp_seconds": 16.5165,
+        "mean_flow_magnitude": 3.3766725063323975
+      },
+      {
+        "timestamp_seconds": 16.766750000000002,
+        "mean_flow_magnitude": 1.7734907865524292
+      },
+      {
+        "timestamp_seconds": 17.017,
+        "mean_flow_magnitude": 2.706882953643799
+      },
+      {
+        "timestamp_seconds": 17.26725,
+        "mean_flow_magnitude": 4.26507568359375
+      },
+      {
+        "timestamp_seconds": 17.517500000000002,
+        "mean_flow_magnitude": 3.3471765518188477
+      },
+      {
+        "timestamp_seconds": 17.76775,
+        "mean_flow_magnitude": 4.702177047729492
+      },
+      {
+        "timestamp_seconds": 18.018,
+        "mean_flow_magnitude": 4.895102500915527
+      },
+      {
+        "timestamp_seconds": 18.268250000000002,
+        "mean_flow_magnitude": 3.4064080715179443
+      },
+      {
+        "timestamp_seconds": 18.5185,
+        "mean_flow_magnitude": 3.1844615936279297
+      },
+      {
+        "timestamp_seconds": 18.76875,
+        "mean_flow_magnitude": 5.51455545425415
+      },
+      {
+        "timestamp_seconds": 19.019000000000002,
+        "mean_flow_magnitude": 5.080543518066406
+      },
+      {
+        "timestamp_seconds": 19.26925,
+        "mean_flow_magnitude": 4.729735851287842
+      },
+      {
+        "timestamp_seconds": 19.5195,
+        "mean_flow_magnitude": 8.264286994934082
+      },
+      {
+        "timestamp_seconds": 19.769750000000002,
+        "mean_flow_magnitude": 6.247641086578369
+      },
+      {
+        "timestamp_seconds": 20.02,
+        "mean_flow_magnitude": 4.295181751251221
+      },
+      {
+        "timestamp_seconds": 20.27025,
+        "mean_flow_magnitude": 3.364408493041992
+      },
+      {
+        "timestamp_seconds": 20.520500000000002,
+        "mean_flow_magnitude": 3.554697036743164
+      },
+      {
+        "timestamp_seconds": 20.77075,
+        "mean_flow_magnitude": 3.4827959537506104
+      },
+      {
+        "timestamp_seconds": 21.021,
+        "mean_flow_magnitude": 4.4044976234436035
+      },
+      {
+        "timestamp_seconds": 21.271250000000002,
+        "mean_flow_magnitude": 7.117743015289307
+      },
+      {
+        "timestamp_seconds": 21.5215,
+        "mean_flow_magnitude": 9.165472984313965
+      },
+      {
+        "timestamp_seconds": 21.77175,
+        "mean_flow_magnitude": 8.375017166137695
+      },
+      {
+        "timestamp_seconds": 22.022000000000002,
+        "mean_flow_magnitude": 8.25133991241455
+      },
+      {
+        "timestamp_seconds": 22.27225,
+        "mean_flow_magnitude": 5.6229376792907715
+      },
+      {
+        "timestamp_seconds": 22.5225,
+        "mean_flow_magnitude": 7.840372085571289
+      },
+      {
+        "timestamp_seconds": 22.772750000000002,
+        "mean_flow_magnitude": 8.792134284973145
+      },
+      {
+        "timestamp_seconds": 23.023,
+        "mean_flow_magnitude": 8.1041259765625
+      },
+      {
+        "timestamp_seconds": 23.27325,
+        "mean_flow_magnitude": 6.898957252502441
+      },
+      {
+        "timestamp_seconds": 23.523500000000002,
+        "mean_flow_magnitude": 5.000544548034668
+      },
+      {
+        "timestamp_seconds": 23.77375,
+        "mean_flow_magnitude": 2.1275572776794434
+      },
+      {
+        "timestamp_seconds": 24.024,
+        "mean_flow_magnitude": 2.2190752029418945
+      },
+      {
+        "timestamp_seconds": 24.274250000000002,
+        "mean_flow_magnitude": 2.500338554382324
+      },
+      {
+        "timestamp_seconds": 24.5245,
+        "mean_flow_magnitude": 4.477306842803955
+      },
+      {
+        "timestamp_seconds": 24.77475,
+        "mean_flow_magnitude": 4.658246994018555
+      },
+      {
+        "timestamp_seconds": 25.025000000000002,
+        "mean_flow_magnitude": 5.4487833976745605
+      },
+      {
+        "timestamp_seconds": 25.27525,
+        "mean_flow_magnitude": 4.365581035614014
+      },
+      {
+        "timestamp_seconds": 25.5255,
+        "mean_flow_magnitude": 3.744321584701538
+      },
+      {
+        "timestamp_seconds": 25.775750000000002,
+        "mean_flow_magnitude": 2.979307174682617
+      },
+      {
+        "timestamp_seconds": 26.026,
+        "mean_flow_magnitude": 2.4123988151550293
+      }
+    ],
+    "method": "opencv-farneback-on-sampled-frames"
+  },
+  "transcript_segments": [
+    {
+      "start_seconds": 0.29,
+      "end_seconds": 2.13,
+      "text": "10 ways to jump in a pool.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 2.61,
+      "end_seconds": 3.53,
+      "text": "Cannonball.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 4.79,
+      "end_seconds": 5.53,
+      "text": "Basketball.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 6.72,
+      "end_seconds": 7.98,
+      "text": "Lake Granado.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 9.82,
+      "end_seconds": 11.14,
+      "text": "Doing the gritty.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 12.36,
+      "end_seconds": 13.54,
+      "text": "Walk the plank.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 14.62,
+      "end_seconds": 15.58,
+      "text": "Dive in kens.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 19.07,
+      "end_seconds": 19.99,
+      "text": "Slam dunk.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 20.99,
+      "end_seconds": 22.43,
+      "text": "Folly get distracted.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    },
+    {
+      "start_seconds": 23.65,
+      "end_seconds": 24.25,
+      "text": "360.",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "ocr_spans": [],
+  "audio": {
+    "analyzed": true,
+    "duration_seconds": 26.153015873015875,
+    "sample_rate": 22050,
+    "rms_mean": 0.09977399557828903,
+    "silence_ratio": 0.0044365572315882874,
+    "estimated_tempo_bpm": 151.99908088235293,
+    "beat_times_seconds": [
+      0.37151927437641724,
+      0.7662585034013606,
+      1.207437641723356,
+      1.6486167800453515,
+      2.066575963718821,
+      2.48453514739229,
+      2.9024943310657596,
+      3.320453514739229,
+      3.6919727891156464,
+      4.08671201814059,
+      4.481451247165533,
+      4.876190476190477,
+      5.201269841269841,
+      5.596009070294785,
+      5.990748299319728,
+      6.408707482993197,
+      6.780226757369615,
+      7.128526077097506,
+      7.500045351473923,
+      7.894784580498866,
+      8.312743764172335,
+      8.684263038548753,
+      9.079002267573696,
+      9.450521541950113,
+      9.822040816326531,
+      10.193560090702947,
+      10.611519274376418,
+      10.983038548752834,
+      11.377777777777778,
+      11.795736961451247,
+      12.26013605442177,
+      12.701315192743763,
+      13.072834467120181,
+      13.444353741496599,
+      13.839092970521541,
+      14.233832199546486,
+      14.651791383219955,
+      15.046530612244897,
+      15.464489795918368,
+      15.882448979591837,
+      16.27718820861678,
+      16.671927437641724,
+      17.04344671201814,
+      17.438185941043084,
+      17.832925170068027,
+      18.22766439909297,
+      18.622403628117915,
+      19.017142857142858,
+      19.4118820861678,
+      19.82984126984127,
+      20.201360544217685,
+      20.572879818594103,
+      20.990839002267574,
+      21.408798185941045,
+      21.826757369614512,
+      22.244716553287983,
+      22.66267573696145,
+      23.057414965986396,
+      23.45215419501134,
+      23.84689342403628,
+      24.241632653061224,
+      24.61315192743764,
+      25.031111111111112
+    ],
+    "onset_times_seconds": [
+      0.06965986394557823,
+      0.34829931972789113,
+      0.5340589569160997,
+      0.7430385487528345,
+      0.9984580498866213,
+      1.18421768707483,
+      1.253877551020408,
+      1.486077097505669,
+      1.5789569160997732,
+      1.6486167800453515,
+      1.8808163265306121,
+      2.182675736961451,
+      2.6238548752834467,
+      2.7631746031746034,
+      2.8328344671201813,
+      3.111473922902494,
+      3.297233560090703,
+      3.5294331065759637,
+      4.156371882086168,
+      4.876190476190477,
+      5.178049886621316,
+      5.38702947845805,
+      5.596009070294785,
+      5.828208616780046,
+      5.897868480725624,
+      6.106848072562358,
+      6.408707482993197,
+      6.5712471655328795,
+      6.896326530612245,
+      7.1053061224489795,
+      7.337505668934241,
+      7.500045351473923,
+      7.592925170068027,
+      7.894784580498866,
+      8.289523809523809,
+      8.684263038548753,
+      8.870022675736962,
+      9.079002267573696,
+      9.241541950113378,
+      10.170340136054422,
+      10.332879818594105,
+      10.588299319727891,
+      10.750839002267574,
+      11.54031746031746,
+      11.609977324263038,
+      11.795736961451247,
+      11.935056689342403,
+      12.26013605442177,
+      12.538775510204081,
+      12.701315192743763,
+      12.84063492063492,
+      13.049614512471654,
+      13.212154195011339,
+      13.421133786848072,
+      13.769433106575963,
+      13.931972789115646,
+      14.094512471655328,
+      14.651791383219955,
+      14.79111111111111,
+      14.97687074829932,
+      15.139410430839002,
+      15.255510204081633,
+      15.975328798185942,
+      16.27718820861678,
+      18.83138321995465,
+      19.249342403628116,
+      19.388662131519276,
+      19.52798185941043,
+      19.82984126984127,
+      20.17814058956916,
+      20.526439909297054,
+      20.82829931972789,
+      21.13015873015873,
+      21.269478458049885,
+      21.43201814058957,
+      21.640997732426303,
+      21.826757369614512,
+      22.058956916099774,
+      22.244716553287983,
+      22.523356009070294,
+      22.68589569160998,
+      23.057414965986396,
+      23.26639455782313,
+      23.637913832199548,
+      24.079092970521543,
+      24.241632653061224,
+      24.427392290249433,
+      24.589931972789117,
+      25.031111111111112,
+      25.193650793650793,
+      25.56517006802721,
+      25.75092970521542
+    ],
+    "method": "librosa-0.11.0",
+    "warning": null
+  },
+  "stages": {
+    "media_validation": {
+      "status": "complete",
+      "engine": "ffprobe",
+      "detail": null
+    },
+    "frame_sampling": {
+      "status": "complete",
+      "engine": "opencv",
+      "detail": null
+    },
+    "asr": {
+      "status": "complete",
+      "engine": "vidtrace-faster-whisper",
+      "detail": "Detected language: en; 10 segments."
+    },
+    "ocr": {
+      "status": "skipped",
+      "engine": "paddleocr/vidtrace",
+      "detail": "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+    },
+    "audio_features": {
+      "status": "complete",
+      "engine": "librosa-0.11.0",
+      "detail": null
+    }
+  },
+  "warnings": [
+    "VidTrace PaddleOCR adapter failed: NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\\paddle\\fluid\\framework\\new_executor\\instruction\\onednn\\onednn_instruction.cc:118)\n"
+  ],
+  "limitations": [
+    "Phase 1 extracts evidence; it does not yet run a fine-tuned VLM.",
+    "Cut, motion and beat events are algorithmic candidates, not ground truth.",
+    "This report does not predict views or establish causal virality drivers."
+  ]
+}

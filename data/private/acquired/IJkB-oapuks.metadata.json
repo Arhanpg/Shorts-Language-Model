@@ -1,0 +1,30 @@
+{
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "IJkB-oapuks",
+    "canonical_url": "https://www.youtube.com/shorts/IJkB-oapuks",
+    "title": "Giving Away $1,000,000 in Gifts To My Subscribers",
+    "description": "NO PURCHASE NECESSARY TO ENTER OR WIN. Takes place from 12/21/25 at 12:00 p.m. ET to 2/1/26 at 11:59 p.m. ET. Open only to new subscribers to the MrBeast YouTube account during the Sweepstakes Period and whose YouTube is set to public and includes a valid email address.  See Official Rules at https://bit.ly/Beast-mas for additional eligibility restrictions and complete details. Odds of winning depend on the number of eligible entries received. Void where prohibited. Sponsor: MrBeastYouTube, LLC, 740 Greenville Blvd., Greenville, NC 27858, USA",
+    "creator": "MrBeast",
+    "view_count": 1223939723,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 19.0,
+    "upload_date": "2025-12-21T09:00:01-08:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-22T12:00:25.388460Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "listed_views_hint": 1200000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  },
+  "downloaded_at": "2026-11-23T08:18:14.696334+00:00"
+}

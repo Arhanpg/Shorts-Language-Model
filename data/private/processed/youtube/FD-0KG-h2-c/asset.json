@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "FD-0KG-h2-c",
+    "canonical_url": "https://www.youtube.com/shorts/FD-0KG-h2-c",
+    "title": "Gordon Ramsay Tries Most Expensive Chocolate Bar!",
+    "description": "New Merch - https://shopmrbeast.com/\n\nSUBSCRIBE OR I TAKE YOUR DOG\n╔═╦╗╔╦╗╔═╦═╦╦╦╦╗╔═╗\n║╚╣║║║╚╣╚╣╔╣╔╣║╚╣═╣ \n╠╗║╚╝║║╠╗║╚╣║║║║║═╣\n╚═╩══╩═╩═╩═╩╝╚╩═╩═╝\n\n----------------------------------------------------------------\nfollow all of these or i will kick you\n• Facebook - https://www.facebook.com/MrBeast6000/\n• Twitter - https://twitter.com/MrBeast\n•  Instagram - https://www.instagram.com/mrbeast\n•  Im Hiring! - https://www.mrbeastjobs.com/\n--------------------------------------------------------------------",
+    "creator": "MrBeast",
+    "view_count": 912871017,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 40.0,
+    "upload_date": "2022-11-19T12:59:59-08:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-22T12:00:25.389460Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "listed_views_hint": 912000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  },
+  "media_path": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\acquired\\FD-0KG-h2-c.mp4",
+  "media_sha256": "c72696070ce16d9b679fc03a130121af04bf0edccc68d5cd87f6152d5a4ec8d3",
+  "video": {
+    "file_name": "FD-0KG-h2-c.mp4",
+    "sha256": "c72696070ce16d9b679fc03a130121af04bf0edccc68d5cd87f6152d5a4ec8d3",
+    "file_size_bytes": 67277303,
+    "duration_seconds": 39.973267,
+    "width": 2160,
+    "height": 3840,
+    "fps": 29.97002997002997,
+    "frame_count": 1198,
+    "video_codec": "av1",
+    "audio_present": true,
+    "audio_codec": "opus",
+    "aspect_ratio": "9:16"
+  },
+  "analysis_report": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\FD-0KG-h2-c\\analysis.json",
+  "transcript": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\FD-0KG-h2-c\\transcript.json",
+  "ocr": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\FD-0KG-h2-c\\ocr.json"
+}

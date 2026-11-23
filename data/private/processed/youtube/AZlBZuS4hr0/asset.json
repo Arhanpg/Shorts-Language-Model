@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "AZlBZuS4hr0",
+    "canonical_url": "https://www.youtube.com/shorts/AZlBZuS4hr0",
+    "title": "Guess The Gift, Keep It",
+    "description": "",
+    "creator": "MrBeast",
+    "view_count": 1130979633,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 44.0,
+    "upload_date": "2023-10-03T10:00:00-07:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-22T12:00:25.389460Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "listed_views_hint": 1100000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  },
+  "media_path": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\acquired\\AZlBZuS4hr0.mp4",
+  "media_sha256": "c1f462911629fcfddc970fc1740df9c1c1d43b38add6053940e641b8ed9c225d",
+  "video": {
+    "file_name": "AZlBZuS4hr0.mp4",
+    "sha256": "c1f462911629fcfddc970fc1740df9c1c1d43b38add6053940e641b8ed9c225d",
+    "file_size_bytes": 29561623,
+    "duration_seconds": 44.367,
+    "width": 1080,
+    "height": 1920,
+    "fps": 29.999774607253137,
+    "frame_count": 1331,
+    "video_codec": "vp9",
+    "audio_present": true,
+    "audio_codec": "opus",
+    "aspect_ratio": "9:16"
+  },
+  "analysis_report": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\AZlBZuS4hr0\\analysis.json",
+  "transcript": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\AZlBZuS4hr0\\transcript.json",
+  "ocr": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\AZlBZuS4hr0\\ocr.json"
+}

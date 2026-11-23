@@ -1,0 +1,30 @@
+{
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "IQxea9UB1nQ",
+    "canonical_url": "https://www.youtube.com/shorts/IQxea9UB1nQ",
+    "title": "$100,000,000 Car Doors",
+    "description": "",
+    "creator": "MrBeast",
+    "view_count": 1377243344,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 28.0,
+    "upload_date": "2023-09-19T10:00:00-07:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-21T21:41:42.255511Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "listed_views_hint": 1300000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  },
+  "downloaded_at": "2026-11-23T08:08:45.115812+00:00"
+}

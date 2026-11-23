@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "T8jU3J_xyw8",
+    "canonical_url": "https://www.youtube.com/shorts/T8jU3J_xyw8",
+    "title": "10 Ways to Jump Into a Pool!",
+    "description": "10 fun ways you can jump into a pool!",
+    "creator": "Colin Amazing",
+    "view_count": 1625021204,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 26.0,
+    "upload_date": "2023-04-19T06:00:24-07:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-22T12:00:15.946212Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCMCzQGnRBx29bemSKM4nA4w",
+      "listed_views_hint": 1600000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCMCzQGnRBx29bemSKM4nA4w"
+    }
+  },
+  "media_path": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\acquired\\T8jU3J_xyw8.mp4",
+  "media_sha256": "2d5de3c1d273ed7fb1175b467ffba1a9de8916426016bdd34854e52efb9e7760",
+  "video": {
+    "file_name": "T8jU3J_xyw8.mp4",
+    "sha256": "2d5de3c1d273ed7fb1175b467ffba1a9de8916426016bdd34854e52efb9e7760",
+    "file_size_bytes": 10608895,
+    "duration_seconds": 26.142783,
+    "width": 1080,
+    "height": 1920,
+    "fps": 59.94005994005994,
+    "frame_count": 1567,
+    "video_codec": "av1",
+    "audio_present": true,
+    "audio_codec": "opus",
+    "aspect_ratio": "9:16"
+  },
+  "analysis_report": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\T8jU3J_xyw8\\analysis.json",
+  "transcript": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\T8jU3J_xyw8\\transcript.json",
+  "ocr": "D:\\Shorts LLM\\Shorts-Language-Model\\data\\private\\processed\\youtube\\T8jU3J_xyw8\\ocr.json"
+}

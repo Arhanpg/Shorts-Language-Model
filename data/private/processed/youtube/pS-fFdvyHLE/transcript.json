@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "platform": "youtube",
+  "source_id": "pS-fFdvyHLE",
+  "language": "en",
+  "segment_count": 1,
+  "segments": [
+    {
+      "start_seconds": 1.35,
+      "end_seconds": 1.93,
+      "text": "Oh boy!",
+      "language": "en",
+      "confidence": null,
+      "words": [
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        },
+        {
+          "start": null,
+          "end": null,
+          "word": "",
+          "probability": null
+        }
+      ]
+    }
+  ],
+  "asr_stage": {
+    "status": "complete",
+    "engine": "vidtrace-faster-whisper-cuda-int8_float16",
+    "detail": "Detected language: en; 1 segments."
+  }
+}

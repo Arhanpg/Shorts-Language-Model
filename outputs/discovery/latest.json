@@ -1,0 +1,138 @@
+{
+  "run_id": "11ca433e9d594a94b8de28d0cfca6ea1",
+  "started_at": "2026-11-21T19:16:29.354712+00:00",
+  "finished_at": "2026-11-21T19:16:56.706513+00:00",
+  "platform": "instagram",
+  "platform_execution": {
+    "youtube": {
+      "selected": false,
+      "queries_selected": 0,
+      "queries_executed": 0,
+      "raw_results": 0,
+      "status": "not_selected",
+      "circuit_reason": null
+    },
+    "instagram": {
+      "selected": true,
+      "queries_selected": 8,
+      "queries_executed": 1,
+      "raw_results": 7,
+      "status": "circuit_open",
+      "circuit_reason": "Stopped after 3 Instaloader failures; last error: BadResponseException: Fetching Post metadata failed.. Anonymous mode was used; a user-owned local session may improve access."
+    }
+  },
+  "target_new": 100,
+  "runtime_budget_seconds": 180,
+  "elapsed_seconds": 27.36,
+  "stop_reason": "completed",
+  "youtube_search_pages_fetched": 0,
+  "youtube_queries_completed": 0,
+  "youtube_duplicate_results_within_queries": 0,
+  "youtube_discovery_surfaces": {
+    "text_search_queries": 0,
+    "hashtag_shelves_selected": 0,
+    "hashtag_shelves_completed": 0,
+    "channel_tabs_completed": 0,
+    "raw_surface_results": 0
+  },
+  "youtube_request_timeout_seconds": 6.0,
+  "youtube_request_retries": 1,
+  "youtube_stage_deadline_seconds_from_start": 111.6,
+  "min_views": 1000000,
+  "raw_search_results": {
+    "youtube": 0,
+    "instagram": 7,
+    "total": 7
+  },
+  "queries_executed": {
+    "instagram": 1
+  },
+  "query_history_counts": {
+    "instagram": 7,
+    "youtube": 94
+  },
+  "query_cooldown_days": 1,
+  "query_rotation": {
+    "youtube_selected": [],
+    "instagram_selected": [
+      "site:instagram.com/reel/ cooking reels",
+      "site:instagram.com/reel/ curiosidades reels",
+      "site:instagram.com/reel/ cocina reels",
+      "site:instagram.com/reel/ தமிழ் கல்வி reels",
+      "site:instagram.com/reel/ curiosidades reels",
+      "site:instagram.com/reel/ தமிழ் கிரிக்கெட் reels",
+      "site:instagram.com/reel/ gaming reels",
+      "site:instagram.com/reel/ తెలుగు విద్య reels"
+    ]
+  },
+  "unique_candidates_evaluated": 0,
+  "duplicate_search_results": 0,
+  "already_known_source_ids": 0,
+  "new_eligible": 0,
+  "already_eligible": 0,
+  "known_ids_became_eligible": 0,
+  "missing_view_metric": 0,
+  "below_threshold": 0,
+  "format_uncertain": 0,
+  "not_short": 0,
+  "youtube_metadata_enrichment": {
+    "attempted": 0,
+    "succeeded": 0,
+    "limit": 40,
+    "budget_seconds": 20,
+    "budget_exhausted": false
+  },
+  "instagram_metadata": {
+    "lookups": 3,
+    "succeeded": 0,
+    "failed": 3,
+    "not_attempted_due_to_lookup_cap": 1,
+    "ddgs_failures": 1,
+    "circuit_open": true,
+    "circuit_reason": "Stopped after 3 Instaloader failures; last error: BadResponseException: Fetching Post metadata failed.. Anonymous mode was used; a user-owned local session may improve access.",
+    "lookup_limit": 40,
+    "request_timeout_seconds": 6.0,
+    "ddgs_timeout_seconds": 6,
+    "stage_deadline_seconds_from_start": 180.0,
+    "stage_budget_policy": "reserved_stage_window",
+    "auth_mode": "anonymous",
+    "session_authenticated": false,
+    "session_username_configured": false
+  },
+  "storage_errors": 0,
+  "provider_errors": 4,
+  "provider_errors_by_platform": {
+    "instagram": 4
+  },
+  "provider_error_details": [
+    "instagram: DDGS bing,brave,duckduckgo page 1 for 'site:instagram.com/reel/ cooking reels': DDGSException: No results found.",
+    "instagram: Instaloader Reel DGbJ1_aM1FB: BadResponseException: Fetching Post metadata failed.",
+    "instagram: Instaloader Reel CvH7I-UqPEX: BadResponseException: Fetching Post metadata failed.",
+    "instagram: Instaloader Reel DZy6qy3itOk: BadResponseException: Fetching Post metadata failed.",
+    "instagram circuit opened: Stopped after 3 Instaloader failures; last error: BadResponseException: Fetching Post metadata failed.. Anonymous mode was used; a user-owned local session may improve access."
+  ],
+  "run_status_counts": {},
+  "run_status_counts_by_platform": {
+    "youtube": {},
+    "instagram": {}
+  },
+  "database_status_counts": {
+    "below_threshold": 546,
+    "eligible": 15,
+    "format_unknown": 293,
+    "metric_unknown": 42,
+    "not_short": 268
+  },
+  "database_status_counts_by_platform": {
+    "youtube": {
+      "below_threshold": 546,
+      "eligible": 15,
+      "format_unknown": 293,
+      "metric_unknown": 42,
+      "not_short": 268
+    }
+  },
+  "database_path": ".shortslm\\discovery.sqlite3",
+  "sampling_note": "YouTube combines bounded ytscrape Shorts-filtered search with yt-dlp hashtag Shorts shelves and discovered-channel Shorts tabs. Instagram URLs are indexed by public web search and metadata is resolved with Instaloader, anonymously unless a user-owned local session is configured. Both remain best-effort, non-uniform samples; only new unique IDs with confirmed format and observed view_count >= the threshold count.",
+  "media_downloaded": 0
+}

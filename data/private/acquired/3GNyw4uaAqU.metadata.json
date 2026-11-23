@@ -1,0 +1,30 @@
+{
+  "candidate": {
+    "platform": "youtube",
+    "source_id": "3GNyw4uaAqU",
+    "canonical_url": "https://www.youtube.com/shorts/3GNyw4uaAqU",
+    "title": "Subscribe for an iPhone",
+    "description": "NO PURCHASE NECESSARY TO ENTER OR WIN. Takes place from 12:00 p.m. ET on January 13, 2026 through 11:59 a.m. ET on February 12, 2026.  See Official Rules at https://bit.ly/subthrow for eligibility requirements, individual entry periodsand complete details. Void where prohibited. Sponsor: MrBeastYouTube, LLC.",
+    "creator": "MrBeast",
+    "view_count": 1231793986,
+    "play_count": null,
+    "metric_source": "tubescrape_video_info.view_count",
+    "duration_seconds": 14.0,
+    "upload_date": "2026-01-13T11:00:04-08:00",
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-22T12:00:25.388460Z",
+    "metadata": {
+      "provider": "tubescrape",
+      "provider_version": "0.6.0",
+      "format_evidence": "channel_shorts_tab",
+      "is_short_field": true,
+      "channel_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "listed_views_hint": 1200000000,
+      "popular_sort": "popular",
+      "creator_frontier_id": "UCX6OQ3DkcsbYNE6H8uQQuVA"
+    }
+  },
+  "downloaded_at": "2026-11-23T08:16:20.604119+00:00"
+}

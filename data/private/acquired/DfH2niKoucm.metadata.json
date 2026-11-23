@@ -1,0 +1,33 @@
+{
+  "candidate": {
+    "platform": "instagram",
+    "source_id": "DfH2niKoucm",
+    "canonical_url": "https://www.instagram.com/reel/DfH2niKoucm/",
+    "title": null,
+    "description": null,
+    "creator": "chaitaliandharshil",
+    "view_count": null,
+    "play_count": null,
+    "metric_source": "instagram_rendered_reel_card.plays",
+    "duration_seconds": null,
+    "upload_date": null,
+    "hashtags": [],
+    "short_format_status": "confirmed",
+    "status": "eligible",
+    "discovered_at": "2026-11-23T11:31:01.277662Z",
+    "metadata": {
+      "provider": "playwright_rendered_reel_link",
+      "discovery_surface": "creator_reels_tab",
+      "hashtag": null,
+      "metric_kind": "plays",
+      "metric_source": "instagram_rendered_reel_card.plays",
+      "metric_is_estimate": true,
+      "metric_display_value": "132M",
+      "metric_nominal_value": 132000000,
+      "metric_conservative_lower_bound": 131500000,
+      "metric_precision": "abbreviated_display",
+      "metric_usage": "discovery_filter_only; not an exact training label"
+    }
+  },
+  "downloaded_at": "2026-11-23T11:43:09.369473+00:00"
+}
