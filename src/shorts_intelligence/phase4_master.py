@@ -101,7 +101,7 @@ def _load_rights_grants(path: Path) -> list[dict[str, Any]]:
                 raise ValueError(
                     f"Rights manifest line {line_number} requires platform, exactly one of source_id/creator_id, and evidence_ref."
                 )
-            if item.get("revoked") is True or not all(item.get(scope) is True for scope in required_true):
+            if item.get("revoked") is not False or not all(item.get(scope) is True for scope in required_true):
                 raise ValueError(
                     f"Rights manifest line {line_number} must explicitly grant retrieval, analysis, "
                     "temporary processing, derived-artifact retention and model training."
