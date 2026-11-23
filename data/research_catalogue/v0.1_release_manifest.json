@@ -1,0 +1,42 @@
+{
+  "release": "Shorts-LM research catalogue v0.1 — reconciled candidate release",
+  "as_of": "2026-11-23",
+  "purpose": "Discovery seed catalogue plus synthetic Phase 4/5 contract fixtures. Not a real video dataset and not a cleared training corpus.",
+  "counts": {
+    "languages": 71,
+    "categories_subcategory_rows": 362,
+    "canonical_category_ids": 30,
+    "creators_normalized_leads": 300,
+    "gemini_regional_handle_leads": 371,
+    "regional_creator_rows": 59,
+    "hashtags_deduplicated_candidates": 802,
+    "discovery_query_candidates": 4744,
+    "diversity_matrix_proposed_cells": 1420,
+    "gemini_diversity_strata": 6,
+    "acquisition_stages": 5,
+    "synthetic_test_cases": 50,
+    "source_registry_rows": 35
+  },
+  "quality_findings": {
+    "gemini_core_creator_source_urls_missing": 105,
+    "gemini_core_creator_rows_reported_verified": 105,
+    "gemini_hashtag_source_urls_missing": 70,
+    "expanded_pack_creator_rows": 143,
+    "expanded_pack_existing_instagram_seed_handles": 99,
+    "expanded_pack_hashtag_rows_all_unverified": 686,
+    "expanded_pack_discovery_query_rows": 4658,
+    "expanded_pack_query_rows_missing_related_hashtags": 3938,
+    "rights_cleared_video_assets_supplied": 0,
+    "human_annotated_media_examples_supplied": 0,
+    "model_ready_training_samples_supplied": 0
+  },
+  "limitations": [
+    "Catalogue rows are discovery leads or proposals; none independently proves active Shorts/Reels publication or rights to use media.",
+    "Hashtag popularity and retrieval yield remain unverified; Gemini's row-level evidence URLs are missing.",
+    "Synthetic test cases contain no media and are not a model-performance benchmark or gold set.",
+    "Gemini's official API recommendations conflict with repository ADR-003, which excludes official platform APIs.",
+    "No Phase 3 commands were run and no Phase 3 code was modified."
+  ],
+  "archive_file": "ShortsLM_Research_Catalogue_v0.1.zip",
+  "archive_note": "Full CSV/JSON/JSONL release is distributed separately. Use scripts/install_research_catalogue.py to verify and install it under data/research_catalogue/v0.1/."
+}
