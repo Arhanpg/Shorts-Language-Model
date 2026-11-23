@@ -88,3 +88,10 @@ def test_large_seed_fixture_pack_is_synthetic_and_unique():
     assert all(x["fixture_type"] == "SYNTHETIC_CATALOGUE_BUILDER_CONTRACT" for x in cases)
     assert all(x["media_asset_included"] is False for x in cases)
     assert all(x["model_evaluation_eligible"] is False for x in cases)
+
+
+def test_youtube_handle_can_be_extracted_from_channel_url():
+    row = map_youtube({"url": "https://www.youtube.com/@samplechannel"})
+    assert row is not None
+    assert row["account_handle"] == "@samplechannel"
+    assert row["account_url"] == "https://www.youtube.com/@samplechannel"

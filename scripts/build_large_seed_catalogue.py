@@ -79,7 +79,7 @@ def map_youtube(row: dict) -> dict|None:
     cid=str(row.get("channel_id") or "").strip(); url=str(row.get("url") or row.get("channel_url") or "").strip()
     handle=str(row.get("channel_handle") or "").strip().lstrip("@")
     if not handle and url:
-        match=re.search(r"youtube\\.com/@([^/?#]+)",url,re.I); handle=match.group(1) if match else ""
+        match=re.search(r"youtube\.com/@([^/?#]+)",url,re.I); handle=match.group(1) if match else ""
     if not cid and not url and not handle: return None
     if not url and cid: url=f"https://www.youtube.com/channel/{cid}"
     key=cid or handle.casefold() or url
