@@ -10,17 +10,11 @@ venv/
 .env.*
 !.env.example
 
-# Private datasets, acquired media, processing artifacts and run outputs
+# Generated and private run data — keep local, never commit
 /data/private/
 /data/raw/
 /data/processed/
 /outputs/
-!/outputs/README.md
-.checkpoints/
-checkpoints/
-runs/
-wandb/
-mlruns/
 .shortslm/
 *.sqlite
 *.sqlite3
@@ -40,15 +34,14 @@ mlruns/
 *session*
 *cookie*
 *token*.json
+
+# Model artifacts and temporary files
 *.gguf
 *.safetensors
 *.pt
 *.pth
 *.ckpt
 *.tmp
-*.jsonl
-!data/private/manifest.example.jsonl
-!data/private/candidates.example.jsonl
 
 # OS/editor
 .DS_Store

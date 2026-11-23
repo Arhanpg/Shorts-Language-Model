@@ -310,7 +310,7 @@ def test_asr_and_ocr_low_signal_heuristics_flag_obvious_gibberish_only():
         _transcript_looks_degenerate,
     )
 
-    repeated = SimpleNamespace(text=" ".join(["ौ"] * 80))
+    repeated = SimpleNamespace(text=" ".join(["repeated"] * 80))
     normal = SimpleNamespace(text="This is a clear sentence with varied words.")
     assert _transcript_looks_degenerate([repeated]) is True
     assert _transcript_looks_degenerate([normal]) is False

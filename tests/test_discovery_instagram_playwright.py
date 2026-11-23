@@ -702,4 +702,5 @@ def test_response_shape_diagnostics_include_bounded_media_like_objects():
     shape = _response_shape(payload)
     assert shape["top_level_keys"] == ["data"]
     assert shape["media_like_objects"]
+    assert shape["media_like_objects"][0]["path"] == "$.data.items[0].media"
     assert "code" in shape["media_like_objects"][0]["signals"]

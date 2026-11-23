@@ -195,7 +195,7 @@ def _response_shape(payload: object) -> dict[str, object]:
         "view_count", "video_view_count", "play_count", "video_play_count",
     }
 
-    def walk(value: object, depth: int = 0) -> None:
+    def walk(value: object, depth: int = 0, path: str = "$") -> None:
         if len(media_shapes) >= 8 or depth > 8:
             return
         if isinstance(value, dict):
@@ -203,15 +203,16 @@ def _response_shape(payload: object) -> dict[str, object]:
             signals = sorted(keys.intersection(interesting))
             if signals:
                 media_shapes.append({
+                    "path": path[:240],
                     "keys": sorted(keys)[:32],
                     "signals": signals,
                     "typename": str(value.get("__typename") or "")[:80] or None,
                 })
-            for child in value.values():
-                walk(child, depth + 1)
+            for key, child in value.items():
+                walk(child, depth + 1, f"{path}.{str(key)[:64]}")
         elif isinstance(value, list):
-            for child in value[:30]:
-                walk(child, depth + 1)
+            for index, child in enumerate(value[:30]):
+                walk(child, depth + 1, f"{path}[{index}]")
 
     walk(payload)
     return {"top_level_keys": top_level, "media_like_objects": media_shapes}

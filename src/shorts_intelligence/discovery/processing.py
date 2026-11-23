@@ -157,12 +157,12 @@ def _transcript_looks_degenerate(segments: list[Any]) -> bool:
     text = " ".join(str(getattr(segment, "text", "") or "") for segment in segments).strip()
     if not text:
         return True
-    tokens = [token.casefold() for token in re.findall(r"\\w+", text, flags=re.UNICODE)]
+    tokens = [token.casefold() for token in re.findall(r"\w+", text, flags=re.UNICODE)]
     if not tokens:
         return True
     unique_ratio = len(set(tokens)) / len(tokens)
     repeated_ratio = max(tokens.count(token) for token in set(tokens)) / len(tokens)
-    replacement_ratio = text.count("\\ufffd") / max(1, len(text))
+    replacement_ratio = text.count("\ufffd") / max(1, len(text))
     return (
         replacement_ratio >= 0.02
         or (len(tokens) >= 20 and unique_ratio < 0.12)
@@ -171,16 +171,12 @@ def _transcript_looks_degenerate(segments: list[Any]) -> bool:
 
 
 def _ocr_is_low_signal(spans: list[Any]) -> bool:
-    """Flag OCR dominated by low-confidence, tiny tokens without deleting spans."""
-    texts = [str(getattr(span, "text", "") or "").strip() for span in spans]
-    useful = [value for value in texts if len(re.sub(r"\\W", "", value, flags=re.UNICODE)) >= 3]
+    """Flag OCR dominated by low-confidence output without penalizing short scripts."""
     confidences = [
         float(getattr(span, "confidence", 0.0) or 0.0)
         for span in spans
         if getattr(span, "confidence", None) is not None
     ]
-    if spans and not useful:
-        return True
     return bool(confidences) and (
         sum(value < 0.35 for value in confidences) / len(confidences) >= 0.5
     )
