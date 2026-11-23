@@ -38,7 +38,7 @@ Example schema only (replace every placeholder with a real grant; do not use thi
 
 The command supports exact-item grants and creator-scope grants. Creator-scope grants must correspond to explicit permission covering the creator's videos and all listed scopes; do not infer creator permission from a public profile or follow relationship. A public profile, a public Reel URL, a creator-list entry, a dataset compilation licence, or a successful extractor response is not itself permission to retrieve, retain, analyze, or train on the underlying video. The evidence reference is an audit pointer; ShortsLM does not independently authenticate the consent or licence.
 
-If you do not have item-specific permission, leave that item out. It can remain in the discovery metadata inventory, but its MP4 will not be acquired or processed. Do not fabricate grants or evidence references.
+If you do not have item-specific or creator-scope permission, leave that item out. It can remain in the discovery metadata inventory, but its MP4 will not be acquired or processed. Do not fabricate grants or evidence references.
 
 For example, create the private file locally in PowerShell:
 
