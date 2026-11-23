@@ -1066,6 +1066,7 @@ def download_eligible(
 
 @discovery_app.command("process")
 def process_eligible_media(
+    platform: Literal["all", "youtube", "instagram"] = typer.Option("all", "--platform"),
     limit: int = typer.Option(10, "--limit", min=1, max=500),
     min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
     database: Path = typer.Option(Path(".shortslm/discovery.sqlite3"), "--database"),
@@ -1079,7 +1080,12 @@ def process_eligible_media(
         None, "--instagram-session-file", exists=True, readable=True
     ),
     asr_model: str = typer.Option("small", "--asr-model"),
-    asr_device: Literal["cpu", "cuda", "auto"] = typer.Option("cpu", "--asr-device"),
+    asr_device: Literal["cpu", "cuda", "auto"] = typer.Option(
+        "cuda",
+        "--device",
+        "--asr-device",
+        help="Inference device for Whisper and PaddleOCR; CUDA is the default.",
+    ),
     language: str | None = typer.Option(None, "--language"),
     max_duration: float = typer.Option(180.0, "--max-duration", min=1.0, max=1800.0),
     max_file_size_mb: int = typer.Option(1000, "--max-file-size-mb", min=1, max=10000),
@@ -1098,6 +1104,7 @@ def process_eligible_media(
             dataset_manifest=dataset_manifest,
             limit=limit,
             min_metric=min_metric,
+            platform=platform,
             instagram_session_username=instagram_session_user,
             instagram_session_file=instagram_session_file,
             asr_model=asr_model,
@@ -1120,9 +1127,15 @@ def process_eligible_media(
     table.add_column("Result")
     table.add_column("Count", justify="right")
     for label, key in [
-        ("Candidates selected", "candidates_selected"),
-        ("Media downloaded", "media_downloaded_this_run"),
-        ("Processed", "processed_this_run"),
+        ("YouTube candidates selected", "youtube_candidates_selected"),
+        ("Instagram candidates selected", "instagram_candidates_selected"),
+        ("YouTube downloaded", "youtube_downloaded"),
+        ("Instagram downloaded", "instagram_downloaded"),
+        ("YouTube processed", "youtube_processed"),
+        ("Instagram processed", "instagram_processed"),
+        ("Total candidates selected", "candidates_selected"),
+        ("Total media downloaded", "media_downloaded_this_run"),
+        ("Total processed", "processed_this_run"),
         ("Exact duplicates", "duplicates"),
         ("Failed / retryable", "failed"),
         ("Completed total", "processing_complete_total"),
@@ -1133,6 +1146,7 @@ def process_eligible_media(
     console.print(f"Dataset manifest: [cyan]{summary['manifest_path']}[/cyan]")
     console.print(f"Downloads: {download_dir.expanduser().resolve()}")
     console.print(f"Artifacts: {artifact_dir.expanduser().resolve()}")
+    console.print(f"Platforms: {platform} | Inference device requested: {asr_device}")
 
 
 @discovery_app.command("graph-run")
