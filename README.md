@@ -132,7 +132,10 @@ Then process a mixed batch:
 shorts-lm discover process --platform all --limit 10 --min-metric 1000000 --asr-model small --device cuda
 ```
 
-The processor reads the existing SQLite inventory. It alternates YouTube and Instagram candidates when both platforms have eligible videos, so the YouTube backlog cannot consume the entire batch first. Its summary shows selected, downloaded and processed counts separately for each platform. When Instagram counts are zero, run combined discovery again and inspect the Instagram discovery report; processing cannot create candidates that are not in the inventory.
+The processor reads the existing SQLite inventory. It alternates between YouTube and Instagram candidates when both platforms have eligible videos, so the YouTube backlog cannot consume the entire batch first. Its summary shows selected, downloaded and processed counts separately for each platform. When Instagram counts are zero, run combined discovery again and check the Instagram discovery report; processing cannot create candidates that are not in the inventory.
+
+Whisper and PaddleOCR prefer the RTX 3050 by default. Whisper uses the compact `int8_float16` CUDA compute type. OCR releases its model after the video batch stage so the two models do not need to occupy VRAM simultaneously. The actual engine names saved in each record include the device used. If CUDA libraries or GPU-enabled PaddlePaddle are unavailable, the existing adapters can fall back to CPU; the stage metadata will show that actual device.
+The processor rhttps://github.com/Arhanpg/Shorts-Language-Model/pull/28/conflict?name=README.md&ancestor_oid=1518b9e2cabcd559ca465ab9027b5d9ed1c585d1&base_oid=573a028d05cae978311b0e73ef856514c8927a10&head_oid=899be4aa2d526a134b1a7e749021dcb76f9e14d8eads the existing SQLite inventory. It alternates YouTube and Instagram candidates when both platforms have eligible videos, so the YouTube backlog cannot consume the entire batch first. Its summary shows selected, downloaded and processed counts separately for each platform. When Instagram counts are zero, run combined discovery again and inspect the Instagram discovery report; processing cannot create candidates that are not in the inventory.
 
 Whisper and PaddleOCR prefer the RTX 3050 by default. Whisper uses the compact `int8_float16` CUDA compute type. ASR and OCR run sequentially, and the VidTrace wrappers release model resources after each stage. Actual engine names saved with each item include the device used. If CUDA libraries or GPU-enabled PaddlePaddle are unavailable, a backend may fall back to CPU; the stage metadata will show the actual device.
 
@@ -140,6 +143,7 @@ Useful controls:
 - `--platform all`: process both platforms (default); use `youtube` or `instagram` to restrict a run.
 - `--limit 10`: total videos in the batch, shared across both platforms.
 - `--min-metric 1000000`: minimum native views for YouTube or plays for Instagram.
+- `--device cuda`: prefer NVIDIA CUDA for Whisper and PaddleOCR (default); `--device cpu` is an explicit fallback.
 - `--device cuda`: prefer NVIDIA CUDA for Whisper and PaddleOCR (default); `--device cpu` is an explicit override.
 - `--language hi`: optionally specify a language; omit it for automatic detection.
 - `--dataset-manifest outputs/dataset/processed-videos.jsonl`: choose the JSONL output path.
@@ -169,6 +173,7 @@ The Phase 1 analyzer remains the downstream processor for a local MP4:
     shorts-lm doctor
     shorts-lm analyze --input data/private/acquired/VIDEO.mp4 --output outputs/analysis.json
 
+The laptop's RTX 3050 is used for local Whisper transcription and PaddleOCR where the CUDA runtimes are installed. Discovery, database operations, video decoding and frame sampling remain CPU-oriented. See [Windows RTX 3050 GPU setup](docs/GPU_SETUP_WINDOWS.md) before the first GPU batch.
 The laptop's RTX 3050 accelerates local Whisper transcription and PaddleOCR when the NVIDIA CUDA runtimes and GPU-enabled PaddlePaddle are installed. Discovery, database operations, FFmpeg and video frame sampling remain CPU-oriented. See [Windows RTX 3050 GPU setup](docs/GPU_SETUP_WINDOWS.md) before the first GPU batch.
 
 ## Revised phases

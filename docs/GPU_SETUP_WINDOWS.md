@@ -1,5 +1,6 @@
 # Windows GPU setup — RTX 3050
 
+This project uses the RTX 3050 for Faster-Whisper ASR and PaddleOCR when the required NVIDIA runtimes are installed. Discovery, database work, FFmpeg and frame sampling continue to use the CPU.
 This project uses the RTX 3050 for Faster-Whisper ASR and PaddleOCR when the NVIDIA runtimes are installed. Discovery, database operations, FFmpeg and frame sampling continue to use the CPU.
 
 ## 1. Check the NVIDIA driver
@@ -10,6 +11,7 @@ Open PowerShell:
 nvidia-smi
 ```
 
+For PaddlePaddle 3.2.0 with CUDA 12.6, its current installation guide lists NVIDIA driver 550.54.14 or newer for Windows. Update the NVIDIA driver first if your installed driver is older.
 For PaddlePaddle 3.2.0 with CUDA 12.6, the official installation guide lists NVIDIA driver 550.54.14 or newer for Windows. Update the NVIDIA driver first if yours is older.
 
 ## 2. Install the ShortsLM packages
@@ -21,6 +23,9 @@ python -m pip install --upgrade pip
 pip install -e ".[dev,discovery,legacy-discovery,audio,ocr,vidtrace,instagram-browser,instagram-fallback]"
 ```
 
+## 3. Replace CPU PaddlePaddle with the GPU build
+
+The processing log you shared says `PaddleOCR | device=cpu`. That means OCR was running on CPU in that run. Remove any CPU or previous GPU PaddlePaddle package, then install the official CUDA 12.6 wheel:
 ## 3. Replace CPU PaddlePaddle with its CUDA build
 
 Your log showed `PaddleOCR | device=cpu`, which confirms OCR ran on the CPU in that run. Replace any CPU or previous PaddlePaddle package with the official CUDA 12.6 GPU wheel:
@@ -30,6 +35,13 @@ python -m pip uninstall -y paddlepaddle paddlepaddle-gpu
 python -m pip install paddlepaddle-gpu==3.2.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu126/
 ```
 
+This wheel index is from the official PaddleOCR installation guide. The matching Python 3.11 Windows wheel is provided there for CUDA 12.6.
+
+## 4. Install CUDA 12 and cuDNN 9 runtime libraries for Whisper
+
+The current Faster-Whisper/CTranslate2 GPU path requires cuBLAS for CUDA 12 and cuDNN 9 for CUDA 12. On Windows, make sure the matching NVIDIA DLLs are installed and available on `PATH` before starting PowerShell/Python. If you installed them after opening the terminal, close and reopen it.
+
+Check that the DLLs can be found:
 The official PaddleOCR installation guide lists this Windows CUDA 12.6 wheel and its driver requirement. The special PaddlePaddle wheel mentioned for NVIDIA 50-series GPUs is not the package intended for your RTX 3050 (30-series).
 
 ## 4. Install CUDA 12 and cuDNN 9 runtime libraries for Whisper
@@ -74,6 +86,16 @@ Then run:
 shorts-lm discover process --platform all --limit 10 --min-metric 1000000 --asr-model small --device cuda
 ```
 
+The command prefers CUDA for both Whisper and PaddleOCR. It alternates YouTube and Instagram candidates when both have eligible inventory. The summary shows per-platform selected/downloaded/processed counts.
+
+The actual ASR and OCR device is also recorded in the engine name inside each video's analysis JSON and the JSONL dataset index. Check those values after the first run. A CPU device in the recorded engine name means the library fell back or the GPU runtime was not available.
+
+For an explicit CPU run, pass `--device cpu`. The CLI accepts `--asr-device` as an alias.
+
+## Notes for the 4 GB VRAM limit
+
+- The default Whisper model is `small` with `int8_float16`, rather than full FP16 large models.
+- ASR and OCR execute sequentially. The VidTrace wrappers release their model resources between stages.
 The command prefers CUDA for both Whisper and PaddleOCR. It alternates YouTube and Instagram candidates when both are eligible. The summary shows per-platform selected/downloaded/processed counts.
 
 The actual ASR and OCR device is recorded in the engine name inside each video's analysis JSON and the JSONL dataset index. A CPU device in the recorded engine name means the library fell back or GPU support was unavailable.
