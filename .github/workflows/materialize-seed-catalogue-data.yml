@@ -64,7 +64,7 @@ jobs:
             echo "Seed catalogue CSV files are already up to date."
           else
             git commit -m "Add materialized v0.2 creator and hashtag CSV datasets"
-            git push origin "HEAD:\${HEAD_REF}"
+            git push origin "HEAD:$HEAD_REF"
           fi
 
       - name: Show committed catalogue inventory
