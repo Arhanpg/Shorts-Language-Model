@@ -10,6 +10,21 @@ from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.schemas import OCRSpan, StageStatus, TranscriptSegment, VideoMetadata
 
 
+def _grant_json(candidate: DiscoveredCandidate) -> str:
+    return json.dumps([{
+        "platform": candidate.platform,
+        "source_id": candidate.source_id,
+        "media_retrieval": True,
+        "media_analysis": True,
+        "temporary_processing": True,
+        "derived_artifact_retention": True,
+        "model_training": True,
+        "evidence_ref": "test-fixture-permission",
+        "expires_at": "2099-12-31T23:59:59+00:00",
+        "revoked": False,
+    }])
+
+
 def _candidate() -> DiscoveredCandidate:
     return DiscoveredCandidate(
         platform="youtube",
@@ -131,6 +146,7 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grant_json(candidate),
         limit=10,
     )
     assert first["processed_this_run"] == 1
@@ -154,7 +170,7 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
     assert len(records) == 1
     assert records[0]["platform"] == "youtube"
     assert records[0]["telemetry"]["transcript_segments"] == 1
-    assert "rights" not in records[0]
+    assert records[0]["rights"]["evidence_ref"] == "test-fixture-permission"
 
     second = processing.run_processing_batch(
         database=database,
@@ -387,6 +403,7 @@ def test_overlong_media_is_terminally_rejected_not_retried(tmp_path: Path, monke
     first = processing.run_processing_batch(
         database=database, download_dir=download_dir, artifact_dir=artifact_dir,
         dataset_manifest=manifest, limit=10, max_processing_attempts=3,
+        authorized_grants_json=_grant_json(candidate),
         delete_media_after_processing=True,
     )
     second = processing.run_processing_batch(
