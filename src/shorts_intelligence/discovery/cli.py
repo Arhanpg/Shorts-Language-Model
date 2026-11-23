@@ -36,7 +36,10 @@ from shorts_intelligence.discovery.query_planner import (
     build_youtube_query_pool,
     select_due_queries,
 )
-from shorts_intelligence.discovery.seed_loader import load_instagram_creator_seeds, load_youtube_channel_seeds
+from shorts_intelligence.discovery.seed_loader import (
+    load_instagram_creator_seeds,
+    load_youtube_channel_seeds,
+)
 from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.media.probe import sha256_file
 
