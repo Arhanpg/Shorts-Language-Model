@@ -163,7 +163,7 @@ def _read_artifact_json(path_value: str | Path | None) -> dict[str, Any]:
         return {}
     try:
         payload = json.loads(Path(path_value).expanduser().read_text(encoding="utf-8"))
-    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+    except (OSError, TypeError, ValueError):
         return {}
     return payload if isinstance(payload, dict) else {}
 
