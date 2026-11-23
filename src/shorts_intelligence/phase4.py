@@ -307,10 +307,14 @@ def release(
         creator = str(row.get("creator_id") or row.get("creator_group") or "").strip()
         digest = str(row["media_sha256"]).casefold()
         if creator:
-            if creator in creator_owner: join(i, creator_owner[creator])
-            else: creator_owner[creator] = i
-        if digest in hash_owner: join(i, hash_owner[digest])
-        else: hash_owner[digest] = i
+            if creator in creator_owner:
+                join(i, creator_owner[creator])
+            else:
+                creator_owner[creator] = i
+        if digest in hash_owner:
+            join(i, hash_owner[digest])
+        else:
+            hash_owner[digest] = i
     components: dict[int, list[dict[str, Any]]] = defaultdict(list)
     for i, row in enumerate(accepted):
         components[root(i)].append(row)
