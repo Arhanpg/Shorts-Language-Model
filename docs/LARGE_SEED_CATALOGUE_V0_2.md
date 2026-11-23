@@ -30,7 +30,7 @@ A 10,000-row platform file means 10,000 account/channel records after platform-l
 
 ## Hashtag semantics
 
-data/research_catalogue/hashtags_generated_compositional_v0.2.csv contains 10,650 unique candidates from 71 language/community scopes x 30 domain labels x five deterministic forms. All are marked GENERATED_UNVERIFIED_COMPOSITIONAL_CANDIDATE; frequency is unmeasured and native-speaker review is pending. The category portion is English taxonomy text appended to a language slug, not a translation or evidence of native usage.
+Two hashtag files are supplied separately. `hashtags_generated_compositional_v0.2.csv` contains 10,650 unique compositional candidates from 71 language/community scopes x 30 domain labels x five deterministic forms. `hashtags_ai_research_candidates_v0.1.csv` preserves 802 original submitted AI candidates (716 distinct normalized strings) with their source-record IDs, reported verification labels, search URLs and review notes. Combined, the two files contain 11,366 unique normalized tags (11,452 source rows before within-source deduplication). The compositional rows are marked GENERATED_UNVERIFIED_COMPOSITIONAL_CANDIDATE; frequency is unmeasured and native-speaker review is pending. The category portion is English taxonomy text appended to a language slug, not a translation or evidence of native usage. The AI rows also remain unverified candidates unless an explicit measured evidence field supports promotion.
 
 ## Rights and Phase 4/5 constraints
 
