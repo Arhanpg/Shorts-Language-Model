@@ -671,3 +671,15 @@ def test_hashtag_falls_back_when_keyword_route_only_has_metricless_reel_links(tm
     assert provider.hashtag_diagnostics[1]["fallback_from"].endswith(
         "q=%23getreadywithme"
     )
+
+
+def test_instagram_parser_stops_at_bounded_depth_and_node_count():
+    payload = {}
+    node = payload
+    for _ in range(500):
+        child = {}
+        node["child"] = child
+        node = child
+
+    records = extract_reel_records(payload, creator_handle="creator")
+    assert records == []
