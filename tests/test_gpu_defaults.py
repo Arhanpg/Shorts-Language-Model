@@ -49,11 +49,11 @@ def test_asr_passes_cuda_and_compute_type_to_vidtrace(monkeypatch, tmp_path: Pat
         "vidtrace.models": ModuleType("vidtrace.models"),
         "vidtrace.models.config": ModuleType("vidtrace.models.config"),
     }
-    modules["vidtrace.audio.transcription"].WhisperTranscriber = FakeWhisperTranscriber
-    modules["vidtrace.models.config"].VidTraceConfig = FakeVidTraceConfig
     modules["vidtrace"].__path__ = []
     modules["vidtrace.audio"].__path__ = []
     modules["vidtrace.models"].__path__ = []
+    modules["vidtrace.audio.transcription"].WhisperTranscriber = FakeWhisperTranscriber
+    modules["vidtrace.models.config"].VidTraceConfig = FakeVidTraceConfig
     for name, module in modules.items():
         monkeypatch.setitem(sys.modules, name, module)
 

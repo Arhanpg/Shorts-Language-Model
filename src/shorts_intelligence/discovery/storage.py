@@ -518,8 +518,7 @@ class DiscoveryStore:
                 for row in rows
             ]
 
-        # Interleave the two platform queues so a high-view YouTube backlog
-        # cannot fill every batch before an eligible Instagram Reel is reached.
+        # Interleave platform queues so one large backlog cannot fill every batch.
         selected: list[tuple[DiscoveredCandidate, str | None, str, str | None]] = []
         depth = 0
         while len(selected) < maximum:
