@@ -53,7 +53,11 @@ MP4 files are stored under `data/private/acquired/`. The JSONL index defaults to
 
 The batch worker is sequential and bounded. With both platforms present, it alternates YouTube and Instagram candidates within the total limit. The command only processes candidates already saved in SQLite; run `shorts-lm discover graph-run --platform all ...` first to discover candidates. Validate 10 videos first, then 100 and 300. Review transcript/OCR accuracy and disk usage before larger runs.
 
-CUDA is preferred by default for Whisper and PaddleOCR. Actual devices are included in the ASR/OCR engine names saved with each record. If the Windows CUDA/cuDNN or GPU PaddlePaddle runtime is missing, an adapter may fall back to CPU; follow [GPU setup](GPU_SETUP_WINDOWS.md) and verify the saved engine metadata before assuming the GPU was used.
+CUDA is preferred by default for Whisper and PaddleOCR. Run `shorts-lm doctor` first to check NVIDIA, CTranslate2 CUDA and Paddle CUDA. Actual devices are included in the ASR/OCR engine names saved with each record. Whisper now runs in a separate worker with a 300-second default hard timeout per video; a hung native inference call is terminated so the batch can continue. Use `--asr-timeout-seconds` to adjust this bound. Progress logs identify each video and ASR/OCR stage.
+
+In combined discovery, the global eligible-new target no longer starves configured Instagram creator seeds. The graph report includes the number of configured Instagram seeds queued and still pending. Creator work remains bounded by the configured creator count and run-time budget.
+
+Follow [GPU setup](GPU_SETUP_WINDOWS.md) and verify the saved engine metadata before assuming the GPU was used.
 
 ## Long-term corpus goal
 
