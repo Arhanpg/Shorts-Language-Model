@@ -1,0 +1,100 @@
+{
+  "release": "Shorts-LM Git-tracked seed catalogue v0.2",
+  "materialized_at": "2026-11-23T15:56:58.754111+00:00",
+  "source_github_actions_run_id": 45203258030,
+  "source_github_actions_artifact": "shorts-lm-large-seed-catalogue-v0.2",
+  "source_build_generated_at": "2026-11-23T15:23:09.824347+00:00",
+  "counts": {
+    "youtube_channel_candidates": 10493,
+    "instagram_account_candidates": 10163,
+    "instagram_person_candidates": 6605,
+    "instagram_organization_publisher_candidates": 3395,
+    "instagram_unknown_entity_leads": 163,
+    "submitted_ai_creator_platform_leads": 291,
+    "generated_hashtag_candidates": 10650,
+    "submitted_ai_hashtag_rows": 802,
+    "submitted_ai_hashtag_unique_normalized": 716,
+    "generated_hashtag_unique_normalized": 10650,
+    "unique_normalized_hashtag_union": 11366
+  },
+  "files": {
+    "creators_ai_research_leads_v0.1.csv": {
+      "rows": 291,
+      "size_bytes": 81920,
+      "sha256": "a723d9eb506c55ff355c23458a62de0fcfcba5ef4523256e21df4fae9a17dd91"
+    },
+    "hashtags_ai_research_candidates.csv": {
+      "rows": 802,
+      "size_bytes": 561214,
+      "sha256": "e163a20e3bbd42a24863c631617249e105033061b8cb7027c0467bbb3fb4a2cb"
+    },
+    "hashtags_generated_candidates.csv": {
+      "rows": 10650,
+      "size_bytes": 4136602,
+      "sha256": "3a7b902a073ca6742874cf548b48fd39e3d2ba3dc8fb3f7d1d7b8249f67cc101"
+    },
+    "hashtags_master_candidates.csv": {
+      "rows": 11366,
+      "size_bytes": 5250480,
+      "sha256": "a0680ceeab78896bec52e999c9f63cc3447f185c2d465792f4e8aaf36a3ddc07"
+    },
+    "instagram_account_candidates.csv": {
+      "rows": 10163,
+      "size_bytes": 5638281,
+      "sha256": "1ffe5cb990704f831b67eb9366024d00f36d9393c09386a3d5454abb1a62791b"
+    },
+    "instagram_organization_publisher_candidates.csv": {
+      "rows": 3395,
+      "size_bytes": 1891902,
+      "sha256": "bb6b808e5a92b4211af66940eac95db20647e6d68e7e142f81d32492fcd51a09"
+    },
+    "instagram_person_candidates.csv": {
+      "rows": 6605,
+      "size_bytes": 3641934,
+      "sha256": "8badaeaaab1e0add3d317ba8304f65ab0f1a2bb3448bb18ee48b49fbe699d94d"
+    },
+    "instagram_unknown_entity_leads.csv": {
+      "rows": 163,
+      "size_bytes": 105075,
+      "sha256": "7a6728feb37f0af0ecdf962df65c5c2fcc520dea65dd4454d8dbb21bc9969452"
+    },
+    "youtube_channel_candidates.csv": {
+      "rows": 10493,
+      "size_bytes": 6962190,
+      "sha256": "76f4f9bc8e28c9ba9e4fa6831f5aee42124eda59572966a41435a6b5e3f63910"
+    }
+  },
+  "source_datasets": {
+    "youtube": {
+      "dataset": "ScrapeExchange/youtube-channel-7m-plus",
+      "url": "https://huggingface.co/datasets/ScrapeExchange/youtube-channel-7m-plus",
+      "license": "CC BY-SA 4.0 compilation; underlying content rights remain separate",
+      "config": "boinko-youtube-channel-0.0.2",
+      "total_rows": 7308164,
+      "retrieved_rows": 10500,
+      "sampling": "evenly spaced pages across source row index; not a probability sample",
+      "retrieved_at": "2026-11-23T15:23:09.256985+00:00",
+      "raw_rows_requested_for_valid_account_target": 10500,
+      "unique_output_candidates": 10493
+    },
+    "instagram": {
+      "dataset": "arh1p/instagram-top-accounts",
+      "url": "https://huggingface.co/datasets/arh1p/instagram-top-accounts",
+      "download_url": "https://huggingface.co/datasets/arh1p/instagram-top-accounts/resolve/main/latest.csv",
+      "license": "CC BY 4.0",
+      "retrieved_rows": 10000,
+      "max_observation_date": "2026-11-22",
+      "retrieved_at": "2026-11-23T15:23:09.461001+00:00",
+      "selection": "rank-ordered latest account snapshot; person and org types retained separately"
+    }
+  },
+  "limitations": [
+    "Account rows are discovery candidates, not confirmed active Shorts/Reels publishers.",
+    "YouTube channel entity type is not reliably classified as person or organization.",
+    "Instagram person, organization and unknown-entity rows are kept separate.",
+    "Cross-platform account rows are not equivalent to unique human identities.",
+    "AI creator and hashtag verification labels are source-reported, not independently confirmed.",
+    "Generated hashtags have no measured popularity or retrieval-yield evidence until tested.",
+    "Public profile visibility and dataset compilation licences do not grant video-download, retention or model-training rights."
+  ]
+}
