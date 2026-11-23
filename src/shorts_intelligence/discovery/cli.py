@@ -1099,6 +1099,12 @@ def process_eligible_media(
     max_keyframes: int = typer.Option(24, "--max-keyframes", min=4, max=96),
     max_ocr_frames: int = typer.Option(12, "--max-ocr-frames", min=1, max=64),
     keep_frame_artifacts: bool = typer.Option(False, "--keep-frame-artifacts"),
+    delete_media_after_processing: bool = typer.Option(
+        False, "--delete-media-after-processing",
+        help="Delete each temporary video after analysis (including failed attempts).",
+    ),
+    max_processing_attempts: int = typer.Option(2, "--max-processing-attempts", min=1, max=5),
+    summary_json: Path | None = typer.Option(None, "--summary-json", help="Write batch counters as JSON for orchestration."),
 ) -> None:
     """Download, transcribe and OCR eligible Shorts and Reels."""
     from shorts_intelligence.discovery.processing import run_processing_batch
@@ -1123,6 +1129,8 @@ def process_eligible_media(
             max_keyframes=max_keyframes,
             max_ocr_frames=max_ocr_frames,
             keep_frame_artifacts=keep_frame_artifacts,
+            delete_media_after_processing=delete_media_after_processing,
+            max_processing_attempts=max_processing_attempts,
         )
     except Exception as exc:
         console.print(
@@ -1130,6 +1138,10 @@ def process_eligible_media(
             f"{type(exc).__name__}: {exc}"
         )
         raise typer.Exit(code=2) from exc
+
+    if summary_json is not None:
+        summary_json.parent.mkdir(parents=True, exist_ok=True)
+        summary_json.write_text(json.dumps(summary, indent=2) + "\\n", encoding="utf-8")
 
     table = Table(title="ShortsLM multimodal processing")
     table.add_column("Result")
