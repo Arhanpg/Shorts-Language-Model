@@ -1,0 +1,79 @@
+name: Commit materialized seed catalogue CSVs
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/materialize-seed-catalogue-data.yml"
+      - "scripts/materialize_seed_catalogue.py"
+      - "docs/SEED_CATALOGUE_DATA_FILES.md"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: materialize-seed-csv-v0.2-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  materialize-and-commit:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the PR branch
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download the completed catalogue build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: shorts-lm-large-seed-catalogue-v0.2
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: 45203258030
+          path: .tmp/upstream-seed-build
+
+      - name: Materialize CSV datasets and checksums
+        run: |
+          python scripts/materialize_seed_catalogue.py \
+            --artifact-dir .tmp/upstream-seed-build \
+            --research-dir data/research_catalogue \
+            --output-dir data/seed_catalogue/v0.2 \
+            --source-run-id 45203258030
+
+      - name: Commit the actual CSV files to this PR branch
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/seed_catalogue/v0.2/
+          if git diff --cached --quiet; then
+            echo "Seed catalogue CSV files are already up to date."
+          else
+            git commit -m "Add materialized v0.2 creator and hashtag CSV datasets"
+            git push origin "HEAD:$HEAD_REF"
+          fi
+
+      - name: Show committed catalogue inventory
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          qa = json.loads(Path("data/seed_catalogue/v0.2/QA_SUMMARY.json").read_text(encoding="utf-8"))
+          print(json.dumps(qa["counts"], indent=2))
+          for name, info in qa["files"].items():
+              print(f"{name}: {info['rows']:,} rows, {info['size_bytes']:,} bytes, sha256={info['sha256']}")
+          PY
