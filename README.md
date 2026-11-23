@@ -118,24 +118,33 @@ Download confirmed candidates from the local SQLite inventory:
 shorts-lm discover download --limit 25 --min-metric 1000000 --output-dir data/private/acquired
 ```
 
-### Batch-process videos with VidTrace
+### Batch-process YouTube Shorts and Instagram Reels
 
-The batch command downloads selected videos, checks each MP4 with FFprobe, removes exact duplicate files, and runs the existing analyzer. ASR uses the VidTrace Whisper adapter and OCR uses the VidTrace PaddleOCR adapter. Transcript and OCR outputs are saved separately as JSON and Markdown alongside the analysis report.
-
-Start with ten videos:
+First populate the shared SQLite inventory from both platforms:
 
 ```powershell
-shorts-lm discover process --limit 10 --min-metric 1000000 --asr-model small --asr-device cpu
+shorts-lm discover graph-run --platform all --target-new 100 --min-metric 1000000
 ```
 
+Then process a mixed batch:
+
+```powershell
+shorts-lm discover process --platform all --limit 10 --min-metric 1000000 --asr-model small --device cuda
+```
+
+The processor reads the existing SQLite inventory. It alternates YouTube and Instagram candidates when both platforms have eligible videos, so the YouTube backlog cannot consume the entire batch first. Its summary shows selected, downloaded and processed counts separately for each platform. When Instagram counts are zero, run combined discovery again and inspect the Instagram discovery report; processing cannot create candidates that are not in the inventory.
+
+Whisper and PaddleOCR prefer the RTX 3050 by default. Whisper uses the compact `int8_float16` CUDA compute type. ASR and OCR run sequentially, and the VidTrace wrappers release model resources after each stage. Actual engine names saved with each item include the device used. If CUDA libraries or GPU-enabled PaddlePaddle are unavailable, a backend may fall back to CPU; the stage metadata will show the actual device.
+
 Useful controls:
-- `--limit 10`: number of videos to process in this batch.
-- `--min-metric 1000000`: minimum platform-native views/plays value.
-- `--asr-device cpu`: conservative starting option for a 4 GB GPU; `cuda` tries GPU inference.
+- `--platform all`: process both platforms (default); use `youtube` or `instagram` to restrict a run.
+- `--limit 10`: total videos in the batch, shared across both platforms.
+- `--min-metric 1000000`: minimum native views for YouTube or plays for Instagram.
+- `--device cuda`: prefer NVIDIA CUDA for Whisper and PaddleOCR (default); `--device cpu` is an explicit override.
 - `--language hi`: optionally specify a language; omit it for automatic detection.
 - `--dataset-manifest outputs/dataset/processed-videos.jsonl`: choose the JSONL output path.
 
-Processing resumes from the downloaded MP4 when ASR/OCR fails. The SQLite database keeps each video's download and processing state, checksums, output paths, attempts and errors. Start with 10 videos, then 100 and 300 after checking transcript and OCR quality.
+Processing resumes from a downloaded MP4 when ASR/OCR fails. The SQLite database keeps per-video download and processing state, checksums, output paths, attempts and errors. Start with 10 videos, then 100 and 300 after checking transcript and OCR quality.
 
 ## Local persistence and deduplication
 
@@ -160,7 +169,7 @@ The Phase 1 analyzer remains the downstream processor for a local MP4:
     shorts-lm doctor
     shorts-lm analyze --input data/private/acquired/VIDEO.mp4 --output outputs/analysis.json
 
-The 4 GB RTX 3050 is not required for discovery, SQLite or download. The local laptop is appropriate for discovery and CPU media preprocessing. Use a rented GPU for substantial multimodal fine-tuning after the dataset quality and cost checks pass.
+The laptop's RTX 3050 accelerates local Whisper transcription and PaddleOCR when the NVIDIA CUDA runtimes and GPU-enabled PaddlePaddle are installed. Discovery, database operations, FFmpeg and video frame sampling remain CPU-oriented. See [Windows RTX 3050 GPU setup](docs/GPU_SETUP_WINDOWS.md) before the first GPU batch.
 
 ## Revised phases
 
