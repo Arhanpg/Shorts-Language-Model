@@ -13,7 +13,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: materialize-seed-csv-v0.2-\${{ github.event.pull_request.number || github.ref }}
+  group: materialize-seed-csv-v0.2-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -27,8 +27,8 @@ jobs:
       - name: Check out the PR branch
         uses: actions/checkout@v4
         with:
-          repository: \${{ github.repository }}
-          ref: \${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.head.ref }}
           persist-credentials: true
 
       - name: Set up Python
@@ -40,8 +40,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: shorts-lm-large-seed-catalogue-v0.2
-          github-token: \${{ secrets.GITHUB_TOKEN }}
-          repository: \${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
           run-id: 45203258030
           path: .tmp/upstream-seed-build
 
@@ -55,7 +55,7 @@ jobs:
 
       - name: Commit the actual CSV files to this PR branch
         env:
-          HEAD_REF: \${{ github.event.pull_request.head.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
