@@ -1,8 +1,7 @@
 """Metadata-only URL collection for YouTube Shorts and Instagram Reels.
 
-This workflow never downloads video/audio media. It uses the existing bounded
-creator-graph providers, persists discovery state in SQLite, and exports
-confirmed short-form canonical URLs into separate, Git-trackable text files.
+YouTube discovery uses yt-dlp flat metadata extraction; Instagram uses the
+existing signed-in Playwright browser workflow. Neither path downloads media.
 """
 from __future__ import annotations
 
@@ -219,29 +218,6 @@ def _collect_youtube_urls(
     save_checkpoint()
     counts["unique_urls"] = len(existing)
     return dict(counts)
-
-def _load_resolution_cache(path: Path) -> dict[str, str]:
-    if not path.exists():
-        return {}
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        return {
-            row["reference"]: row["channel_id"]
-            for row in csv.DictReader(handle)
-            if row.get("reference") and row.get("channel_id")
-            and _CHANNEL_ID.fullmatch(row["channel_id"])
-        }
-
-
-def _save_resolution_cache(path: Path, values: dict[str, str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    with temporary.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["reference", "channel_id"])
-        writer.writeheader()
-        for reference, channel_id in sorted(values.items()):
-            writer.writerow({"reference": reference, "channel_id": channel_id})
-    temporary.replace(path)
-
 
 def _export_urls(database: Path, platform: str, destination: Path) -> int:
     with DiscoveryStore(database) as store:
