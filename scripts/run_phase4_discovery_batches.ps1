@@ -30,6 +30,16 @@ function Invoke-ShortsLm([string[]]$Arguments, [string]$Label) {
     if ($LASTEXITCODE -ne 0) {
         throw "shorts-lm failed for $Label (exit $LASTEXITCODE). Stopping batch campaign."
     }
+    $reportIndex = [Array]::IndexOf($Arguments, "--report")
+    if ($reportIndex -ge 0 -and (Test-Path $Arguments[$reportIndex + 1])) {
+        $report = Get-Content -Raw $Arguments[$reportIndex + 1] | ConvertFrom-Json
+        $blockedCreators = @($report.creator_results | Where-Object { $_.status -eq "blocked" }).Count
+        $blockedHashtags = @($report.hashtag_results | Where-Object { $_.status -eq "blocked" }).Count
+        $restrictedErrors = @($report.errors | Where-Object { $_ -match "(?i)captcha|challenge|rate.?limit|429|403|forbidden|login required" }).Count
+        if ($report.creators_blocked -gt 0 -or $blockedCreators -gt 0 -or $blockedHashtags -gt 0 -or $restrictedErrors -gt 0) {
+            throw "Access restriction reported in $Label. Campaign stopped; do not retry or bypass the restriction."
+        }
+    }
 }
 
 if ($RunInstagramCreators) {
