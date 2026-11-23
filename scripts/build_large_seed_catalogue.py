@@ -18,15 +18,55 @@ UA="Shorts-LM-Seed-Catalogue/0.2 (research discovery)"
 ACCOUNT_FIELDS=["account_id","platform","account_handle","account_url","display_name","entity_type","country","region","language","category","followers_count","videos_count","views_count","rank","joined_date","source_dataset","source_url","source_license","source_observed_at","discovery_status","short_form_status","rights_status","last_independent_verification_at","notes"]
 TAG_FIELDS=["hashtag_id","hashtag","normalized_hashtag","language","language_code","category","candidate_platform_scope","generation_rule","verification_state","frequency_measured_at","native_speaker_review_status","source_url","notes"]
 
-def http_bytes(url: str, tries: int=4) -> bytes:
-    error=None
+def http_bytes(url: str, tries: int = 7) -> bytes:
+    """Fetch a public source respectfully, honouring Retry-After on 429/5xx."""
+    error = None
     for attempt in range(tries):
         try:
-            req=Request(url,headers={"User-Agent":UA,"Accept":"application/json,text/csv,*/*"})
-            with urlopen(req,timeout=45) as response: return response.read()
-        except (HTTPError,URLError,TimeoutError,OSError) as exc:
-            error=exc; time.sleep(min(2**attempt,12))
-    raise RuntimeError(f"Unable to retrieve {url}: {error}")
+            req = Request(
+                url,
+                headers={"User-Agent": UA, "Accept": "application/json,text/csv,*/*"},
+            )
+            with urlopen(req, timeout=45) as response:
+                return response.read()
+        except HTTPError as exc:
+            error = exc
+            if exc.code not in {408, 425, 429, 500, 502, 503, 504}:
+                raise RuntimeError(f"Non-retryable HTTP {exc.code} for {url}") from exc
+            retry_after = (exc.headers.get("Retry-After") or "").strip()
+            wait_seconds = None
+            if retry_after:
+                try:
+                    wait_seconds = float(retry_after)
+                except ValueError:
+                    try:
+                        from email.utils import parsedate_to_datetime
+                        wait_date = parsedate_to_datetime(retry_after)
+                        wait_seconds = max(0.0, (wait_date - datetime.now(UTC)).total_seconds())
+                    except (TypeError, ValueError, OverflowError):
+                        wait_seconds = None
+            if wait_seconds is None:
+                wait_seconds = min(15 * (2 ** attempt), 180)
+            wait_seconds = min(max(wait_seconds, 1.0), 300.0)
+            print(
+                f"HTTP {exc.code} from source; respecting retry delay {wait_seconds:.0f}s "
+                f"(attempt {attempt + 1}/{tries})",
+                file=sys.stderr,
+            )
+            if attempt < tries - 1:
+                time.sleep(wait_seconds)
+        except (URLError, TimeoutError, OSError) as exc:
+            error = exc
+            wait_seconds = min(5 * (2 ** attempt), 120)
+            print(
+                f"Transient source error; retrying in {wait_seconds}s "
+                f"(attempt {attempt + 1}/{tries}): {exc}",
+                file=sys.stderr,
+            )
+            if attempt < tries - 1:
+                time.sleep(wait_seconds)
+    raise RuntimeError(f"Unable to retrieve {url} after {tries} bounded attempts: {error}")
+
 
 def get_json(endpoint: str, params: dict) -> dict:
     url=f"{YT_API}/{endpoint}?{urlencode(params)}"
@@ -61,7 +101,10 @@ def fetch_youtube(limit: int) -> tuple[list[dict],dict]:
         data=get_json("rows",{"dataset":YT_DATASET,"config":config,"split":"train","offset":offset,"length":length})
         rows.extend(x["row"] for x in data.get("rows",[]) if isinstance(x,dict) and isinstance(x.get("row"),dict))
         print(f"YouTube dataset pages {i}/{len(offsets)}; {len(rows)} rows",file=sys.stderr)
-        time.sleep(0.12)
+        # The dataset viewer returned HTTP 429 after a burst in the first build.
+        # A conservative cadence reduces repeated pressure on the public service.
+        if i < len(offsets):
+            time.sleep(2.5)
     if len(rows)<min(limit,total): raise RuntimeError(f"Only retrieved {len(rows)} of {limit} YouTube rows; no synthetic top-up")
     return rows[:limit],{"dataset":YT_DATASET,"url":YT_CARD,"license":"CC BY-SA 4.0 compilation; underlying content rights remain separate","config":config,"total_rows":total,"retrieved_rows":len(rows),"sampling":"evenly spaced pages across source row index; not a probability sample","retrieved_at":datetime.now(UTC).isoformat()}
 

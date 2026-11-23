@@ -3,7 +3,16 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
-from scripts.build_large_seed_catalogue import ACCOUNT_FIELDS,TAG_FIELDS,build_tags,dedupe,map_instagram,map_youtube,page_offsets,write_csv
+from scripts.build_large_seed_catalogue import (
+    ACCOUNT_FIELDS,
+    TAG_FIELDS,
+    build_tags,
+    dedupe,
+    map_instagram,
+    map_youtube,
+    page_offsets,
+    write_csv,
+)
 
 def test_evenly_spaced_page_sampling():
     offsets=page_offsets(7_264_739,10_000,100)
@@ -39,7 +48,8 @@ def test_generated_hashtags_are_unverified(tmp_path: Path):
 def test_csv_writer_preserves_unicode_and_schema(tmp_path: Path):
     path=tmp_path/"accounts.csv"
     write_csv(path,[{"account_id":"ig:x","display_name":"ಕನ್ನಡ"}],ACCOUNT_FIELDS)
-    with path.open(encoding="utf-8-sig",newline="") as stream: row=next(csv.DictReader(stream))
+    with path.open(encoding="utf-8-sig", newline="") as stream:
+        row = next(csv.DictReader(stream))
     assert row["display_name"]=="ಕನ್ನಡ" and list(row)==ACCOUNT_FIELDS
 
 
@@ -95,3 +105,33 @@ def test_youtube_handle_can_be_extracted_from_channel_url():
     assert row is not None
     assert row["account_handle"] == "@samplechannel"
     assert row["account_url"] == "https://www.youtube.com/@samplechannel"
+
+
+def test_http_bytes_honours_retry_after(monkeypatch):
+    import urllib.error
+    from scripts import build_large_seed_catalogue as module
+
+    calls = {"count": 0}
+    waits = []
+    class DummyResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+        def read(self):
+            return b"ok"
+
+    def fake_urlopen(request, timeout):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise urllib.error.HTTPError(
+                request.full_url, 429, "Too Many Requests",
+                {"Retry-After": "3"}, None
+            )
+        return DummyResponse()
+
+    monkeypatch.setattr(module, "urlopen", fake_urlopen)
+    monkeypatch.setattr(module.time, "sleep", waits.append)
+    assert module.http_bytes("https://example.test/data") == b"ok"
+    assert waits == [3.0]
+    assert calls["count"] == 2
