@@ -15,15 +15,17 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from shorts_intelligence import __version__
+# Importing phase4_master registers the resumable run-all command on phase4_app.
+from shorts_intelligence import (
+    __version__,
+    phase4_master,  # noqa: F401
+)
 from shorts_intelligence.analyzer import analyze_video
 from shorts_intelligence.campaign import campaign_app
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.discovery.cli import discovery_app
 from shorts_intelligence.media.probe import MediaError
 from shorts_intelligence.phase4 import phase4_app
-# Registers the resumable full-catalogue command on phase4_app.
-from shorts_intelligence import phase4_master  # noqa: F401
 from shorts_intelligence.pilot.cli import pilot_app
 
 app = typer.Typer(
