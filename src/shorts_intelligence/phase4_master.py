@@ -176,7 +176,7 @@ def run_all(
     instagram_session_user: str | None = typer.Option(None, "--instagram-session-user"),
     instagram_session_file: Path | None = typer.Option(None, "--instagram-session-file", exists=True, readable=True),
     seed: int = typer.Option(20261123, "--seed"),
-    min_metric: int = typer.Option(0, "--min-metric", min=0),
+    min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
     target_new_per_batch: int = typer.Option(2000, "--target-new-per-batch", min=1, max=2000),
     discovery_runtime_seconds: int = typer.Option(900, "--discovery-runtime-seconds", min=30, max=900),
     creator_batch_size: int = typer.Option(100, "--creator-batch-size", min=1, max=500),
@@ -229,6 +229,10 @@ def run_all(
         f"unique hashtags={len(hashtags)} (each platform)"
     )
     console.print("[yellow]Instagram and YouTube metrics are kept platform-specific. Media files are temporary and deleted after each processing attempt.[/yellow]")
+    if not instagram_creators:
+        raise typer.BadParameter("The normalized catalogue contains zero Instagram creators. Check source CSV headers and catalogue inputs.")
+    if not youtube_creators:
+        console.print("[bold yellow]No stable YouTube UC channel IDs were found. YouTube creator-harvest batches will be skipped; YouTube hashtag discovery will still run. Handle-only leads are reported for a separate resolver workflow.[/bold yellow]")
 
     totals: Counter[str] = Counter()
     blocked_platforms: list[str] = []
