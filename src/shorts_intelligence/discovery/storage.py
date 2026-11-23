@@ -420,7 +420,7 @@ class DiscoveryStore:
     def find_media_hash(self, media_sha256: str) -> sqlite3.Row | None:
         return self.connection.execute(
             "SELECT platform, source_id, download_path FROM candidates "
-            "WHERE media_sha256=? AND download_status='downloaded' LIMIT 1",
+            "WHERE media_sha256=? AND download_status IN ('downloaded','processed_media_deleted') LIMIT 1",
             (media_sha256,),
         ).fetchone()
 
