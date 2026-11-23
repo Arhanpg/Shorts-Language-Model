@@ -1141,7 +1141,7 @@ def process_eligible_media(
 
     if summary_json is not None:
         summary_json.parent.mkdir(parents=True, exist_ok=True)
-        summary_json.write_text(json.dumps(summary, indent=2) + "\\n", encoding="utf-8")
+        summary_json.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 
     table = Table(title="ShortsLM multimodal processing")
     table.add_column("Result")
