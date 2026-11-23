@@ -10,7 +10,7 @@ from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.schemas import OCRSpan, StageStatus, TranscriptSegment, VideoMetadata
 
 
-def _grant_json(candidate: DiscoveredCandidate) -> str:
+def _grants_json(*candidates: DiscoveredCandidate) -> str:
     return json.dumps([{
         "platform": candidate.platform,
         "source_id": candidate.source_id,
@@ -22,7 +22,11 @@ def _grant_json(candidate: DiscoveredCandidate) -> str:
         "evidence_ref": "test-fixture-permission",
         "expires_at": "2099-12-31T23:59:59+00:00",
         "revoked": False,
-    }])
+    } for candidate in candidates])
+
+
+def _grant_json(candidate: DiscoveredCandidate) -> str:
+    return _grants_json(candidate)
 
 
 def _candidate() -> DiscoveredCandidate:
@@ -177,6 +181,7 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grant_json(candidate),
         limit=10,
     )
     assert second["candidates_selected"] == 0
@@ -228,6 +233,7 @@ def test_analysis_failure_keeps_downloaded_media_and_retry_skips_download(
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grant_json(candidate),
         limit=10,
     )
     assert first["failed"] == 1
@@ -246,6 +252,7 @@ def test_analysis_failure_keeps_downloaded_media_and_retry_skips_download(
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grant_json(candidate),
         limit=10,
     )
     assert second["processed_this_run"] == 1
@@ -307,6 +314,7 @@ def test_processing_batch_includes_both_platforms_and_prefers_cuda(
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grants_json(youtube, instagram),
         limit=2,
     )
 
@@ -409,6 +417,7 @@ def test_overlong_media_is_terminally_rejected_not_retried(tmp_path: Path, monke
     second = processing.run_processing_batch(
         database=database, download_dir=download_dir, artifact_dir=artifact_dir,
         dataset_manifest=manifest, limit=10, max_processing_attempts=3,
+        authorized_grants_json=_grant_json(candidate),
         delete_media_after_processing=True,
     )
 
