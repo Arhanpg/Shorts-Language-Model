@@ -1259,7 +1259,9 @@ def graph_run(
         "metric_above_threshold_candidates", "youtube_creator_candidates",
         "youtube_related_candidates", "instagram_hashtag_requests",
         "hashtags_with_candidates", "creators_with_candidates", "creators_empty",
-        "creators_completed", "creators_pending", "creators_exhausted",
+        "creators_completed", "creators_pending",
+        "instagram_seed_creators_queued", "instagram_seed_creators_pending",
+        "creators_exhausted",
         "creators_blocked", "creators_failed", "creator_edges", "elapsed_seconds",
     ):
         table.add_row(key.replace("_", " ").title(), str(summary.get(key, 0)))
@@ -1278,8 +1280,9 @@ def graph_run(
         if summary.get("new_eligible", 0) >= summary.get("target_new", 0) and summary.get("target_new", 0) > 0 and not summary.get("continue_graph_after_target"):
             console.print(
                 "[yellow]The new-eligible target was reached during seed discovery; "
-                "creator/related-video expansion was skipped. Use --continue-graph-after-target "
-                "to continue bounded graph exploration in the same run.[/yellow]"
+                "optional YouTube creator/related-video expansion was skipped. "
+                "Configured Instagram seed creators are still processed within the run budget. "
+                "Use --continue-graph-after-target for full graph expansion.[/yellow]"
             )
 
     instagram_requests = summary.get("provider_requests", {}).get("instagram", {})
