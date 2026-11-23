@@ -23,6 +23,7 @@ async def run_creator_graph(
     instagram_profile_dir: Path | None = None,
     instagram_creators: list[str] | None = None,
     instagram_hashtags: list[str] | None = None,
+    youtube_creators: list[str] | None = None,
     force: bool = False,
     instagram_max_scrolls: int = 8,
     instagram_max_reel_details: int = 3,
@@ -277,6 +278,14 @@ async def run_creator_graph(
                     "instagram", normalized, handle=username.strip().lstrip("@"),
                     discovered_via="seed_file" if not force else "forced_seed",
                     priority_score=10_000.0, depth=0, force=force)
+
+        for channel_id in youtube_creators or []:
+            normalized_id = channel_id.strip()
+            if normalized_id:
+                frontier.enqueue_creator(
+                    "youtube", normalized_id, discovered_via="seed_file",
+                    priority_score=10_000.0, depth=0, force=force,
+                )
 
         creators_claimed = {"youtube": 0, "instagram": 0}
         expansions_done = 0
