@@ -395,7 +395,8 @@ def test_overlong_media_is_terminally_rejected_not_retried(tmp_path: Path, monke
         delete_media_after_processing=True,
     )
 
-    assert first["failed"] == 1
+    assert first["failed"] == 0
+    assert first["rejected"] == 1
     assert second["candidates_selected"] == 0
     assert calls == {"download": 1, "analyze": 0}
     with DiscoveryStore(database) as store:
