@@ -54,3 +54,12 @@ def test_downloader_prefers_node_runtime_when_node_is_available(monkeypatch, tmp
     assert captured["options"]["js_runtimes"] == {
         "node": {"path": node_path}
     }
+
+
+def test_instagram_access_and_transport_failures_are_classified_for_fast_stop():
+    from shorts_intelligence.discovery.downloader import _is_access_or_transport_failure
+
+    assert _is_access_or_transport_failure(RuntimeError("401 Unauthorized"))
+    assert _is_access_or_transport_failure(RuntimeError("Connection timed out"))
+    assert _is_access_or_transport_failure(RuntimeError("HTTP 429 rate limit"))
+    assert not _is_access_or_transport_failure(RuntimeError("unsupported media format"))
