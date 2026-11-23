@@ -24,6 +24,7 @@ async def run_creator_graph(
     instagram_creators: list[str] | None = None,
     instagram_hashtags: list[str] | None = None,
     youtube_creators: list[str] | None = None,
+    youtube_hashtags: list[str] | None = None,
     force: bool = False,
     instagram_max_scrolls: int = 8,
     instagram_max_reel_details: int = 3,
@@ -158,8 +159,12 @@ async def run_creator_graph(
                     stats["seed_search_failures"] += 1
                     errors.append(f"seed search {query!r}: {type(exc).__name__}: {str(exc)[:180]}")
 
-            hashtags = ["shorts", "viralshorts", "comedyshorts", "cricketshorts",
-                        "cooking", "education", "travel", "technology"][:max_hashtag_queries]
+            hashtags = list(dict.fromkeys(
+                tag.strip().lstrip("#").casefold()
+                for tag in (youtube_hashtags or ["shorts", "viralshorts", "comedyshorts", "cricketshorts",
+                    "cooking", "education", "travel", "technology"])
+                if tag.strip()
+            ))[:max_hashtag_queries]
             for hashtag in hashtags:
                 if loop.time() >= youtube_seed_deadline or getattr(yt, "blocked", False):
                     break
