@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import multiprocessing
 import time
@@ -164,13 +165,11 @@ def _transcription_worker(
             "language": detected_language,
         })
     except BaseException as exc:
-        try:
+        with contextlib.suppress(BrokenPipeError, EOFError, OSError):
             connection.send({
                 "ok": False,
                 "error": f"{type(exc).__name__}: {exc}",
             })
-        except (BrokenPipeError, EOFError, OSError):
-            pass
     finally:
         connection.close()
 
@@ -301,10 +300,8 @@ def transcribe_audio(
         raise
     finally:
         receiver.close()
-        try:
+        with contextlib.suppress(OSError):
             sender.close()
-        except OSError:
-            pass
         try:
             if not process.is_alive():
                 process.close()
