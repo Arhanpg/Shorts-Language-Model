@@ -19,6 +19,11 @@ campaign_app = typer.Typer(
 console = Console()
 
 
+@campaign_app.callback()
+def _campaign_callback() -> None:
+    """Manage randomized creator and hashtag campaign seed files."""
+
+
 def _read(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return list(csv.DictReader(handle))
