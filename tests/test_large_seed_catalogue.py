@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
+
 from scripts.build_large_seed_catalogue import (
     ACCOUNT_FIELDS,
     TAG_FIELDS,
