@@ -56,7 +56,9 @@ def transcribe_audio(
 
         config = VidTraceConfig(whisper_model=model_name, language=language)
         engine = WhisperTranscriber(
-            config, prefer_gpu=device in {"cuda", "auto"}
+            config,
+            prefer_gpu=device in {"cuda", "auto"},
+            compute_type=compute_type,
         )
         try:
             raw, meta = engine.transcribe(audio_path)
@@ -65,9 +67,12 @@ def transcribe_audio(
             if callable(close):
                 close()
         detected_language = meta.get("language") or language
+        actual_device = str(meta.get("device") or "unknown")
+        actual_compute = str(meta.get("compute_type") or "unknown")
+        engine_name = f"vidtrace-faster-whisper-{actual_device}-{actual_compute}"
         return (
             _convert_segments(raw, detected_language),
-            "vidtrace-faster-whisper",
+            engine_name,
             detected_language,
         )
     except ImportError:
