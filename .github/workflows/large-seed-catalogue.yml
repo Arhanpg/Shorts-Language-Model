@@ -18,6 +18,10 @@ on:
         required: false
         default: "10000"
 
+concurrency:
+  group: large-seed-catalogue-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -34,6 +38,8 @@ jobs:
           python-version: "3.12"
       - name: Build creator/account and hashtag candidates
         shell: bash
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           python scripts/build_large_seed_catalogue.py \
             --research-dir data/research_catalogue \

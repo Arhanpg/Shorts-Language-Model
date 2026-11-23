@@ -134,3 +134,20 @@ def test_http_bytes_honours_retry_after(monkeypatch):
     assert module.http_bytes("https://example.test/data") == b"ok"
     assert waits == [3.0]
     assert calls["count"] == 2
+
+
+def test_http_bytes_adds_optional_hugging_face_token(monkeypatch):
+    from scripts import build_large_seed_catalogue as module
+    monkeypatch.setenv("HF_TOKEN", "hf_test_read_token")
+    class DummyResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+        def read(self):
+            return b"ok"
+    def fake_urlopen(request, timeout):
+        assert request.get_header("Authorization") == "Bearer hf_test_read_token"
+        return DummyResponse()
+    monkeypatch.setattr(module, "urlopen", fake_urlopen)
+    assert module.http_bytes("https://example.test/data") == b"ok"

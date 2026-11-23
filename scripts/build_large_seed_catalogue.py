@@ -23,10 +23,11 @@ def http_bytes(url: str, tries: int = 7) -> bytes:
     error = None
     for attempt in range(tries):
         try:
-            req = Request(
-                url,
-                headers={"User-Agent": UA, "Accept": "application/json,text/csv,*/*"},
-            )
+            headers = {"User-Agent": UA, "Accept": "application/json,text/csv,*/*"}
+            hf_token = os.environ.get("HF_TOKEN", "").strip()
+            if hf_token:
+                headers["Authorization"] = f"Bearer {hf_token}"
+            req = Request(url, headers=headers)
             with urlopen(req, timeout=45) as response:
                 return response.read()
         except HTTPError as exc:

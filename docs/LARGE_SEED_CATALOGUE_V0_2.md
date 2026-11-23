@@ -14,6 +14,10 @@ The YouTube builder reads evenly spaced pages from the Hugging Face dataset view
 
 Opening this PR runs `.github/workflows/large-seed-catalogue.yml`. The workflow builds 10,000 YouTube channel candidates and 10,000 Instagram account candidates from the public datasets, then uploads the generated CSVs and QA summary as the `shorts-lm-large-seed-catalogue-v0.2` workflow artifact. The Instagram `person` subset is reported separately and is never padded with organization accounts if fewer than 10,000 people are present.
 
+## Rate limits and optional Hugging Face token
+
+The builder spaces requests by 2.5 seconds, honours the server's `Retry-After` header, and applies bounded exponential backoff to transient failures. Hugging Face recommends passing an `HF_TOKEN` and spreading requests over time when using its Hub endpoints. To improve the anonymous quota in GitHub Actions, create a read-only Hugging Face access token and add it to the repository as an Actions secret named `HF_TOKEN`. The workflow passes it only as an environment variable; it is never written to a file or CSV. The builder still works without it, subject to the public anonymous rate limit.
+
 ## Sources
 
 - YouTube: ScrapeExchange/youtube-channel-7m-plus, 7,264,739 channel rows, CC BY-SA 4.0 compilation; underlying creator/platform material remains subject to its own terms and rights. https://huggingface.co/datasets/ScrapeExchange/youtube-channel-7m-plus
