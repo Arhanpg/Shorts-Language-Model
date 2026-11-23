@@ -375,3 +375,86 @@ def test_estimated_metric_can_filter_discovery_without_becoming_exact_view_count
     assert saved.view_count is None
     assert saved.qualifying_metric() == 1_150_000
     assert saved.metadata["metric_is_estimate"] is True
+
+
+def test_combined_run_processes_instagram_seed_after_youtube_target_is_met(
+    monkeypatch, tmp_path
+):
+    import shorts_intelligence.discovery.engine as engine
+
+    class FakeYouTube:
+        def __init__(self, **kwargs):
+            pass
+
+        async def search_seed_videos(self, query, *, limit):
+            return [SimpleNamespace(video_id="TargetSeed123", channel_id=None)]
+
+        async def enrich_seed_videos(self, videos):
+            return [_candidate("TargetSeed123", "UC" + "z" * 22, 2_000_000)]
+
+        async def search_hashtag_videos(self, hashtag, *, limit):
+            return []
+
+        async def close(self):
+            return None
+
+    class FakeInstagram:
+        calls = 0
+
+        def __init__(self, **kwargs):
+            self.requests_observed = 0
+            self.responses_parsed = 0
+            self.responses_unparsed = 0
+            self.errors = []
+            self.blocked = False
+            self.creator_diagnostics = []
+            self.hashtag_diagnostics = []
+
+        async def harvest_creator(self, username, *, max_scrolls=8, max_reel_details=3):
+            type(self).calls += 1
+            self.creator_diagnostics.append({
+                "handle": username,
+                "candidate_count": 1,
+                "metric_count": 1,
+                "reason": None,
+            })
+            candidate = DiscoveredCandidate(
+                platform="instagram",
+                source_id="AfterTargetReel123",
+                canonical_url="https://www.instagram.com/reel/AfterTargetReel123/",
+                creator=username,
+                play_count=1_700_000,
+                metric_source="fixture",
+                short_format_status="confirmed",
+                metadata={"metric_kind": "plays"},
+            )
+            return [candidate], set()
+
+        async def close(self):
+            return None
+
+    monkeypatch.setattr(engine, "TubeScrapeProvider", FakeYouTube)
+    monkeypatch.setattr(engine, "InstagramPlaywrightProvider", FakeInstagram)
+
+    with DiscoveryStore(tmp_path / "combined-target.sqlite3") as store:
+        summary = asyncio.run(run_creator_graph(
+            store,
+            platform="all",
+            target_new=1,
+            min_metric=1_000_000,
+            max_runtime_seconds=30,
+            max_seed_queries=1,
+            max_hashtag_queries=0,
+            max_creators=1,
+            max_expansions=0,
+            instagram_profile_dir=tmp_path / "profile",
+            instagram_creators=["creator_one"],
+        ))
+
+        assert summary["eligible_new"] == 2
+        assert summary["target_reached"] is True
+        assert summary["instagram_seed_creators_queued"] == 1
+        assert summary["instagram_seed_creators_pending"] == 0
+        assert summary["instagram_creator_candidates"] == 1
+        assert FakeInstagram.calls == 1
+        assert store.get_candidate("instagram", "AfterTargetReel123") is not None
