@@ -420,7 +420,7 @@ class DiscoveryStore:
     def find_media_hash(self, media_sha256: str) -> sqlite3.Row | None:
         return self.connection.execute(
             "SELECT platform, source_id, download_path FROM candidates "
-            "WHERE media_sha256=? AND download_status='downloaded' LIMIT 1",
+            "WHERE media_sha256=? AND download_status IN ('downloaded','processed_media_deleted') LIMIT 1",
             (media_sha256,),
         ).fetchone()
 
@@ -462,6 +462,7 @@ class DiscoveryStore:
         min_metric: int = 1_000_000,
         limit: int = 25,
         platform: str = "all",
+        max_attempts: int = 2,
     ) -> list[tuple[DiscoveredCandidate, str | None, str, str | None]]:
         """Return a balanced batch of confirmed YouTube Shorts and Instagram Reels."""
         if platform not in {"all", "youtube", "instagram"}:
@@ -490,6 +491,7 @@ class DiscoveryStore:
                         0
                     )
                   END >= ?
+              AND COALESCE(p.attempts, 0) < ?
               AND c.platform=?
             ORDER BY
               CASE WHEN c.platform='youtube'
@@ -506,7 +508,7 @@ class DiscoveryStore:
 
         for selected_platform in platforms:
             rows = self.connection.execute(
-                query, (int(min_metric), selected_platform, maximum)
+                query, (int(min_metric), int(max_attempts), selected_platform, maximum)
             )
             by_platform[selected_platform] = [
                 (
@@ -601,6 +603,20 @@ class DiscoveryStore:
                 transcript_segments, ocr_spans, detected_language, asr_engine, ocr_engine,
                 json.dumps(quality_flags, ensure_ascii=False), now, now, platform, source_id,
             ),
+        )
+        self.connection.commit()
+
+    def mark_processed_media_deleted(self, platform: str, source_id: str) -> None:
+        """Forget the temporary media path after a successful feature extraction."""
+        now = datetime.now(UTC).isoformat()
+        self.connection.execute(
+            "UPDATE media_processing SET media_path=NULL, updated_at=? WHERE platform=? AND source_id=?",
+            (now, platform, source_id),
+        )
+        self.connection.execute(
+            "UPDATE candidates SET download_path=NULL, download_status='processed_media_deleted', updated_at=? "
+            "WHERE platform=? AND source_id=?",
+            (now, platform, source_id),
         )
         self.connection.commit()
 
