@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 import sys
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
+from types import ModuleType
 
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.telemetry.asr import transcribe_audio
@@ -51,6 +51,9 @@ def test_asr_passes_cuda_and_compute_type_to_vidtrace(monkeypatch, tmp_path: Pat
     }
     modules["vidtrace.audio.transcription"].WhisperTranscriber = FakeWhisperTranscriber
     modules["vidtrace.models.config"].VidTraceConfig = FakeVidTraceConfig
+    modules["vidtrace"].__path__ = []
+    modules["vidtrace.audio"].__path__ = []
+    modules["vidtrace.models"].__path__ = []
     for name, module in modules.items():
         monkeypatch.setitem(sys.modules, name, module)
 
