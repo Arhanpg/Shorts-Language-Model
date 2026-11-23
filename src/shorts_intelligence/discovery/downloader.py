@@ -49,6 +49,12 @@ def _download_with_ytdlp(candidate: DiscoveredCandidate, output_dir: Path) -> Pa
         "socket_timeout": 30,
         "postprocessors": [{"key": "FFmpegVideoRemuxer", "preferedformat": "mp4"}],
     }
+    # Prefer Node when available. Deno remains yt-dlp's default on machines
+    # without Node, while this avoids the observed Deno challenge-runtime error.
+    node_runtime = shutil.which("node")
+    if node_runtime:
+        options["js_runtimes"] = {"node": {"path": node_runtime}}
+
     try:
         with YoutubeDL(options) as ydl:
             info = ydl.extract_info(str(candidate.canonical_url), download=True)

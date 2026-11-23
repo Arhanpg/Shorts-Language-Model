@@ -683,3 +683,24 @@ def test_instagram_parser_stops_at_bounded_depth_and_node_count():
 
     records = extract_reel_records(payload, creator_handle="creator")
     assert records == []
+
+
+def test_response_shape_diagnostics_include_bounded_media_like_objects():
+    from shorts_intelligence.discovery.providers.instagram_playwright import _response_shape
+
+    payload = {
+        "data": {
+            "items": [{
+                "media": {
+                    "__typename": "XDTGraphVideo",
+                    "code": "PublicReel123",
+                    "play_count": 12345,
+                }
+            }]
+        }
+    }
+    shape = _response_shape(payload)
+    assert shape["top_level_keys"] == ["data"]
+    assert shape["media_like_objects"]
+    assert shape["media_like_objects"][0]["path"] == "$.data.items[0].media"
+    assert "code" in shape["media_like_objects"][0]["signals"]

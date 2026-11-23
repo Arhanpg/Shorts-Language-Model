@@ -10,16 +10,11 @@ venv/
 .env.*
 !.env.example
 
-# Private user data and acquisition artifacts
-# /data/
-# /data/private/
-# /raw/
-# /processed/
-# /outputs/
-/checkpoints/
-/runs/
-/wandb/
-/mlruns/
+# Generated and private run data — keep local, never commit
+/data/private/
+/data/raw/
+/data/processed/
+/outputs/
 .shortslm/
 *.sqlite
 *.sqlite3
@@ -33,13 +28,12 @@ venv/
 *.wav
 *.mp3
 *.flac
-# *.jsonl.private
+*.metadata.json
+*.session
+*.session-journal
 *session*
 *cookie*
 *token*.json
-*.session
-*.session-journal
-# *.metadata.json
 
 # Model artifacts and temporary files
 *.gguf

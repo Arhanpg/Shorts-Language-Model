@@ -302,3 +302,48 @@ def test_processing_batch_includes_both_platforms_and_prefers_cuda(
     assert set(downloaded_platforms) == {"youtube", "instagram"}
     assert requested_devices == ["cuda", "cuda"]
     assert summary["failed"] == 0
+
+
+def test_asr_and_ocr_low_signal_heuristics_flag_obvious_gibberish_only():
+    from shorts_intelligence.discovery.processing import (
+        _ocr_is_low_signal,
+        _transcript_looks_degenerate,
+    )
+
+    repeated = SimpleNamespace(text=" ".join(["repeated"] * 80))
+    normal = SimpleNamespace(text="This is a clear sentence with varied words.")
+    assert _transcript_looks_degenerate([repeated]) is True
+    assert _transcript_looks_degenerate([normal]) is False
+
+    tiny = SimpleNamespace(text="x", confidence=0.2)
+    useful = SimpleNamespace(text="GORDON RAMSAY", confidence=0.99)
+    assert _ocr_is_low_signal([tiny]) is True
+    assert _ocr_is_low_signal([useful]) is False
+
+
+
+def test_manifest_quality_is_recomputed_from_existing_artifacts(tmp_path: Path):
+    import json
+
+    from shorts_intelligence.discovery.processing import _artifact_quality_flags
+
+    transcript = tmp_path / "transcript.json"
+    transcript.write_text(
+        json.dumps({"segments": [{"text": " ".join(["repeated"] * 80)}]}),
+        encoding="utf-8",
+    )
+    ocr = tmp_path / "ocr.json"
+    ocr.write_text(
+        json.dumps({"spans": [{"text": "x", "confidence": 0.1}]}),
+        encoding="utf-8",
+    )
+
+    flags = _artifact_quality_flags(
+        ["preexisting_flag"],
+        transcript_path=transcript,
+        ocr_path=ocr,
+    )
+
+    assert "preexisting_flag" in flags
+    assert "asr_suspected_gibberish" in flags
+    assert "ocr_low_signal" in flags
