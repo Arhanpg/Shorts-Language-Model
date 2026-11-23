@@ -210,10 +210,11 @@ def run_processing_batch(
     dataset_manifest: Path,
     limit: int = 25,
     min_metric: int = 1_000_000,
+    platform: str = "all",
     instagram_session_username: str | None = None,
     instagram_session_file: Path | None = None,
     asr_model: str = "small",
-    asr_device: str = "cpu",
+    asr_device: str = "cuda",
     language: str | None = None,
     max_duration_seconds: float = 180.0,
     max_file_size_mb: int = 1000,
@@ -223,8 +224,18 @@ def run_processing_batch(
 ) -> dict[str, int | str]:
     """Download and process a bounded batch of discovered Shorts and Reels."""
     processed = downloaded = failed = duplicates = 0
+    platform_totals = {
+        "youtube": {"selected": 0, "downloaded": 0, "processed": 0},
+        "instagram": {"selected": 0, "downloaded": 0, "processed": 0},
+    }
     with DiscoveryStore(database) as store:
-        queued = store.processing_candidates(min_metric=min_metric, limit=limit)
+        queued = store.processing_candidates(
+            min_metric=min_metric,
+            limit=limit,
+            platform=platform,
+        )
+        for candidate, _, _, _ in queued:
+            platform_totals[candidate.platform]["selected"] += 1
         for candidate, existing_path, download_status, stored_hash in queued:
             platform, source_id = candidate.platform, candidate.source_id
             did_download = download_attempted = download_succeeded = False
@@ -258,6 +269,7 @@ def run_processing_batch(
                     )
                     did_download = True
                     downloaded += 1
+                    platform_totals[platform]["downloaded"] += 1
 
                 media_path = media_path.expanduser().resolve(strict=True)
                 try:
@@ -313,6 +325,7 @@ def run_processing_batch(
                     quality_flags=_quality_flags(report, candidate),
                 )
                 processed += 1
+                platform_totals[platform]["processed"] += 1
             except Exception as exc:
                 store.mark_processing_failure(platform, source_id, error=f"{type(exc).__name__}: {exc}")
                 if media_validation_failed or (download_attempted and not download_succeeded):
@@ -335,4 +348,11 @@ def run_processing_batch(
         "manifest_path": str(dataset_manifest.expanduser().resolve()),
         "processing_complete_total": statuses.get("complete", 0),
         "processing_failed_total": statuses.get("failed", 0),
+        "youtube_candidates_selected": platform_totals["youtube"]["selected"],
+        "instagram_candidates_selected": platform_totals["instagram"]["selected"],
+        "youtube_downloaded": platform_totals["youtube"]["downloaded"],
+        "instagram_downloaded": platform_totals["instagram"]["downloaded"],
+        "youtube_processed": platform_totals["youtube"]["processed"],
+        "instagram_processed": platform_totals["instagram"]["processed"],
+        "platform": platform,
     }
