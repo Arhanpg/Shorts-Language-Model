@@ -1,0 +1,50 @@
+{
+  "release": "Shorts-LM large seed catalogue v0.2",
+  "as_of": "2026-11-23",
+  "sources": [
+    {
+      "id": "youtube_channels_hf",
+      "dataset": "ScrapeExchange/youtube-channel-7m-plus",
+      "url": "https://huggingface.co/datasets/ScrapeExchange/youtube-channel-7m-plus",
+      "reported_rows": 7264739,
+      "compilation_license": "CC BY-SA 4.0",
+      "access": "Hugging Face dataset viewer pages; 10K sample; no full Parquet download",
+      "limitations": [
+        "channel does not prove individual human",
+        "does not prove active Shorts",
+        "underlying platform rights remain separate"
+      ]
+    },
+    {
+      "id": "instagram_top_accounts_hf",
+      "dataset": "arh1p/instagram-top-accounts",
+      "url": "https://huggingface.co/datasets/arh1p/instagram-top-accounts",
+      "download_url": "https://huggingface.co/datasets/arh1p/instagram-top-accounts/resolve/main/latest.csv",
+      "license": "CC BY 4.0",
+      "reported_rank_range": 12100,
+      "entity_types": [
+        "person",
+        "org"
+      ],
+      "limitations": [
+        "followers-ranked leads not verified Reels creators",
+        "person and organization rows kept separate"
+      ]
+    },
+    {
+      "id": "submitted_ai_research",
+      "dataset": "Gemini Deep Research and other submitted AI outputs",
+      "url": "https://github.com/Arhanpg/Shorts-Language-Model",
+      "limitations": [
+        "AI-reported verification is not independent confirmation",
+        "rights remain discovery-only"
+      ]
+    }
+  ],
+  "claims_not_made": [
+    "10,000 unique human identities per platform are not guaranteed.",
+    "No account is assumed to be active on Shorts or Reels.",
+    "No video retrieval or training permission is inferred from profile visibility or dataset license.",
+    "Generated hashtag candidates are not observed popularity measurements."
+  ]
+}
