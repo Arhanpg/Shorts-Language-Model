@@ -24,9 +24,8 @@ def _read(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def _write_csv(path: Path, rows: list[dict[str, str]]) -> None:
+def _write_csv(path: Path, rows: list[dict[str, str]], fields: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fields = list(rows[0]) if rows else ["platform", "identity", "source", "display_name", "verification"]
     with path.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
@@ -94,12 +93,12 @@ def sample(
         rng.shuffle(rows)
         rows = rows[:creators_per_platform]
         tags_for_platform = selected_tags[platform]
-        _write_csv(output_dir / f"{platform}_creators.csv", rows)
+        _write_csv(output_dir / f"{platform}_creators.csv", rows, ["platform", "identity", "source", "display_name", "verification"])
         _write_seeds(
             output_dir / f"{platform}_creator_seeds.txt",
             [row["identity"] for row in rows],
         )
-        _write_csv(output_dir / f"{platform}_hashtags.csv", tags_for_platform)
+        _write_csv(output_dir / f"{platform}_hashtags.csv", tags_for_platform, ["hashtag", "language", "domain", "source"])
         _write_seeds(
             output_dir / f"{platform}_hashtag_seeds.txt",
             [str(row.get("hashtag") or "").lstrip("#") for row in tags_for_platform],
