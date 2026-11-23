@@ -17,6 +17,17 @@ class DownloadError(RuntimeError):
     """A source-specific downloader could not produce a local MP4."""
 
 
+def _is_access_or_transport_failure(error: BaseException) -> bool:
+    """Avoid cascading extractor requests after an access denial or network outage."""
+    message = str(error).casefold()
+    markers = (
+        "401 unauthorized", "403 forbidden", "429", "rate limit",
+        "checkpoint", "login required", "challenge", "timed out", "timeout",
+        "connection reset", "connection refused", "temporarily blocked",
+    )
+    return any(marker in message for marker in markers)
+
+
 def _write_metadata(candidate: DiscoveredCandidate, path: Path) -> None:
     """Write a small source/download sidecar beside the MP4."""
     metadata_path = path.with_suffix(".metadata.json")
@@ -182,9 +193,18 @@ def download_candidate(
                 session_file=instagram_session_file,
             )
         except DownloadError as instaloader_error:
+            # Do not cascade more extractors after access denials or network outages.
+            if _is_access_or_transport_failure(instaloader_error):
+                raise DownloadError(
+                    f"Instagram access/transport failure; stopped fallback attempts: {instaloader_error}"
+                ) from instaloader_error
             try:
                 media_path = _download_with_ytdlp(candidate, output_dir)
             except DownloadError as ytdlp_error:
+                if _is_access_or_transport_failure(ytdlp_error):
+                    raise DownloadError(
+                        f"Instagram access/transport failure; stopped fallback attempts: {ytdlp_error}"
+                    ) from ytdlp_error
                 try:
                     media_path = _download_gallery_dl(candidate, output_dir)
                 except (DownloadError, subprocess.TimeoutExpired) as gallery_error:
