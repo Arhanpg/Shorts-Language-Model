@@ -99,7 +99,7 @@ def _youtube_video_urls(info: Any, *, source: str) -> list[str]:
         video_id = str(entry.get("id") or "").strip()
         if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
             webpage_url = str(entry.get("webpage_url") or entry.get("url") or "")
-            match = re.search(r"(?:youtu\\.be/|youtube\\.com/(?:shorts/|watch\\?v=))([A-Za-z0-9_-]{11})", webpage_url)
+            match = re.search(r"(?:youtu\.be/|youtube\.com/(?:shorts/|watch\?v=))([A-Za-z0-9_-]{11})", webpage_url)
             if match:
                 video_id = match.group(1)
         if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
@@ -167,7 +167,7 @@ def _collect_youtube_urls(
 
     def save_checkpoint() -> None:
         temporary = destination.with_suffix(destination.suffix + ".tmp")
-        temporary.write_text("".join(f"{url}\\n" for url in sorted(existing)), encoding="utf-8")
+        temporary.write_text("".join(f"{url}\n" for url in sorted(existing)), encoding="utf-8")
         temporary.replace(destination)
 
     with YoutubeDL(options) as client:
@@ -370,7 +370,7 @@ def collect_urls(
             if blocked:
                 break
             console.print(
-                f"\\n[bold cyan]Instagram browser discovery {index}/{len(jobs)} · {label}[/bold cyan] "
+                f"\n[bold cyan]Instagram browser discovery {index}/{len(jobs)} · {label}[/bold cyan] "
                 f"| creators={len(creators)} hashtags={len(tags)}"
             )
             try:
@@ -432,7 +432,7 @@ def collect_urls(
     }
     report_dir.mkdir(parents=True, exist_ok=True)
     (report_dir / "summary.json").write_text(
-        json.dumps(report, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8",
+        json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8",
     )
     table = Table(title="ShortsLM URL collection")
     table.add_column("Output")
