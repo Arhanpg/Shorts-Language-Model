@@ -11,13 +11,13 @@ from scripts.build_large_seed_catalogue import (
     ACCOUNT_FIELDS,
     TAG_FIELDS,
     build_tags,
-    research_leads,
-    youtube_scan_target,
     dedupe,
     map_instagram,
     map_youtube,
     page_offsets,
+    research_leads,
     write_csv,
+    youtube_scan_target,
 )
 
 def test_evenly_spaced_page_sampling():
