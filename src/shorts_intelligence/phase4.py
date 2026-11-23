@@ -39,10 +39,10 @@ def _identity(row: dict[str, str]) -> str | None:
     if not value:
         return None
     if "youtube.com" in value.casefold():
-        match = re.search(r"youtube\\.com/(?:@|user/|channel/|c/)?([^/?#]+)", value, re.I)
+        match = re.search(r"youtube\.com/(?:@|user/|channel/|c/)?([^/?#]+)", value, re.I)
         value = match.group(1) if match else value
     elif "instagram.com" in value.casefold():
-        match = re.search(r"instagram\\.com/([^/?#]+)", value, re.I)
+        match = re.search(r"instagram\.com/([^/?#]+)", value, re.I)
         value = match.group(1) if match else value
     value = value.strip().lstrip("@").rstrip("/").casefold()
     return value if re.fullmatch(r"[a-z0-9._-]{1,64}", value) else None
@@ -58,7 +58,7 @@ def _tag(row: dict[str, str]) -> str | None:
 
 def _write_lines(path: Path, values: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("".join(v + "\\n" for v in values), encoding="utf-8")
+    path.write_text("".join(v + "\n" for v in values), encoding="utf-8")
 
 
 def _write_jsonl(path: Path, values: list[dict[str, Any]]) -> None:
@@ -66,7 +66,7 @@ def _write_jsonl(path: Path, values: list[dict[str, Any]]) -> None:
     temp = path.with_suffix(path.suffix + ".tmp")
     with temp.open("w", encoding="utf-8") as handle:
         for value in values:
-            handle.write(json.dumps(value, ensure_ascii=False, sort_keys=True) + "\\n")
+            handle.write(json.dumps(value, ensure_ascii=False, sort_keys=True) + "\n")
     temp.replace(path)
 
 
