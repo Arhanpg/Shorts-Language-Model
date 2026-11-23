@@ -478,6 +478,18 @@ class DiscoveryStore:
         platforms = ["youtube", "instagram"] if platform == "all" else [platform]
         by_platform: dict[str, list[tuple[DiscoveredCandidate, str | None, str, str | None]]] = {}
 
+        # A zero threshold is the explicit broad-coverage mode. Reclassify
+        # previously observed confirmed Shorts/Reels with low or unknown metrics
+        # so an older 1M-only run does not leave them stranded outside the queue.
+        if int(min_metric) == 0:
+            self.connection.execute(
+                """UPDATE candidates SET status='eligible', updated_at=?
+                WHERE short_format_status='confirmed'
+                  AND status IN ('metric_unknown', 'below_threshold')""",
+                (datetime.now(UTC).isoformat(),),
+            )
+            self.connection.commit()
+
         query = """SELECT c.*, p.status AS processing_status
             FROM candidates AS c
             LEFT JOIN media_processing AS p
