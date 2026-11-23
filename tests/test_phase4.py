@@ -33,7 +33,9 @@ def test_catalogue_materializes_all_csvs(tmp_path: Path):
         "--output-dir", str(out), "--batch-size", "10"])
     assert result.exit_code == 0, result.output
     report = json.loads((out / "catalogue_report.json").read_text())
-    assert report["unique_instagram_accounts"] == 4
+    # Two account-candidate rows plus the one Instagram-tagged research lead.
+    # The YouTube research lead is correctly counted under YouTube, not Instagram.
+    assert report["unique_instagram_accounts"] == 3
     assert report["unique_youtube_channel_candidates"] == 2
     assert report["youtube_channel_id_seedable"] == 1
     assert report["unique_normalized_hashtags"] == 2
