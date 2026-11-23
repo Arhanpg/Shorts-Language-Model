@@ -16,9 +16,9 @@ class OCRError(RuntimeError):
 def run_ocr(
     frames: list[tuple[FrameEvidence, np.ndarray]],
     max_frames: int = 12,
-    prefer_gpu: bool = False,
+    prefer_gpu: bool = True,
 ) -> tuple[list[OCRSpan], str]:
-    """OCR selected frames; default is CPU to avoid 4 GB VRAM contention."""
+    """OCR selected frames, preferring CUDA when PaddlePaddle has GPU support."""
     if not frames:
         return [], "not-run-no-frames"
 
@@ -66,23 +66,29 @@ def run_ocr(
 
         engine = PaddleOCREngine(prefer_gpu=prefer_gpu)
         spans: list[OCRSpan] = []
-        for evidence, image in chosen:
-            boxes, _variant = engine.run(image)
-            for box in boxes:
-                text = str(box.text).strip()
-                if not text:
-                    continue
-                spans.append(OCRSpan(
-                    timestamp_seconds=evidence.timestamp_seconds,
-                    text=text,
-                    confidence=min(1.0, max(0.0, float(box.confidence))),
-                    bbox_xyxy=[
-                        int(box.x1), int(box.y1), int(box.x2), int(box.y2)
-                    ],
-                    engine="vidtrace-paddleocr",
-                    frame_index=evidence.frame_index,
-                ))
-        return spans, "vidtrace-paddleocr"
+        try:
+            for evidence, image in chosen:
+                boxes, _variant = engine.run(image)
+                for box in boxes:
+                    text = str(box.text).strip()
+                    if not text:
+                        continue
+                    spans.append(OCRSpan(
+                        timestamp_seconds=evidence.timestamp_seconds,
+                        text=text,
+                        confidence=min(1.0, max(0.0, float(box.confidence))),
+                        bbox_xyxy=[
+                            int(box.x1), int(box.y1), int(box.x2), int(box.y2)
+                        ],
+                        engine="vidtrace-paddleocr",
+                        frame_index=evidence.frame_index,
+                    ))
+            actual_device = str(getattr(engine, "device", "unknown")).replace(":", "-")
+            return spans, f"vidtrace-paddleocr-{actual_device}"
+        finally:
+            close = getattr(engine, "close", None)
+            if callable(close):
+                close()
     except ImportError:
         pass
     except Exception as exc:
@@ -113,6 +119,7 @@ def run_ocr(
         version = "paddleocr-2"
 
     spans = []
+    actual_device = "gpu-0" if prefer_gpu else "cpu"
     for evidence, image in chosen:
         if version == "paddleocr-3":
             results = engine.predict(image)
@@ -156,4 +163,4 @@ def run_ocr(
                         engine=version,
                         frame_index=evidence.frame_index,
                     ))
-    return spans, version
+    return spans, f"{version}-{actual_device}"
