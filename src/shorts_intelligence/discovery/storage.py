@@ -512,7 +512,14 @@ class DiscoveryStore:
               AND EXISTS (
                     SELECT 1 FROM json_each(?) AS grant_row
                     WHERE json_extract(grant_row.value, '$.platform') = c.platform
-                      AND json_extract(grant_row.value, '$.source_id') = c.source_id
+                      AND (
+                        json_extract(grant_row.value, '$.source_id') = c.source_id
+                        OR json_extract(grant_row.value, '$.creator_id') IN (
+                            json_extract(c.metadata_json, '$.creator_id'),
+                            json_extract(c.metadata_json, '$.channel_id'),
+                            c.creator
+                        )
+                      )
                 )
             ORDER BY
               CASE WHEN c.platform='youtube'
