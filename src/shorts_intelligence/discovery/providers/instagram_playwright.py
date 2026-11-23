@@ -335,6 +335,7 @@ def extract_reel_records(
                     hashtags=hashtags,
                     metadata={
                         "provider": "playwright_response_observer",
+                        "creator_id": str(owner or creator_handle or "").casefold(),
                         "discovery_surface": discovery_surface,
                         "hashtag": hashtag,
                         "metric_kind": (
@@ -686,6 +687,7 @@ class InstagramPlaywrightProvider:
                         short_format_status="confirmed",
                         metadata={
                             "provider": "playwright_rendered_reel_link",
+                            "creator_id": str(creator_handle or "").casefold(),
                             "discovery_surface": surface,
                             "hashtag": hashtag,
                             "metric_kind": "unknown",

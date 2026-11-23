@@ -10,6 +10,25 @@ from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.schemas import OCRSpan, StageStatus, TranscriptSegment, VideoMetadata
 
 
+def _grants_json(*candidates: DiscoveredCandidate) -> str:
+    return json.dumps([{
+        "platform": candidate.platform,
+        "source_id": candidate.source_id,
+        "media_retrieval": True,
+        "media_analysis": True,
+        "temporary_processing": True,
+        "derived_artifact_retention": True,
+        "model_training": True,
+        "evidence_ref": "test-fixture-permission",
+        "expires_at": "2099-12-31T23:59:59+00:00",
+        "revoked": False,
+    } for candidate in candidates])
+
+
+def _grant_json(candidate: DiscoveredCandidate) -> str:
+    return _grants_json(candidate)
+
+
 def _candidate() -> DiscoveredCandidate:
     return DiscoveredCandidate(
         platform="youtube",
@@ -131,6 +150,7 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grant_json(candidate),
         limit=10,
     )
     assert first["processed_this_run"] == 1
@@ -154,13 +174,14 @@ def test_processing_batch_resumes_without_redownloading_or_reanalyzing(
     assert len(records) == 1
     assert records[0]["platform"] == "youtube"
     assert records[0]["telemetry"]["transcript_segments"] == 1
-    assert "rights" not in records[0]
+    assert records[0]["rights"]["evidence_ref"] == "test-fixture-permission"
 
     second = processing.run_processing_batch(
         database=database,
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grant_json(candidate),
         limit=10,
     )
     assert second["candidates_selected"] == 0
@@ -212,6 +233,7 @@ def test_analysis_failure_keeps_downloaded_media_and_retry_skips_download(
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grant_json(candidate),
         limit=10,
     )
     assert first["failed"] == 1
@@ -230,6 +252,7 @@ def test_analysis_failure_keeps_downloaded_media_and_retry_skips_download(
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grant_json(candidate),
         limit=10,
     )
     assert second["processed_this_run"] == 1
@@ -291,6 +314,7 @@ def test_processing_batch_includes_both_platforms_and_prefers_cuda(
         download_dir=download_dir,
         artifact_dir=artifact_dir,
         dataset_manifest=dataset_manifest,
+        authorized_grants_json=_grants_json(youtube, instagram),
         limit=2,
     )
 
@@ -387,11 +411,13 @@ def test_overlong_media_is_terminally_rejected_not_retried(tmp_path: Path, monke
     first = processing.run_processing_batch(
         database=database, download_dir=download_dir, artifact_dir=artifact_dir,
         dataset_manifest=manifest, limit=10, max_processing_attempts=3,
+        authorized_grants_json=_grant_json(candidate),
         delete_media_after_processing=True,
     )
     second = processing.run_processing_batch(
         database=database, download_dir=download_dir, artifact_dir=artifact_dir,
         dataset_manifest=manifest, limit=10, max_processing_attempts=3,
+        authorized_grants_json=_grant_json(candidate),
         delete_media_after_processing=True,
     )
 
@@ -410,3 +436,64 @@ def test_overlong_media_is_terminally_rejected_not_retried(tmp_path: Path, monke
         ).fetchone()
         assert row["status"] == "media_rejected"
         assert processing_row["status"] == "rejected"
+
+
+
+def test_zero_threshold_requeues_unknown_metric_but_requires_exact_item_grant(tmp_path: Path):
+    candidate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="UnknownMetric01",
+        canonical_url="https://www.instagram.com/reel/UnknownMetric01/",
+        short_format_status="confirmed",
+    )
+    database = tmp_path / "broad-mode.sqlite3"
+    with DiscoveryStore(database) as store:
+        store.start_run("broad-mode", 10, 0)
+        store.upsert_candidate(candidate, min_views=1_000_000, run_id="broad-mode")
+        # It starts as metric_unknown under the old threshold.
+        assert store.get_candidate("instagram", candidate.source_id).status == "metric_unknown"
+        # Zero-threshold mode requeues it, but never treats missing metrics as zero evidence.
+        assert store.processing_candidates(
+            min_metric=0, limit=5, platform="instagram"
+        ) == []
+        grant = _grant_json(candidate)
+        queued = store.processing_candidates(
+            min_metric=0, limit=5, platform="instagram",
+            authorized_grants_json=grant,
+        )
+        assert len(queued) == 1
+        assert queued[0][0].qualifying_metric() is None
+
+
+
+def test_creator_scope_grant_matches_observed_instagram_creator(tmp_path: Path):
+    candidate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="CreatorScope01",
+        canonical_url="https://www.instagram.com/reel/CreatorScope01/",
+        creator="creator.one",
+        short_format_status="confirmed",
+        metadata={"creator_id": "creator.one"},
+    )
+    database = tmp_path / "creator-grant.sqlite3"
+    with DiscoveryStore(database) as store:
+        store.start_run("creator-grant", 10, 0)
+        store.upsert_candidate(candidate, min_views=0, run_id="creator-grant")
+        grant = json.dumps([{
+            "platform": "instagram",
+            "creator_id": "creator.one",
+            "media_retrieval": True,
+            "media_analysis": True,
+            "temporary_processing": True,
+            "derived_artifact_retention": True,
+            "model_training": True,
+            "evidence_ref": "creator-permission-record",
+            "expires_at": "2099-12-31T23:59:59+00:00",
+            "revoked": False,
+        }])
+        queued = store.processing_candidates(
+            min_metric=0, limit=5, platform="instagram",
+            authorized_grants_json=grant,
+        )
+        assert len(queued) == 1
+        assert queued[0][0].source_id == "CreatorScope01"

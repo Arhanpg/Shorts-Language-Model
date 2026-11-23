@@ -222,6 +222,7 @@ def _export_processing_manifest(
     output_path: Path,
     *,
     min_metric: int,
+    rights_by_key: dict[tuple[str, str], dict[str, Any]],
 ) -> int:
     """Write a compact JSONL manifest for successfully processed videos."""
     exported_at = datetime.now(UTC).isoformat()
@@ -243,6 +244,16 @@ def _export_processing_manifest(
                 "exported_at": exported_at,
                 "platform": row["platform"],
                 "source_id": row["source_id"],
+                "rights": rights_by_key.get((row["platform"], row["source_id"]))
+                    or rights_by_key.get((
+                        row["platform"],
+                        str(
+                            json.loads(row["metadata_json"] or "{}").get("creator_id")
+                            or json.loads(row["metadata_json"] or "{}").get("channel_id")
+                            or row["creator"]
+                            or ""
+                        ),
+                    )),
                 "canonical_url": row["canonical_url"],
                 "title": row["title"],
                 "creator": row["creator"],
@@ -302,6 +313,7 @@ def run_processing_batch(
     keep_frame_artifacts: bool = False,
     delete_media_after_processing: bool = False,
     max_processing_attempts: int = 2,
+    authorized_grants_json: str = "[]",
 ) -> dict[str, int | str]:
     """Download and process a bounded batch of discovered Shorts and Reels."""
     processed = downloaded = failed = rejected = duplicates = 0
@@ -315,6 +327,7 @@ def run_processing_batch(
             limit=limit,
             platform=platform,
             max_attempts=max_processing_attempts,
+            authorized_grants_json=authorized_grants_json,
         )
         for candidate, _, _, _ in queued:
             platform_totals[candidate.platform]["selected"] += 1
@@ -477,7 +490,18 @@ def run_processing_batch(
                         media_path.unlink(missing_ok=True)
                         media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
 
-        manifest_count = _export_processing_manifest(store, dataset_manifest, min_metric=min_metric)
+        grants = json.loads(authorized_grants_json)
+        rights_by_key = {
+            (
+                str(item["platform"]),
+                str(item.get("source_id") or item.get("creator_id")),
+            ): item
+            for item in grants
+        }
+        manifest_count = _export_processing_manifest(
+            store, dataset_manifest, min_metric=min_metric,
+            rights_by_key=rights_by_key,
+        )
         statuses = store.processing_summary()
 
     return {

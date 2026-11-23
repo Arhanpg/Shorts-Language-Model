@@ -8,6 +8,7 @@ import json
 import random
 import time
 from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,110 @@ def _read_values(path: Path, field: str) -> list[str]:
 def _chunks(values: list[str], size: int):
     for offset in range(0, len(values), size):
         yield values[offset : offset + size]
+
+
+def _read_balanced_hashtags(path: Path, *, seed: int) -> list[str]:
+    """Interleave hashtag candidates by catalogue language/domain buckets."""
+    buckets: dict[tuple[str, str], list[str]] = {}
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            tag = str(row.get("hashtag") or "").strip().lstrip("#").casefold()
+            if not tag:
+                continue
+            key = (
+                str(row.get("language") or "unspecified").strip().casefold(),
+                str(row.get("domain") or "unspecified").strip().casefold(),
+            )
+            bucket = buckets.setdefault(key, [])
+            if tag not in bucket:
+                bucket.append(tag)
+    rng = random.Random(seed)
+    for values in buckets.values():
+        rng.shuffle(values)
+    ordered: list[str] = []
+    keys = sorted(buckets)
+    while keys:
+        next_keys = []
+        for key in keys:
+            if buckets[key]:
+                ordered.append(buckets[key].pop())
+            if buckets[key]:
+                next_keys.append(key)
+        keys = next_keys
+    return ordered
+
+
+def _load_rights_grants(path: Path) -> list[dict[str, Any]]:
+    """Load exact-item grants; fail closed before the master campaign starts."""
+    grants: list[dict[str, Any]] = []
+    required_true = (
+        "media_retrieval", "media_analysis", "temporary_processing",
+        "derived_artifact_retention", "model_training",
+    )
+    with path.expanduser().resolve(strict=True).open("r", encoding="utf-8-sig") as handle:
+        for line_number, line in enumerate(handle, 1):
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"Rights manifest line {line_number} is invalid JSON.") from exc
+            if not isinstance(item, dict):
+                raise ValueError(f"Rights manifest line {line_number} must be a JSON object.")
+            platform = str(item.get("platform") or "").strip().casefold()
+            source_id = str(item.get("source_id") or "").strip()
+            creator_id = str(item.get("creator_id") or "").strip().lstrip("@")
+            if platform == "instagram":
+                creator_id = creator_id.casefold()
+            evidence_ref = str(item.get("evidence_ref") or "").strip()
+            expires_at = item.get("expires_at")
+            if (
+                platform not in {"youtube", "instagram"}
+                or bool(source_id) == bool(creator_id)
+                or not evidence_ref
+            ):
+                raise ValueError(
+                    f"Rights manifest line {line_number} requires platform, exactly one of source_id/creator_id, and evidence_ref."
+                )
+            if item.get("revoked") is not False or not all(item.get(scope) is True for scope in required_true):
+                raise ValueError(
+                    f"Rights manifest line {line_number} must explicitly grant retrieval, analysis, "
+                    "temporary processing, derived-artifact retention and model training."
+                )
+            if not expires_at:
+                raise ValueError(f"Rights manifest line {line_number} requires expires_at.")
+            try:
+                expiry = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise ValueError(f"Rights manifest line {line_number} has invalid expires_at.") from exc
+            if expiry.tzinfo is None or expiry <= datetime.now(UTC):
+                raise ValueError(f"Rights manifest line {line_number} has expired or timezone-naive expiry.")
+            grant_identity = source_id or creator_id
+            if any(
+                existing["platform"] == platform
+                and (existing.get("source_id") or existing.get("creator_id")) == grant_identity
+                for existing in grants
+            ):
+                raise ValueError(f"Duplicate rights grant for {platform}:{grant_identity}.")
+            grant = {
+                "platform": platform,
+                **({"source_id": source_id} if source_id else {"creator_id": creator_id}),
+                "media_retrieval": True,
+                "media_analysis": True,
+                "temporary_processing": True,
+                "derived_artifact_retention": True,
+                "model_training": True,
+                "evidence_ref": evidence_ref,
+                "expires_at": expiry.isoformat(),
+                "revoked": False,
+            }
+            grants.append(grant)
+    if not grants:
+        raise ValueError(
+            "Rights manifest contains no authorized item/creator grants. Metadata discovery can run separately, "
+            "but media downloading and feature extraction require documented item-specific permission."
+        )
+    return grants
 
 
 def _write_lines(path: Path, values: list[str]) -> None:
@@ -116,6 +221,7 @@ def _drain_processing(
     instagram_session_user: str | None,
     instagram_session_file: Path | None,
     max_attempts: int,
+    authorized_grants_json: str,
 ) -> dict[str, int | str]:
     totals: Counter[str] = Counter()
     last: dict[str, int | str] = {}
@@ -141,6 +247,7 @@ def _drain_processing(
             keep_frame_artifacts=False,
             delete_media_after_processing=True,
             max_processing_attempts=max_attempts,
+            authorized_grants_json=authorized_grants_json,
         )
         for key in (
             "candidates_selected", "media_downloaded_this_run", "processed_this_run",
@@ -173,14 +280,15 @@ def run_all(
     instagram_profile_dir: Path = typer.Option(Path(".shortslm/browser/instagram"), "--instagram-profile-dir"),
     instagram_session_user: str | None = typer.Option(None, "--instagram-session-user"),
     instagram_session_file: Path | None = typer.Option(None, "--instagram-session-file", exists=True, readable=True),
+    rights_manifest: Path = typer.Option(Path("data/private/rights-manifest.jsonl"), "--rights-manifest", exists=True, file_okay=True, dir_okay=False, readable=True),
     seed: int = typer.Option(20261123, "--seed"),
-    min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
+    min_metric: int = typer.Option(0, "--min-metric", min=0),
     target_new_per_batch: int = typer.Option(2000, "--target-new-per-batch", min=1, max=2000),
     discovery_runtime_seconds: int = typer.Option(900, "--discovery-runtime-seconds", min=30, max=900),
     creator_batch_size: int = typer.Option(100, "--creator-batch-size", min=1, max=500),
     instagram_hashtag_batch_size: int = typer.Option(50, "--instagram-hashtag-batch-size", min=1, max=100),
     youtube_hashtag_batch_size: int = typer.Option(20, "--youtube-hashtag-batch-size", min=1, max=20),
-    processing_batch_size: int = typer.Option(25, "--processing-batch-size", min=1, max=500),
+    processing_batch_size: int = typer.Option(1, "--processing-batch-size", min=1, max=500),
     max_processing_attempts: int = typer.Option(2, "--max-processing-attempts", min=1, max=5),
     asr_model: str = typer.Option("small", "--asr-model"),
     device: str = typer.Option("cuda", "--device"),
@@ -194,6 +302,8 @@ def run_all(
     """Discover the full catalogue and sequentially extract features, deleting temporary media."""
     if not all_catalogue:
         raise typer.BadParameter("Pass --all-catalogue to explicitly confirm the potentially multi-day full-catalogue run.")
+    grants = _load_rights_grants(rights_manifest)
+    authorized_grants_json = json.dumps(grants, ensure_ascii=False)
     if not instagram_profile_dir.exists():
         raise typer.BadParameter(
             f"Instagram browser profile not found: {instagram_profile_dir}. "
@@ -215,18 +325,18 @@ def run_all(
     youtube_creators_all = _read_values(catalogue_output / "youtube_creator_candidates.csv", "identity")
     youtube_creators = [value for value in youtube_creators_all if value.startswith("UC") and len(value) == 24]
     youtube_unresolved = len(youtube_creators_all) - len(youtube_creators)
-    hashtags = _read_values(catalogue_output / "hashtag_candidates.csv", "hashtag")
+    hashtags = _read_balanced_hashtags(catalogue_output / "hashtag_candidates.csv", seed=seed)
 
     rng = random.Random(seed)
     rng.shuffle(instagram_creators)
     rng.shuffle(youtube_creators)
-    rng.shuffle(hashtags)
     console.print(
         f"[bold]Full Phase 4 campaign[/bold] | Instagram creators={len(instagram_creators)}, "
         f"YouTube channel IDs={len(youtube_creators)} (unresolved handles skipped={youtube_unresolved}), "
         f"unique hashtags={len(hashtags)} (each platform)"
     )
-    console.print("[yellow]Instagram and YouTube metrics are kept platform-specific. Media files are temporary and deleted after each processing attempt.[/yellow]")
+    console.print("[yellow]Instagram plays and YouTube views remain separate. Threshold 0 includes confirmed short-form items with unknown/low metrics; unknown counts remain null, not zero. Only exact source IDs in the rights manifest can enter media processing. Media is deleted after each processed item.[/yellow]")
+    console.print(f"[cyan]Authorized items/creator scopes in rights manifest:[/cyan] {len(grants)}")
     if not instagram_creators:
         raise typer.BadParameter("The normalized catalogue contains zero Instagram creators. Check source CSV headers and catalogue inputs.")
     if not youtube_creators:
@@ -296,6 +406,7 @@ def run_all(
             instagram_session_user=instagram_session_user,
             instagram_session_file=instagram_session_file,
             max_attempts=max_processing_attempts,
+            authorized_grants_json=authorized_grants_json,
         )
         for key, value in processing.items():
             if isinstance(value, int):
@@ -344,10 +455,16 @@ def run_all(
         max_file_size_mb=max_file_size_mb, max_keyframes=max_keyframes,
         max_ocr_frames=max_ocr_frames, instagram_session_user=instagram_session_user,
         instagram_session_file=instagram_session_file, max_attempts=max_processing_attempts,
+        authorized_grants_json=authorized_grants_json,
     )
     report = {
         "schema_version": "phase4.master-run.v1",
         "seed": seed,
+        "rights": {
+            "manifest": str(rights_manifest.expanduser().resolve()),
+            "authorized_grants": len(grants),
+            "creator_scope_grants_supported": True,
+        },
         "catalogue": {
             "instagram_creator_candidates": len(instagram_creators),
             "youtube_channel_id_candidates": len(youtube_creators),
@@ -366,7 +483,9 @@ def run_all(
             "Search providers return best-effort results, not guaranteed global popularity rankings.",
             "Only stable YouTube UC channel IDs are used; unresolved handle-only records are counted and skipped.",
             "Media is deleted after processing; derived feature artifacts and manifests remain local.",
-            "A public URL does not itself establish permission to download, retain derived artifacts, or train a model. Run only for content you are authorized to process.",
+            "A public URL does not itself establish permission to download, retain derived artifacts, or train a model. Only exact item IDs in the private rights manifest are processed.",
+            "The master campaign discovers the full metadata catalogue, but feature extraction is limited to item-specific rights grants present in the manifest.",
+            "The catalogue is candidate inventory; inactive accounts, private profiles, provider limits and unresolved YouTube channel handles can reduce actual discovery coverage.",
             "Access restrictions stop further discovery for that platform. The workflow does not bypass login challenges, CAPTCHAs, rate limits or other restrictions.",
         ],
     }
