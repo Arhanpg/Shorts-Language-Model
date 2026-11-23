@@ -38,9 +38,14 @@ def test_catalogue_materializes_all_csvs(tmp_path: Path):
     assert report["unique_instagram_accounts"] == 3
     assert report["unique_youtube_channel_candidates"] == 2
     assert report["youtube_channel_id_seedable"] == 1
+    assert report["youtube_creator_seedable"] == 2
     assert report["unique_normalized_hashtags"] == 2
     assert (out / "batches/instagram_creators_0001.txt").exists()
     assert (out / "batches/youtube_channel_ids_0001.txt").exists()
+    assert (out / "youtube_creator_seeds.txt").read_text().splitlines() == [
+        "UC" + "a" * 22, "@flyingbeast320"
+    ]
+    assert (out / "batches/youtube_creators_0001.txt").exists()
 
 
 def test_rights_scopes_are_separate():
