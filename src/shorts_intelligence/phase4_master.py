@@ -89,6 +89,8 @@ def _load_rights_grants(path: Path) -> list[dict[str, Any]]:
             platform = str(item.get("platform") or "").strip().casefold()
             source_id = str(item.get("source_id") or "").strip()
             creator_id = str(item.get("creator_id") or "").strip().lstrip("@")
+            if platform == "instagram":
+                creator_id = creator_id.casefold()
             evidence_ref = str(item.get("evidence_ref") or "").strip()
             expires_at = item.get("expires_at")
             if (
@@ -134,7 +136,7 @@ def _load_rights_grants(path: Path) -> list[dict[str, Any]]:
             grants.append(grant)
     if not grants:
         raise ValueError(
-            "Rights manifest contains no authorized item grants. Metadata discovery can run separately, "
+            "Rights manifest contains no authorized item/creator grants. Metadata discovery can run separately, "
             "but media downloading and feature extraction require documented item-specific permission."
         )
     return grants
