@@ -152,9 +152,44 @@ def _quality_flags(report: Any, candidate: DiscoveredCandidate) -> list[str]:
     return sorted(set(flags))
 
 
+def _artifact_field(value: Any, field: str, default: Any = None) -> Any:
+    """Read a field from either a model object or a decoded JSON object."""
+    return value.get(field, default) if isinstance(value, dict) else getattr(value, field, default)
+
+
+def _read_artifact_json(path_value: str | Path | None) -> dict[str, Any]:
+    """Read a local JSON artifact; missing or malformed files do not break export."""
+    if not path_value:
+        return {}
+    try:
+        payload = json.loads(Path(path_value).expanduser().read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _artifact_quality_flags(
+    existing_flags: list[str],
+    *,
+    transcript_path: str | Path | None,
+    ocr_path: str | Path | None,
+) -> list[str]:
+    """Re-evaluate saved ASR/OCR artifacts when rebuilding the cumulative manifest."""
+    flags = set(existing_flags)
+    transcript = _read_artifact_json(transcript_path)
+    segments = transcript.get("segments")
+    if isinstance(segments, list) and segments and _transcript_looks_degenerate(segments):
+        flags.add("asr_suspected_gibberish")
+    ocr = _read_artifact_json(ocr_path)
+    spans = ocr.get("spans")
+    if isinstance(spans, list) and spans and _ocr_is_low_signal(spans):
+        flags.add("ocr_low_signal")
+    return sorted(flags)
+
+
 def _transcript_looks_degenerate(segments: list[Any]) -> bool:
     """Flag obvious repeated-token or replacement-character ASR output."""
-    text = " ".join(str(getattr(segment, "text", "") or "") for segment in segments).strip()
+    text = " ".join(str(_artifact_field(segment, "text", "") or "") for segment in segments).strip()
     if not text:
         return True
     tokens = [token.casefold() for token in re.findall(r"\w+", text, flags=re.UNICODE)]
@@ -173,9 +208,9 @@ def _transcript_looks_degenerate(segments: list[Any]) -> bool:
 def _ocr_is_low_signal(spans: list[Any]) -> bool:
     """Flag OCR dominated by low-confidence output without penalizing short scripts."""
     confidences = [
-        float(getattr(span, "confidence", 0.0) or 0.0)
+        float(_artifact_field(span, "confidence", 0.0) or 0.0)
         for span in spans
-        if getattr(span, "confidence", None) is not None
+        if _artifact_field(span, "confidence") is not None
     ]
     return bool(confidences) and (
         sum(value < 0.35 for value in confidences) / len(confidences) >= 0.5
@@ -197,6 +232,11 @@ def _export_processing_manifest(
     with temporary.open("w", encoding="utf-8", newline="\n") as handle:
         for row in store.iter_processing_records():
             metric = row["metric_value"]
+            quality_flags = _artifact_quality_flags(
+                json.loads(row["quality_flags_json"] or "[]"),
+                transcript_path=row["transcript_path"],
+                ocr_path=row["ocr_path"],
+            )
             record = {
                 "schema_version": "1.0.0",
                 "record_type": "short_video_multimodal_observation",
@@ -231,7 +271,7 @@ def _export_processing_manifest(
                     "asr_engine": row["asr_engine"],
                     "ocr_engine": row["ocr_engine"],
                 },
-                "quality_flags": json.loads(row["quality_flags_json"] or "[]"),
+                "quality_flags": quality_flags,
                 "processing_completed_at": row["completed_at"],
             }
             handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
