@@ -22,6 +22,8 @@ from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.discovery.cli import discovery_app
 from shorts_intelligence.media.probe import MediaError
 from shorts_intelligence.phase4 import phase4_app
+# Registers the resumable full-catalogue command on phase4_app.
+from shorts_intelligence import phase4_master  # noqa: F401
 from shorts_intelligence.pilot.cli import pilot_app
 
 app = typer.Typer(
