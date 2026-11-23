@@ -1,9 +1,12 @@
 """Tests for large creator/account and hashtag seed catalogue generation."""
 from __future__ import annotations
+
 import csv
 import json
+import urllib.error
 from pathlib import Path
 
+from scripts import build_large_seed_catalogue as module
 from scripts.build_large_seed_catalogue import (
     ACCOUNT_FIELDS,
     TAG_FIELDS,
@@ -55,7 +58,6 @@ def test_csv_writer_preserves_unicode_and_schema(tmp_path: Path):
 
 
 def test_fetch_youtube_reads_split_size_before_paging(monkeypatch):
-    from scripts import build_large_seed_catalogue as module
     calls = []
     def fake_get_json(endpoint, params):
         calls.append(endpoint)
@@ -85,7 +87,6 @@ def test_build_tags_uses_bundled_catalogue_without_v01_tree(tmp_path):
          "verification_state": "GENERATED_UNVERIFIED_COMPOSITIONAL_CANDIDATE"}
         for i in range(3)
     ], TAG_FIELDS)
-    from scripts.build_large_seed_catalogue import build_tags
     result = build_tags(tmp_path, 3)
     assert len(result) == 3
     assert result[0]["verification_state"] == "GENERATED_UNVERIFIED_COMPOSITIONAL_CANDIDATE"
@@ -109,9 +110,6 @@ def test_youtube_handle_can_be_extracted_from_channel_url():
 
 
 def test_http_bytes_honours_retry_after(monkeypatch):
-    import urllib.error
-    from scripts import build_large_seed_catalogue as module
-
     calls = {"count": 0}
     waits = []
     class DummyResponse:
