@@ -461,13 +461,19 @@ class DiscoveryStore:
         *,
         min_metric: int = 1_000_000,
         limit: int = 25,
+        platform: str = "all",
     ) -> list[tuple[DiscoveredCandidate, str | None, str, str | None]]:
-        """Return confirmed, above-threshold videos that still need processing."""
+        """Return a balanced batch of confirmed YouTube Shorts and Instagram Reels."""
+        if platform not in {"all", "youtube", "instagram"}:
+            raise ValueError("platform must be all, youtube or instagram")
         maximum = max(0, int(limit))
         if maximum == 0:
             return []
-        cursor = self.connection.execute(
-            """SELECT c.*, p.status AS processing_status
+
+        platforms = ["youtube", "instagram"] if platform == "all" else [platform]
+        by_platform: dict[str, list[tuple[DiscoveredCandidate, str | None, str, str | None]]] = {}
+
+        query = """SELECT c.*, p.status AS processing_status
             FROM candidates AS c
             LEFT JOIN media_processing AS p
               ON p.platform=c.platform AND p.source_id=c.source_id
@@ -484,6 +490,7 @@ class DiscoveryStore:
                         0
                     )
                   END >= ?
+              AND c.platform=?
             ORDER BY
               CASE WHEN c.platform='youtube'
                    THEN COALESCE(c.view_count, 0)
@@ -495,18 +502,38 @@ class DiscoveryStore:
                    )
               END DESC,
               c.discovered_at ASC
-            LIMIT ?""",
-            (int(min_metric), maximum),
-        )
-        return [
-            (
-                self._candidate_from_row(row),
-                row["download_path"],
-                str(row["download_status"]),
-                row["media_sha256"],
+            LIMIT ?"""
+
+        for selected_platform in platforms:
+            rows = self.connection.execute(
+                query, (int(min_metric), selected_platform, maximum)
             )
-            for row in cursor
-        ]
+            by_platform[selected_platform] = [
+                (
+                    self._candidate_from_row(row),
+                    row["download_path"],
+                    str(row["download_status"]),
+                    row["media_sha256"],
+                )
+                for row in rows
+            ]
+
+        # Interleave platform queues so one large backlog cannot fill every batch.
+        selected: list[tuple[DiscoveredCandidate, str | None, str, str | None]] = []
+        depth = 0
+        while len(selected) < maximum:
+            added = False
+            for selected_platform in platforms:
+                candidates = by_platform[selected_platform]
+                if depth < len(candidates):
+                    selected.append(candidates[depth])
+                    added = True
+                    if len(selected) >= maximum:
+                        break
+            if not added:
+                break
+            depth += 1
+        return selected
 
     def mark_processing_started(self, candidate: DiscoveredCandidate) -> None:
         now = datetime.now(UTC).isoformat()

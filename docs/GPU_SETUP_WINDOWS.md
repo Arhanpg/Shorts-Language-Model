@@ -1,0 +1,93 @@
+# Windows GPU setup — RTX 3050
+
+This project uses the RTX 3050 for Faster-Whisper ASR and PaddleOCR when the NVIDIA runtimes are installed. Discovery, database operations, FFmpeg and frame sampling continue to use the CPU.
+
+## 1. Check the NVIDIA driver
+
+Open PowerShell:
+
+```powershell
+nvidia-smi
+```
+
+For PaddlePaddle 3.2.0 with CUDA 12.6, the official installation guide lists NVIDIA driver 550.54.14 or newer for Windows. Update the NVIDIA driver first if yours is older.
+
+## 2. Install the ShortsLM packages
+
+Activate the repository's Python 3.11 virtual environment, then install the project dependencies:
+
+```powershell
+python -m pip install --upgrade pip
+pip install -e ".[dev,discovery,legacy-discovery,audio,ocr,vidtrace,instagram-browser,instagram-fallback]"
+```
+
+## 3. Replace CPU PaddlePaddle with its CUDA build
+
+Your log showed `PaddleOCR | device=cpu`, which confirms OCR ran on the CPU in that run. Replace any CPU or previous PaddlePaddle package with the official CUDA 12.6 GPU wheel:
+
+```powershell
+python -m pip uninstall -y paddlepaddle paddlepaddle-gpu
+python -m pip install paddlepaddle-gpu==3.2.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu126/
+```
+
+The official PaddleOCR installation guide lists this Windows CUDA 12.6 wheel and its driver requirement. The special PaddlePaddle wheel mentioned for NVIDIA 50-series GPUs is not the package intended for your RTX 3050 (30-series).
+
+## 4. Install CUDA 12 and cuDNN 9 runtime libraries for Whisper
+
+The current Faster-Whisper/CTranslate2 GPU path requires cuBLAS for CUDA 12 and cuDNN 9 for CUDA 12. On Windows, install the matching NVIDIA runtime libraries and ensure their DLL directory is on `PATH`. Close and reopen PowerShell after changing the PATH.
+
+Check:
+
+```powershell
+where.exe cublas64_12.dll
+where.exe cudnn64_9.dll
+```
+
+An up-to-date NVIDIA driver alone does not guarantee that the CUDA/cuDNN runtime DLLs required by Faster-Whisper are present.
+
+## 5. Verify both GPU backends
+
+Run:
+
+```powershell
+python -c "import paddle; print('Paddle:', paddle.__version__); print('Paddle CUDA:', paddle.is_compiled_with_cuda()); print('Paddle device:', paddle.device.get_device())"
+python -c "import ctranslate2; print('CTranslate2 CUDA devices:', ctranslate2.get_cuda_device_count()); print('CUDA compute types:', ctranslate2.get_supported_compute_types('cuda'))"
+```
+
+Expected:
+- Paddle CUDA reports `True` and Paddle device is `gpu:0`.
+- CTranslate2 reports at least one CUDA device and supported compute types.
+
+If Paddle says CUDA is unavailable or CTranslate2 reports zero CUDA devices, do not assume the next processing run will use the GPU.
+
+## 6. Run a small mixed-platform batch
+
+First discover both platforms into the same SQLite inventory:
+
+```powershell
+shorts-lm discover graph-run --platform all --target-new 100 --min-metric 1000000
+```
+
+Then run:
+
+```powershell
+shorts-lm discover process --platform all --limit 10 --min-metric 1000000 --asr-model small --device cuda
+```
+
+The command prefers CUDA for both Whisper and PaddleOCR. It alternates YouTube and Instagram candidates when both are eligible. The summary shows per-platform selected/downloaded/processed counts.
+
+The actual ASR and OCR device is recorded in the engine name inside each video's analysis JSON and the JSONL dataset index. A CPU device in the recorded engine name means the library fell back or GPU support was unavailable.
+
+For an explicit CPU run, pass `--device cpu`. The CLI also accepts `--asr-device` as an alias.
+
+## Notes for the 4 GB VRAM limit
+
+- The default Whisper model is `small` with `int8_float16`, rather than full-FP16 large models.
+- ASR and OCR execute sequentially. VidTrace releases its model resources between stages.
+- Start with `--limit 2` or `--limit 5` before processing ten videos.
+- If CUDA reports an out-of-memory error, retry with `--device cpu` or reduce `--max-ocr-frames`. Do not increase the frame count until the GPU run is stable.
+
+## Official installation references
+
+- [PaddlePaddle installation guide](https://www.paddleocr.ai/latest/en/version3.x/paddlepaddle_installation.html)
+- [Faster-Whisper GPU requirements](https://github.com/SYSTRAN/faster-whisper#gpu)

@@ -235,3 +235,70 @@ def test_analysis_failure_keeps_downloaded_media_and_retry_skips_download(
     assert second["processed_this_run"] == 1
     assert second["failed"] == 0
     assert calls == {"download": 1, "analyze": 2}
+
+
+def test_processing_batch_includes_both_platforms_and_prefers_cuda(
+    tmp_path: Path,
+    monkeypatch,
+):
+    from shorts_intelligence.discovery import processing
+
+    youtube = _candidate()
+    instagram = DiscoveredCandidate(
+        platform="instagram",
+        source_id="MixedReel012",
+        canonical_url="https://www.instagram.com/reel/MixedReel012/",
+        play_count=1_600_000,
+        metric_source="test_fixture",
+        short_format_status="confirmed",
+    )
+    database = tmp_path / "mixed" / "discovery.sqlite3"
+    download_dir = tmp_path / "mixed" / "acquired"
+    artifact_dir = tmp_path / "mixed" / "processed"
+    dataset_manifest = tmp_path / "mixed" / "processed-videos.jsonl"
+
+    with DiscoveryStore(database) as store:
+        store.start_run("mixed-platform-run", 10, 1_000_000)
+        store.upsert_candidate(
+            youtube, min_views=1_000_000, run_id="mixed-platform-run"
+        )
+        store.upsert_candidate(
+            instagram, min_views=1_000_000, run_id="mixed-platform-run"
+        )
+
+    downloaded_platforms = []
+    requested_devices = []
+
+    def fake_download(candidate, output_dir, **_kwargs):
+        downloaded_platforms.append(candidate.platform)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        media_path = output_dir / f"{candidate.platform}_{candidate.source_id}.mp4"
+        media_path.write_bytes(f"{candidate.platform}:{candidate.source_id}".encode())
+        return media_path
+
+    def fake_analyze(input_path, output_path, *, config):
+        requested_devices.append(config.asr_device)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text("{}", encoding="utf-8")
+        return _fake_report()
+
+    monkeypatch.setattr(processing, "download_candidate", fake_download)
+    monkeypatch.setattr(processing, "probe_video", _fake_probe)
+    monkeypatch.setattr(processing, "analyze_video", fake_analyze)
+
+    summary = processing.run_processing_batch(
+        database=database,
+        download_dir=download_dir,
+        artifact_dir=artifact_dir,
+        dataset_manifest=dataset_manifest,
+        limit=2,
+    )
+
+    assert summary["candidates_selected"] == 2
+    assert summary["youtube_candidates_selected"] == 1
+    assert summary["instagram_candidates_selected"] == 1
+    assert summary["youtube_processed"] == 1
+    assert summary["instagram_processed"] == 1
+    assert set(downloaded_platforms) == {"youtube", "instagram"}
+    assert requested_devices == ["cuda", "cuda"]
+    assert summary["failed"] == 0
