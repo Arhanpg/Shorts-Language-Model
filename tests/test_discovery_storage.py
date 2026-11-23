@@ -352,3 +352,44 @@ def test_all_platform_processing_queue_interleaves_youtube_and_instagram(tmp_pat
         )
         assert all(item[0].platform == "youtube" for item in youtube_only)
         assert all(item[0].platform == "instagram" for item in instagram_only)
+
+
+def test_all_platform_processing_queue_interleaves_youtube_and_instagram(tmp_path: Path):
+    instagram_candidates = [
+        DiscoveredCandidate(
+            platform="instagram",
+            source_id=f"ReelPlay{i:02d}",
+            canonical_url=f"https://www.instagram.com/reel/ReelPlay{i:02d}/",
+            play_count=1_800_000 - i * 100_000,
+            metric_source="test_fixture",
+            short_format_status="confirmed",
+        )
+        for i in range(2)
+    ]
+    youtube_candidates = [
+        _candidate(2_000_000 - i * 100_000, source_id=f"YouTube{i:02d}")
+        for i in range(2)
+    ]
+
+    with DiscoveryStore(tmp_path / "balanced-platform-queue.sqlite3") as store:
+        store.start_run("balanced-platform-queue", 10, 1_000_000)
+        for candidate in youtube_candidates + instagram_candidates:
+            store.upsert_candidate(
+                candidate, min_views=1_000_000, run_id="balanced-platform-queue"
+            )
+
+        selected = store.processing_candidates(
+            min_metric=1_000_000, limit=4, platform="all"
+        )
+        assert [item[0].platform for item in selected] == [
+            "youtube", "instagram", "youtube", "instagram"
+        ]
+
+        youtube_only = store.processing_candidates(
+            min_metric=1_000_000, limit=4, platform="youtube"
+        )
+        instagram_only = store.processing_candidates(
+            min_metric=1_000_000, limit=4, platform="instagram"
+        )
+        assert all(item[0].platform == "youtube" for item in youtube_only)
+        assert all(item[0].platform == "instagram" for item in instagram_only)
