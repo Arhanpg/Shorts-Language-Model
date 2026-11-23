@@ -58,6 +58,24 @@ async def run_creator_graph(
     creator_results: list[dict[str, Any]] = []
     hashtag_results: list[dict[str, Any]] = []
     new_eligible = 0
+    instagram_seed_ids: set[str] = set()
+
+    def pending_instagram_seed_count() -> int:
+        if not instagram_seed_ids:
+            return 0
+        handles = sorted(instagram_seed_ids)
+        placeholders = ",".join("?" for _ in handles)
+        now = datetime.now(UTC).isoformat()
+        row = store.connection.execute(
+            f"""SELECT COUNT(*) AS total FROM creator_frontier
+            WHERE platform='instagram' AND creator_id IN ({placeholders})
+              AND (
+                status='pending'
+                OR (status='active' AND lease_until IS NOT NULL AND lease_until<=?)
+              )""",
+            (*handles, now),
+        ).fetchone()
+        return int(row["total"] if row else 0)
 
     async def within_budget(awaitable: Any, stage_deadline: float = deadline) -> Any:
         remaining = min(deadline, stage_deadline) - loop.time()
@@ -250,18 +268,33 @@ async def run_creator_graph(
                     })
 
             for username in instagram_creators or []:
+                normalized = username.strip().lstrip("@").casefold()
+                if not normalized:
+                    continue
+                instagram_seed_ids.add(normalized)
                 frontier.enqueue_creator(
-                    "instagram", username.casefold().lstrip("@"), handle=username.lstrip("@"),
+                    "instagram", normalized, handle=username.strip().lstrip("@"),
                     discovered_via="seed_file" if not force else "forced_seed",
                     priority_score=10_000.0, depth=0, force=force)
 
         creators_claimed = {"youtube": 0, "instagram": 0}
         expansions_done = 0
         while loop.time() < deadline and (
-            new_eligible < target_new or continue_graph_after_target
+            new_eligible < target_new
+            or continue_graph_after_target
+            or pending_instagram_seed_count() > 0
         ):
             progressed = False
             for current_platform in (["youtube", "instagram"] if platform == "all" else [platform]):
+                # A global target must not starve explicit Instagram seed handles
+                # in combined runs. Once the target is met, only those configured
+                # Instagram seeds may continue unless full graph expansion was requested.
+                if (
+                    new_eligible >= target_new
+                    and not continue_graph_after_target
+                    and current_platform == "youtube"
+                ):
+                    continue
                 provider = providers.get(current_platform)
                 stage_deadline = youtube_deadline if current_platform == "youtube" else instagram_deadline
                 if loop.time() >= stage_deadline:
@@ -366,8 +399,12 @@ async def run_creator_graph(
                             ),
                         })
 
-            if ("youtube" in providers and expansions_done < max_expansions
-                    and loop.time() < youtube_deadline):
+            if (
+                "youtube" in providers
+                and (new_eligible < target_new or continue_graph_after_target)
+                and expansions_done < max_expansions
+                and loop.time() < youtube_deadline
+            ):
                 seeds = frontier.claim_seeds("youtube", limit=1)
                 if seeds:
                     progressed = True
@@ -480,6 +517,9 @@ async def run_creator_graph(
                 "all_candidates_observed": stats["candidates_observed"],
             },
             "continue_graph_after_target": continue_graph_after_target,
+            "instagram_seed_creators_queued": len(instagram_seed_ids),
+            "instagram_seed_creators_pending": pending_instagram_seed_count(),
+            "target_reached": new_eligible >= target_new,
             "creator_results": creator_results,
             "hashtag_results": hashtag_results,
             "hashtags_with_candidates": sum(
