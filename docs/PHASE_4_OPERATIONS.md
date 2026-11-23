@@ -41,7 +41,21 @@ shorts-lm discover graph-run `
 
 Repeat for each `instagram_creators_*.txt` and `hashtags_*.txt` batch. Account-only batches use `--instagram-max-hashtags 0`. Hashtag-only batches use `--max-creators 0` and an empty creator seed file. Do not use `--force` unless intentionally requeueing completed seeds.
 
-YouTube channel candidates are not all directly usable channel IDs. Phase 4 exports only IDs matching the stable `UC...` shape to `youtube_channel_id_seeds.txt`. Use these with the Phase 4-enabled graph runner when available; otherwise use the CSV as a manual verification/query-planning queue. Handle-only entries are not guessed into IDs.
+YouTube channel candidates are not all directly usable channel IDs. Phase 4 exports only IDs matching the stable `UC...` shape to `youtube_channel_id_seeds.txt`. The graph runner now accepts this file directly. Example:
+```powershell
+shorts-lm discover graph-run `
+  --platform youtube `
+  --youtube-channel-ids-file outputs/phase4/catalogue/youtube_channel_id_seeds.txt `
+  --max-creators 100 `
+  --max-seed-queries 0 `
+  --max-hashtag-queries 0 `
+  --max-runtime-seconds 600 `
+  --target-new 200 `
+  --min-metric 0 `
+  --database .shortslm/discovery.sqlite3 `
+  --report outputs/phase4/discovery/youtube_channel_batch_0001.json
+```
+Use subsequent batches under distinct report names. Handle-only entries remain in the CSV for human verification; they are not guessed into IDs.
 
 Stop when the provider reports a login challenge, CAPTCHA, rate limit, 403/429, or other access restriction. Do not rotate identities/proxies or bypass access controls.
 
