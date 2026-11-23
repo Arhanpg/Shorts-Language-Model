@@ -36,7 +36,7 @@ from shorts_intelligence.discovery.query_planner import (
     build_youtube_query_pool,
     select_due_queries,
 )
-from shorts_intelligence.discovery.seed_loader import load_instagram_creator_seeds
+from shorts_intelligence.discovery.seed_loader import load_instagram_creator_seeds, load_youtube_channel_seeds
 from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.media.probe import sha256_file
 
@@ -1172,6 +1172,10 @@ def graph_run(
     instagram_seeds_file: Path = typer.Option(
         Path("data/instagram_creator_seeds.txt"), "--instagram-seeds-file"
     ),
+    youtube_channel_ids_file: Path = typer.Option(
+        Path("data/youtube_channel_ids.txt"), "--youtube-channel-ids-file",
+        help="Optional newline-delimited stable UC... channel IDs for creator graph seeding.",
+    ),
     instagram_hashtag: list[str] = typer.Option(
         [], "--instagram-hashtag", help="Repeatable hashtag seed, with or without #."
     ),
@@ -1217,6 +1221,10 @@ def graph_run(
                 instagram_hashtags_file, explicit_hashtags=instagram_hashtag
             ) if instagram_enabled else []
         )
+        youtube_creator_seeds = (
+            load_youtube_channel_seeds(youtube_channel_ids_file)
+            if platform in {"youtube", "all"} else []
+        )
         if instagram_enabled and not creator_seeds and not hashtag_seeds:
             raise ValueError(
                 "No Instagram creator or hashtag seeds found. Supply --instagram-creator, "
@@ -1237,6 +1245,7 @@ def graph_run(
                 instagram_profile_dir=instagram_profile_dir if instagram_enabled else None,
                 instagram_creators=creator_seeds,
                 instagram_hashtags=hashtag_seeds,
+                youtube_creators=youtube_creator_seeds,
                 force=force,
                 instagram_max_scrolls=instagram_max_scrolls,
                 instagram_max_reel_details=instagram_max_reel_details,
