@@ -243,7 +243,11 @@ def _username(value: object) -> str | None:
     if isinstance(value, dict):
         raw = value.get("username") or value.get("user_name")
         if isinstance(raw, str) and raw.strip():
-            retudef extract_reel_records(
+            return raw.strip().lstrip("@").casefold()
+    return None
+
+
+def extract_reel_records(
     payload: object,
     *,
     creator_handle: str,
@@ -361,11 +365,6 @@ def _username(value: object) -> str | None:
                 if visited_nodes >= _MAX_RESPONSE_NODES:
                     break
                 walk(child, depth + 1)
-
-    walk(payload)
-    return list(found.values())
-
-ld)
 
     walk(payload)
     return list(found.values())
