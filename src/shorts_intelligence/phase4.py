@@ -352,4 +352,5 @@ def release(
                              "The golden holdout is locked by workflow, not cryptographically access-controlled."]}
     (output_dir / "release_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     console.print(f"[green]Phase 4 release written:[/green] {output_dir.resolve()}")
-    for name, count in counts.items(): console.print(f"{name}: {count}")
+    for name, count in counts.items():
+        console.print(f"{name}: {count}")
