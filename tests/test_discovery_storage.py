@@ -352,3 +352,56 @@ def test_all_platform_processing_queue_interleaves_youtube_and_instagram(tmp_pat
         )
         assert all(item[0].platform == "youtube" for item in youtube_only)
         assert all(item[0].platform == "instagram" for item in instagram_only)
+
+
+def test_processing_attempt_cap_prevents_infinite_retries(tmp_path: Path):
+    candidate = _candidate(1_500_000, source_id="RetryCap12345")
+    with DiscoveryStore(tmp_path / "retry-cap.sqlite3") as store:
+        store.start_run("retry-cap", 10, 1_000_000)
+        store.upsert_candidate(candidate, min_views=1_000_000, run_id="retry-cap")
+        assert len(store.processing_candidates(min_metric=0, max_attempts=2)) == 1
+
+        store.mark_processing_started(candidate)
+        store.mark_processing_failure("youtube", candidate.source_id, error="first failure")
+        assert len(store.processing_candidates(min_metric=0, max_attempts=2)) == 1
+
+        store.mark_processing_started(candidate)
+        store.mark_processing_failure("youtube", candidate.source_id, error="second failure")
+        assert store.processing_candidates(min_metric=0, max_attempts=2) == []
+
+
+def test_deleted_processed_media_keeps_hash_for_deduplication(tmp_path: Path):
+    candidate = _candidate(1_500_000, source_id="DeletedMedia123")
+    with DiscoveryStore(tmp_path / "deleted-media.sqlite3") as store:
+        store.start_run("deleted-media", 10, 1_000_000)
+        store.upsert_candidate(candidate, min_views=1_000_000, run_id="deleted-media")
+        store.mark_download(
+            "youtube", candidate.source_id,
+            path=str(tmp_path / "temporary.mp4"),
+            media_sha256="b" * 64,
+        )
+        store.mark_processing_started(candidate)
+        store.mark_processing_complete(
+            "youtube", candidate.source_id,
+            media_path=str(tmp_path / "temporary.mp4"),
+            media_sha256="b" * 64,
+            analysis_path=str(tmp_path / "analysis.json"),
+            transcript_path=str(tmp_path / "transcript.json"),
+            ocr_path=str(tmp_path / "ocr.json"),
+            transcript_segments=2,
+            ocr_spans=1,
+            detected_language="en",
+            asr_engine="test-asr",
+            ocr_engine="test-ocr",
+            quality_flags=[],
+        )
+        store.mark_processed_media_deleted("youtube", candidate.source_id)
+        duplicate = store.find_media_hash("b" * 64)
+        assert duplicate is not None
+        assert duplicate["source_id"] == candidate.source_id
+        row = store.connection.execute(
+            "SELECT download_path, download_status FROM candidates WHERE source_id=?",
+            (candidate.source_id,),
+        ).fetchone()
+        assert row["download_path"] is None
+        assert row["download_status"] == "processed_media_deleted"
