@@ -1,0 +1,63 @@
+name: Build large discovery seed catalogue
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/build_large_seed_catalogue.py"
+      - "data/research_catalogue/hashtags_generated_compositional_v0.2.csv"
+      - ".github/workflows/large-seed-catalogue.yml"
+  workflow_dispatch:
+    inputs:
+      youtube_limit:
+        description: "Number of YouTube channel candidates"
+        required: false
+        default: "10000"
+      instagram_limit:
+        description: "Number of Instagram account candidates"
+        required: false
+        default: "10000"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build creator/account and hashtag candidates
+        shell: bash
+        run: |
+          python scripts/build_large_seed_catalogue.py \
+            --research-dir data/research_catalogue \
+            --output-dir data/generated_seed_catalogue/v0.2 \
+            --youtube-limit "${{ github.event.inputs.youtube_limit || '10000' }}" \
+            --instagram-limit "${{ github.event.inputs.instagram_limit || '10000' }}" \
+            --hashtag-target 10650
+      - name: Report output inventory
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          root = Path("data/generated_seed_catalogue/v0.2")
+          summary = json.loads((root / "QA_SUMMARY.json").read_text(encoding="utf-8"))
+          print(json.dumps(summary["counts"], indent=2))
+          for filename in ("youtube_channel_candidates.csv", "instagram_account_candidates.csv", "instagram_person_candidates.csv", "instagram_organization_publisher_candidates.csv"):
+              with (root / filename).open(encoding="utf-8-sig", newline="") as stream:
+                  rows = list(csv.DictReader(stream))
+              print(f"{filename}: {len(rows):,} rows")
+          PY
+      - name: Upload generated seed catalogue
+        uses: actions/upload-artifact@v4
+        with:
+          name: shorts-lm-large-seed-catalogue-v0.2
+          path: data/generated_seed_catalogue/v0.2/
+          if-no-files-found: error
+          retention-days: 30

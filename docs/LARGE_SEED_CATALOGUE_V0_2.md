@@ -4,11 +4,15 @@ Prepared 23 November 2026. This release builds large, auditable discovery candid
 
 ## Build the creator/account lists
 
-Install the full research catalogue v0.1 first using the installer from PR #31, then run from the repository root:
+You can run this builder directly from the repository root; it uses the committed v0.2 compositional hashtag catalogue. To additionally merge the Gemini/other-AI creator leads, install the full research catalogue v0.1 first using the installer from PR #31:
 
     python scripts/build_large_seed_catalogue.py --research-dir data/research_catalogue/v0.1 --output-dir data/generated_seed_catalogue/v0.2 --youtube-limit 10000 --instagram-limit 10000 --hashtag-target 10650
 
 The YouTube builder reads evenly spaced pages from the Hugging Face dataset viewer and does not download the full multi-GB Parquet. The Instagram builder downloads the latest.csv snapshot. It emits separate YouTube channels, all Instagram account candidates, person-only Instagram candidates, organization/publisher candidates, plain-text seed lists, and QA_SUMMARY.json.
+
+## Automatic GitHub Actions build
+
+Opening this PR runs `.github/workflows/large-seed-catalogue.yml`. The workflow builds 10,000 YouTube channel candidates and 10,000 Instagram account candidates from the public datasets, then uploads the generated CSVs and QA summary as the `shorts-lm-large-seed-catalogue-v0.2` workflow artifact. The Instagram `person` subset is reported separately and is never padded with organization accounts if fewer than 10,000 people are present.
 
 ## Sources
 

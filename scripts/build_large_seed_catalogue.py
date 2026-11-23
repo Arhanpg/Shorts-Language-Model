@@ -45,8 +45,15 @@ def fetch_youtube(limit: int) -> tuple[list[dict],dict]:
     train=[x for x in info.get("splits",[]) if x.get("split")=="train"]
     if not train: raise RuntimeError("YouTube dataset viewer returned no train split")
     split=next((x for x in train if "boinko-youtube-channel" in x.get("config","")),train[0])
-    config,total=split["config"],int(split.get("num_rows") or 0)
-    if total<=0: raise RuntimeError("YouTube dataset viewer did not report num_rows")
+    config=split["config"]
+    size_info=get_json("size",{"dataset":YT_DATASET})
+    size_splits=size_info.get("size",{}).get("splits",[])
+    sized=next((x for x in size_splits if x.get("config")==config and x.get("split")=="train"),None)
+    total=int((sized or {}).get("num_rows") or 0)
+    if total<=0:
+        probe=get_json("rows",{"dataset":YT_DATASET,"config":config,"split":"train","offset":0,"length":1})
+        total=int(probe.get("num_rows_total") or 0)
+    if total<=0: raise RuntimeError("YouTube dataset viewer size/rows endpoints did not report num_rows")
     rows=[]; offsets=page_offsets(total,limit)
     for i,offset in enumerate(offsets,1):
         length=min(100,limit-len(rows))
@@ -90,7 +97,15 @@ def slug(value: str) -> str:
 
 def build_tags(research_dir: Path,target: int=10650) -> list[dict]:
     lp,cp=research_dir/"languages.csv",research_dir/"categories.csv"
-    if not lp.is_file() or not cp.is_file(): raise RuntimeError("Research catalogue v0.1 missing; install languages.csv and categories.csv first")
+    if not lp.is_file() or not cp.is_file():
+        bundled=research_dir/"hashtags_generated_compositional_v0.2.csv"
+        if not bundled.is_file(): bundled=research_dir.parent/"hashtags_generated_compositional_v0.2.csv"
+        if bundled.is_file():
+            with bundled.open("r",encoding="utf-8-sig",newline="") as stream:
+                rows=list(csv.DictReader(stream))
+            if len(rows)<target: raise RuntimeError(f"Bundled hashtag file has {len(rows)} rows; requested {target}")
+            return rows[:target]
+        raise RuntimeError("Research catalogue v0.1 missing; install languages.csv/categories.csv or use bundled v0.2 hashtags")
     with lp.open("r",encoding="utf-8-sig",newline="") as f: langs=list(csv.DictReader(f))
     with cp.open("r",encoding="utf-8-sig",newline="") as f: cat_rows=list(csv.DictReader(f))
     cats=OrderedDict()
@@ -112,7 +127,9 @@ def build_tags(research_dir: Path,target: int=10650) -> list[dict]:
     raise RuntimeError(f"Taxonomy generated only {len(out)} unique tags; target={target}; no fake top-up")
 
 def research_leads(research_dir: Path) -> dict[str,list[dict]]:
-    found={"youtube":[],"instagram":[]}; path=research_dir/"creators.csv"
+    found={"youtube":[],"instagram":[]}
+    path=research_dir/"creators.csv"
+    if not path.is_file(): path=research_dir/"v0.1"/"creators.csv"
     if not path.is_file(): return found
     with path.open("r",encoding="utf-8-sig",newline="") as f:
         for row in csv.DictReader(f):
@@ -155,7 +172,7 @@ def build(research_dir: Path,out_dir: Path,yt_limit: int,ig_limit: int,tag_targe
 
 def main() -> int:
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--research-dir",type=Path,default=Path("data/research_catalogue/v0.1"))
+    p.add_argument("--research-dir",type=Path,default=Path("data/research_catalogue"))
     p.add_argument("--output-dir",type=Path,default=Path("data/generated_seed_catalogue/v0.2"))
     p.add_argument("--youtube-limit",type=int,default=10000)
     p.add_argument("--instagram-limit",type=int,default=10000)

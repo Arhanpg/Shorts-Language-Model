@@ -1,6 +1,7 @@
 """Tests for large creator/account and hashtag seed catalogue generation."""
 from __future__ import annotations
 import csv
+import json
 from pathlib import Path
 from scripts.build_large_seed_catalogue import ACCOUNT_FIELDS,TAG_FIELDS,build_tags,dedupe,map_instagram,map_youtube,page_offsets,write_csv
 
@@ -40,3 +41,50 @@ def test_csv_writer_preserves_unicode_and_schema(tmp_path: Path):
     write_csv(path,[{"account_id":"ig:x","display_name":"ಕನ್ನಡ"}],ACCOUNT_FIELDS)
     with path.open(encoding="utf-8-sig",newline="") as stream: row=next(csv.DictReader(stream))
     assert row["display_name"]=="ಕನ್ನಡ" and list(row)==ACCOUNT_FIELDS
+
+
+def test_fetch_youtube_reads_split_size_before_paging(monkeypatch):
+    from scripts import build_large_seed_catalogue as module
+    calls = []
+    def fake_get_json(endpoint, params):
+        calls.append(endpoint)
+        if endpoint == "splits":
+            return {"splits": [{"config": "boinko-youtube-channel-0.0.2", "split": "train"}]}
+        if endpoint == "size":
+            return {"size": {"splits": [{"config": "boinko-youtube-channel-0.0.2", "split": "train", "num_rows": 1000}]}}
+        if endpoint == "rows":
+            return {"num_rows_total": 1000, "rows": [
+                {"row": {"channel_id": f"UC{i:021d}", "channel_handle": f"creator{i}"}}
+                for i in range(100)
+            ]}
+        raise AssertionError(endpoint)
+    monkeypatch.setattr(module, "get_json", fake_get_json)
+    monkeypatch.setattr(module.time, "sleep", lambda _: None)
+    rows, meta = module.fetch_youtube(200)
+    assert len(rows) == 200
+    assert meta["total_rows"] == 1000
+    assert calls[:2] == ["splits", "size"]
+    assert calls.count("rows") == 2
+
+
+def test_build_tags_uses_bundled_catalogue_without_v01_tree(tmp_path):
+    path = tmp_path / "hashtags_generated_compositional_v0.2.csv"
+    write_csv(path, [
+        {"hashtag_id": f"H{i}", "hashtag": f"#tag{i}", "normalized_hashtag": f"tag{i}",
+         "verification_state": "GENERATED_UNVERIFIED_COMPOSITIONAL_CANDIDATE"}
+        for i in range(3)
+    ], TAG_FIELDS)
+    from scripts.build_large_seed_catalogue import build_tags
+    result = build_tags(tmp_path, 3)
+    assert len(result) == 3
+    assert result[0]["verification_state"] == "GENERATED_UNVERIFIED_COMPOSITIONAL_CANDIDATE"
+
+
+def test_large_seed_fixture_pack_is_synthetic_and_unique():
+    fixture_path = Path(__file__).parent / "fixtures" / "large_seed_catalogue_cases.jsonl"
+    cases = [json.loads(line) for line in fixture_path.read_text(encoding="utf-8").splitlines() if line]
+    assert len(cases) == 20
+    assert len({x["test_case_id"] for x in cases}) == 20
+    assert all(x["fixture_type"] == "SYNTHETIC_CATALOGUE_BUILDER_CONTRACT" for x in cases)
+    assert all(x["media_asset_included"] is False for x in cases)
+    assert all(x["model_evaluation_eligible"] is False for x in cases)
