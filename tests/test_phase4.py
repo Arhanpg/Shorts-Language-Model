@@ -9,6 +9,7 @@ from shorts_intelligence.phase4 import _identity, _tag, _training_rights, phase4
 
 def test_unicode_normalization():
     assert _identity({"profile_url": "https://instagram.com/Some.User/"}) == "some.user"
+    assert _identity({"account_handle": "@new.creator"}) == "new.creator"
     channel_id = "UC" + "a" * 22
     assert _identity({"channel_id": channel_id}) == channel_id
     assert _tag({"hashtag": "#ಕನ್ನಡ"}) == "ಕನ್ನಡ"
@@ -32,7 +33,7 @@ def test_catalogue_materializes_all_csvs(tmp_path: Path):
         "--output-dir", str(out), "--batch-size", "10"])
     assert result.exit_code == 0, result.output
     report = json.loads((out / "catalogue_report.json").read_text())
-    assert report["unique_instagram_accounts"] == 3
+    assert report["unique_instagram_accounts"] == 4
     assert report["unique_youtube_channel_candidates"] == 2
     assert report["youtube_channel_id_seedable"] == 1
     assert report["unique_normalized_hashtags"] == 2
