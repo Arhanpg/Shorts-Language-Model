@@ -2,7 +2,7 @@
 
 ## Environment
 
-Use Windows PowerShell. Install Python 3.11 and FFmpeg (ffmpeg.exe and ffprobe.exe on PATH). The RTX 3050 is not needed for discovery or downloads.
+Use Windows PowerShell. Install Python 3.11 and FFmpeg (ffmpeg.exe and ffprobe.exe on PATH). The RTX 3050 accelerates Whisper and PaddleOCR; discovery, downloading, FFprobe and database operations remain CPU-oriented. Follow [Windows RTX 3050 GPU Setup](GPU_SETUP_WINDOWS.md) once before processing.
 
 ```powershell
 py -3.11 -m venv .venv
@@ -34,10 +34,10 @@ The downloader writes an MP4 and a small metadata sidecar. YouTube uses yt-dlp; 
 ## Batch processing with VidTrace
 
 ```powershell
-shorts-lm discover process --limit 10 --min-metric 1000000 --asr-model small --asr-device cpu
+shorts-lm discover process --platform all --limit 10 --min-metric 1000000 --asr-model small --device cuda
 ```
 
-The command downloads missing MP4s, checks them with FFprobe, deduplicates exact file hashes, and runs ASR/OCR. It writes per-video analysis, transcript, OCR and asset JSON files under:
+The command reads both platforms from the local SQLite inventory, alternates YouTube and Instagram candidates when both are available, downloads missing MP4s, checks them with FFprobe, deduplicates exact file hashes, and runs CUDA-preferred ASR/OCR. It writes per-video analysis, transcript, OCR and asset JSON files under:
 
 ```text
 data/private/processed/<platform>/<source_id>/
@@ -63,7 +63,7 @@ The JSONL output defaults to `outputs/dataset/processed-videos.jsonl`.
 8. Confirm an invalid or unavailable media download remains retryable.
 9. Confirm local databases, sessions, media files and private outputs remain gitignored.
 
-Increase the batch from 10 to 100 to 300 only after the initial sample is working correctly.
+Increase the batch from 10 to 100 to 300 only after the initial sample is working correctly. The processing command does not discover new videos; populate the inventory first with `shorts-lm discover graph-run --platform all ...`.
 
 ## Commands
 
