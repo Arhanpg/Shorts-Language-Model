@@ -46,9 +46,10 @@ YouTube creator discovery:
 shorts-lm discover graph-run `
   --platform youtube `
   --youtube-channel-ids-file outputs/campaign/youtube_creator_seeds.txt `
+  --youtube-hashtags-file outputs/campaign/youtube_hashtag_seeds.txt `
   --max-creators 100 `
   --max-seed-queries 0 `
-  --max-hashtag-queries 0 `
+  --max-hashtag-queries 100 `
   --continue-graph-after-target `
   --max-runtime-seconds 600 `
   --target-new 200 `
