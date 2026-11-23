@@ -427,3 +427,30 @@ def test_overlong_media_is_terminally_rejected_not_retried(tmp_path: Path, monke
         ).fetchone()
         assert row["status"] == "media_rejected"
         assert processing_row["status"] == "rejected"
+
+
+
+def test_zero_threshold_requeues_unknown_metric_but_requires_exact_item_grant(tmp_path: Path):
+    candidate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="UnknownMetric01",
+        canonical_url="https://www.instagram.com/reel/UnknownMetric01/",
+        short_format_status="confirmed",
+    )
+    database = tmp_path / "broad-mode.sqlite3"
+    with DiscoveryStore(database) as store:
+        store.start_run("broad-mode", 10, 0)
+        store.upsert_candidate(candidate, min_views=1_000_000, run_id="broad-mode")
+        # It starts as metric_unknown under the old threshold.
+        assert store.get_candidate("instagram", candidate.source_id).status == "metric_unknown"
+        # Zero-threshold mode requeues it, but never treats missing metrics as zero evidence.
+        assert store.processing_candidates(
+            min_metric=0, limit=5, platform="instagram"
+        ) == []
+        grant = _grant_json(candidate)
+        queued = store.processing_candidates(
+            min_metric=0, limit=5, platform="instagram",
+            authorized_grants_json=grant,
+        )
+        assert len(queued) == 1
+        assert queued[0][0].qualifying_metric() is None
