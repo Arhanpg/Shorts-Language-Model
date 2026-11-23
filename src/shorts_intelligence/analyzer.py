@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import tempfile
+import time
 from pathlib import Path
 from typing import Literal
 
@@ -23,6 +25,8 @@ from shorts_intelligence.schemas import (
 from shorts_intelligence.telemetry.asr import ASRError, transcribe_audio
 from shorts_intelligence.telemetry.audio import analyze_audio
 from shorts_intelligence.telemetry.ocr import OCRError, run_ocr
+
+logger = logging.getLogger(__name__)
 
 
 def _persist_frames(
@@ -143,6 +147,14 @@ def analyze_video(
             )
 
         if extracted_audio and config.enable_asr:
+            asr_started = time.monotonic()
+            logger.info(
+                "ASR stage started | file=%s | model=%s | requested_device=%s | timeout=%.0fs",
+                input_path.name,
+                config.asr_model,
+                config.asr_device,
+                config.asr_timeout_seconds,
+            )
             try:
                 transcript_segments, asr_engine, detected_language = transcribe_audio(
                     extracted_audio,
@@ -150,6 +162,14 @@ def analyze_video(
                     language=config.language,
                     device=config.asr_device,
                     compute_type=config.asr_compute_type,
+                    timeout_seconds=config.asr_timeout_seconds,
+                )
+                logger.info(
+                    "ASR stage completed | file=%s | engine=%s | segments=%d | elapsed=%.1fs",
+                    input_path.name,
+                    asr_engine,
+                    len(transcript_segments),
+                    time.monotonic() - asr_started,
                 )
                 stages["asr"] = StageStatus(
                     status="complete" if transcript_segments else "partial",
@@ -165,6 +185,12 @@ def analyze_video(
                         "this may be a music-only or silent clip."
                     )
             except ASRError as exc:
+                logger.warning(
+                    "ASR stage did not complete | file=%s | elapsed=%.1fs | error=%s",
+                    input_path.name,
+                    time.monotonic() - asr_started,
+                    exc,
+                )
                 stages["asr"] = StageStatus(
                     status="skipped", engine="faster-whisper/vidtrace",
                     detail=str(exc),
@@ -184,14 +210,28 @@ def analyze_video(
             )
 
         if config.enable_ocr and sampling.frames:
+            ocr_started = time.monotonic()
             frames = [
                 (item.evidence, item.image) for item in sampling.frames
             ]
             try:
+                logger.info(
+                    "OCR stage started | file=%s | frames=%d | requested_device=%s",
+                    input_path.name,
+                    min(len(frames), config.max_ocr_frames),
+                    config.asr_device,
+                )
                 ocr_spans, ocr_engine = run_ocr(
                     frames,
                     max_frames=config.max_ocr_frames,
                     prefer_gpu=config.asr_device in {"cuda", "auto"},
+                )
+                logger.info(
+                    "OCR stage completed | file=%s | engine=%s | spans=%d | elapsed=%.1fs",
+                    input_path.name,
+                    ocr_engine,
+                    len(ocr_spans),
+                    time.monotonic() - ocr_started,
                 )
                 stages["ocr"] = StageStatus(
                     status="complete" if ocr_spans else "partial",
@@ -206,6 +246,12 @@ def analyze_video(
                         "OCR ran but found no text above its detector threshold."
                     )
             except OCRError as exc:
+                logger.warning(
+                    "OCR stage did not complete | file=%s | elapsed=%.1fs | error=%s",
+                    input_path.name,
+                    time.monotonic() - ocr_started,
+                    exc,
+                )
                 stages["ocr"] = StageStatus(
                     status="skipped", engine="paddleocr/vidtrace", detail=str(exc)
                 )
