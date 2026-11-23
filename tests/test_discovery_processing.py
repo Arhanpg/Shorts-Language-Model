@@ -347,3 +347,65 @@ def test_manifest_quality_is_recomputed_from_existing_artifacts(tmp_path: Path):
     assert "preexisting_flag" in flags
     assert "asr_suspected_gibberish" in flags
     assert "ocr_low_signal" in flags
+
+
+
+def test_overlong_media_is_terminally_rejected_not_retried(tmp_path: Path, monkeypatch):
+    from shorts_intelligence.discovery import processing
+    from shorts_intelligence.media.probe import MediaError
+
+    candidate = _candidate()
+    database = tmp_path / "reject" / "discovery.sqlite3"
+    download_dir = tmp_path / "reject" / "acquired"
+    artifact_dir = tmp_path / "reject" / "processed"
+    manifest = tmp_path / "reject" / "manifest.jsonl"
+
+    with DiscoveryStore(database) as store:
+        store.start_run("reject-long", 10, 1_000_000)
+        store.upsert_candidate(candidate, min_views=1_000_000, run_id="reject-long")
+
+    calls = {"download": 0, "analyze": 0}
+
+    def fake_download(candidate, output_dir, **_kwargs):
+        calls["download"] += 1
+        output_dir.mkdir(parents=True, exist_ok=True)
+        path = output_dir / f"{candidate.source_id}.mp4"
+        path.write_bytes(b"long-video")
+        return path
+
+    def reject_probe(_path, _config):
+        raise MediaError("Video duration is 299.8s; Phase 1 limit is 180s.")
+
+    def fake_analyze(*_args, **_kwargs):
+        calls["analyze"] += 1
+        raise AssertionError("Analysis must not run on rejected media")
+
+    monkeypatch.setattr(processing, "download_candidate", fake_download)
+    monkeypatch.setattr(processing, "probe_video", reject_probe)
+    monkeypatch.setattr(processing, "analyze_video", fake_analyze)
+
+    first = processing.run_processing_batch(
+        database=database, download_dir=download_dir, artifact_dir=artifact_dir,
+        dataset_manifest=manifest, limit=10, max_processing_attempts=3,
+        delete_media_after_processing=True,
+    )
+    second = processing.run_processing_batch(
+        database=database, download_dir=download_dir, artifact_dir=artifact_dir,
+        dataset_manifest=manifest, limit=10, max_processing_attempts=3,
+        delete_media_after_processing=True,
+    )
+
+    assert first["failed"] == 1
+    assert second["candidates_selected"] == 0
+    assert calls == {"download": 1, "analyze": 0}
+    with DiscoveryStore(database) as store:
+        row = store.connection.execute(
+            "SELECT status, download_status FROM candidates WHERE platform='youtube' AND source_id=?",
+            (candidate.source_id,),
+        ).fetchone()
+        processing_row = store.connection.execute(
+            "SELECT status FROM media_processing WHERE platform='youtube' AND source_id=?",
+            (candidate.source_id,),
+        ).fetchone()
+        assert row["status"] == "media_rejected"
+        assert processing_row["status"] == "rejected"
