@@ -81,6 +81,7 @@ if ($RunYouTubeChannels) {
             "discover", "graph-run", "--platform", "youtube",
             "--youtube-channel-ids-file", $_.FullName,
             "--max-creators", "100", "--max-seed-queries", "0", "--max-hashtag-queries", "0",
+            "--continue-graph-after-target",
             "--max-runtime-seconds", "$RuntimeSeconds",
             "--target-new", "$TargetNew", "--min-metric", "$MinMetric",
             "--database", $Database, "--report", "$reports/$name.json"
