@@ -33,10 +33,10 @@ def test_sample_creates_platform_specific_random_seed_files(tmp_path: Path):
          "--creators", "10", "--hashtags", "1", "--seed", "42"],
     )
     assert result.exit_code == 0, result.output
-    assert (output / "youtube_creator_seeds.txt").read_text().strip() == channel_id
-    assert (output / "instagram_creator_seeds.txt").read_text().strip() == "creator.one"
-    assert len((output / "youtube_hashtag_seeds.txt").read_text().splitlines()) == 1
-    assert len((output / "instagram_hashtag_seeds.txt").read_text().splitlines()) == 1
+    assert (output / "youtube_creator_seeds.txt").read_text(encoding="utf-8").strip() == channel_id
+    assert (output / "instagram_creator_seeds.txt").read_text(encoding="utf-8").strip() == "creator.one"
+    assert len((output / "youtube_hashtag_seeds.txt").read_text(encoding="utf-8").splitlines()) == 1
+    assert len((output / "instagram_hashtag_seeds.txt").read_text(encoding="utf-8").splitlines()) == 1
 
 
 def test_sample_is_reproducible_with_seed(tmp_path: Path):
@@ -58,6 +58,6 @@ def test_sample_is_reproducible_with_seed(tmp_path: Path):
              "--creators", "5", "--hashtags", "2", "--seed", "7"],
         )
         assert result.exit_code == 0, result.output
-    assert (tmp_path / "one/instagram_creator_seeds.txt").read_text() == (
+    assert (tmp_path / "one/instagram_creator_seeds.txt").read_text(encoding="utf-8") == (
         tmp_path / "two/instagram_creator_seeds.txt"
-    ).read_text()
+    ).read_text(encoding="utf-8")

@@ -304,7 +304,7 @@ def run_processing_batch(
     max_processing_attempts: int = 2,
 ) -> dict[str, int | str]:
     """Download and process a bounded batch of discovered Shorts and Reels."""
-    processed = downloaded = failed = duplicates = 0
+    processed = downloaded = failed = rejected = duplicates = 0
     platform_totals = {
         "youtube": {"selected": 0, "downloaded": 0, "processed": 0},
         "instagram": {"selected": 0, "downloaded": 0, "processed": 0},
@@ -462,8 +462,10 @@ def run_processing_batch(
                     )
                 )
                 if terminal_media_error:
+                    rejected += 1
                     store.mark_processing_rejected(platform, source_id, reason=error_text)
                 else:
+                    failed += 1
                     store.mark_processing_failure(platform, source_id, error=error_text)
                 if delete_media_after_processing and media_path is not None:
                     media_path.unlink(missing_ok=True)
@@ -474,7 +476,6 @@ def run_processing_batch(
                     if media_validation_failed and media_path is not None:
                         media_path.unlink(missing_ok=True)
                         media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
-                failed += 1
 
         manifest_count = _export_processing_manifest(store, dataset_manifest, min_metric=min_metric)
         statuses = store.processing_summary()
@@ -485,10 +486,12 @@ def run_processing_batch(
         "processed_this_run": processed,
         "duplicates": duplicates,
         "failed": failed,
+        "rejected": rejected,
         "manifest_records": manifest_count,
         "manifest_path": str(dataset_manifest.expanduser().resolve()),
         "processing_complete_total": statuses.get("complete", 0),
         "processing_failed_total": statuses.get("failed", 0),
+        "processing_rejected_total": statuses.get("rejected", 0),
         "youtube_candidates_selected": platform_totals["youtube"]["selected"],
         "instagram_candidates_selected": platform_totals["instagram"]["selected"],
         "youtube_downloaded": platform_totals["youtube"]["downloaded"],

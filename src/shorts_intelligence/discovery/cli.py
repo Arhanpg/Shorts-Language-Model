@@ -1157,7 +1157,8 @@ def process_eligible_media(
         ("Total media downloaded", "media_downloaded_this_run"),
         ("Total processed", "processed_this_run"),
         ("Exact duplicates", "duplicates"),
-        ("Failed / retryable", "failed"),
+        ("Transient failures (retryable)", "failed"),
+        ("Media rejected (not retried)", "rejected"),
         ("Completed total", "processing_complete_total"),
         ("Manifest records", "manifest_records"),
     ]:
