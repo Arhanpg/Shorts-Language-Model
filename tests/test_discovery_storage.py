@@ -1,7 +1,15 @@
 from pathlib import Path
+import json
 
 from shorts_intelligence.discovery.models import DiscoveredCandidate
 from shorts_intelligence.discovery.storage import DiscoveryStore
+
+
+def _grant_json(*candidates: DiscoveredCandidate) -> str:
+    return json.dumps([{
+        "platform": candidate.platform,
+        "source_id": candidate.source_id,
+    } for candidate in candidates])
 
 
 def _candidate(view_count: int | None = 1_300_000, *, source_id: str = "AbCdEfGh123"):
@@ -289,11 +297,11 @@ def test_processing_queue_needs_only_eligible_video_and_skips_completed(tmp_path
             candidate, min_views=1_000_000, run_id="simple-processing"
         )
 
-        queued = store.processing_candidates(min_metric=1_000_000, limit=10)
+        queued = store.processing_candidates(min_metric=1_000_000, limit=10, authorized_grants_json=_grant_json(candidate))
         assert len(queued) == 1
         assert queued[0][0].source_id == candidate.source_id
         store.mark_processing_started(candidate)
-        assert len(store.processing_candidates(limit=10)) == 1
+        assert len(store.processing_candidates(limit=10, authorized_grants_json=_grant_json(candidate))) == 1
 
         store.mark_processing_complete(
             "youtube",
@@ -310,7 +318,7 @@ def test_processing_queue_needs_only_eligible_video_and_skips_completed(tmp_path
             ocr_engine="vidtrace-paddleocr",
             quality_flags=[],
         )
-        assert store.processing_candidates(limit=10) == []
+        assert store.processing_candidates(limit=10, authorized_grants_json=_grant_json(candidate)) == []
 
 
 def test_all_platform_processing_queue_interleaves_youtube_and_instagram(tmp_path: Path):
@@ -337,18 +345,22 @@ def test_all_platform_processing_queue_interleaves_youtube_and_instagram(tmp_pat
                 candidate, min_views=1_000_000, run_id="balanced-platform-queue"
             )
 
+        grants = _grant_json(*(youtube_candidates + instagram_candidates))
         selected = store.processing_candidates(
-            min_metric=1_000_000, limit=4, platform="all"
+            min_metric=1_000_000, limit=4, platform="all",
+            authorized_grants_json=grants,
         )
         assert [item[0].platform for item in selected] == [
             "youtube", "instagram", "youtube", "instagram"
         ]
 
         youtube_only = store.processing_candidates(
-            min_metric=1_000_000, limit=4, platform="youtube"
+            min_metric=1_000_000, limit=4, platform="youtube",
+            authorized_grants_json=grants,
         )
         instagram_only = store.processing_candidates(
-            min_metric=1_000_000, limit=4, platform="instagram"
+            min_metric=1_000_000, limit=4, platform="instagram",
+            authorized_grants_json=grants,
         )
         assert all(item[0].platform == "youtube" for item in youtube_only)
         assert all(item[0].platform == "instagram" for item in instagram_only)
@@ -359,7 +371,7 @@ def test_processing_attempt_cap_prevents_infinite_retries(tmp_path: Path):
     with DiscoveryStore(tmp_path / "retry-cap.sqlite3") as store:
         store.start_run("retry-cap", 10, 1_000_000)
         store.upsert_candidate(candidate, min_views=1_000_000, run_id="retry-cap")
-        assert len(store.processing_candidates(min_metric=0, max_attempts=2)) == 1
+        assert len(store.processing_candidates(min_metric=0, max_attempts=2, authorized_grants_json=_grant_json(candidate))) == 1
 
         store.mark_processing_started(candidate)
         store.mark_processing_failure("youtube", candidate.source_id, error="first failure")
@@ -367,7 +379,7 @@ def test_processing_attempt_cap_prevents_infinite_retries(tmp_path: Path):
 
         store.mark_processing_started(candidate)
         store.mark_processing_failure("youtube", candidate.source_id, error="second failure")
-        assert store.processing_candidates(min_metric=0, max_attempts=2) == []
+        assert store.processing_candidates(min_metric=0, max_attempts=2, authorized_grants_json=_grant_json(candidate)) == []
 
 
 def test_deleted_processed_media_keeps_hash_for_deduplication(tmp_path: Path):
