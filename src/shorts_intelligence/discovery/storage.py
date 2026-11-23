@@ -466,7 +466,7 @@ class DiscoveryStore:
         limit: int = 25,
         platform: str = "all",
         max_attempts: int = 2,
-        authorized_grants_json: str | None = None,
+        authorized_grants_json: str = "[]",
     ) -> list[tuple[DiscoveredCandidate, str | None, str, str | None]]:
         """Return a balanced batch of confirmed YouTube Shorts and Instagram Reels."""
         if platform not in {"all", "youtube", "instagram"}:
@@ -497,21 +497,11 @@ class DiscoveryStore:
                   END >= ?
               AND COALESCE(p.attempts, 0) < ?
               AND c.platform=?
-              AND (
-                ? IS NULL
-                OR EXISTS (
+              AND EXISTS (
                     SELECT 1 FROM json_each(?) AS grant_row
                     WHERE json_extract(grant_row.value, '$.platform') = c.platform
-                      AND (
-                        json_extract(grant_row.value, '$.source_id') = c.source_id
-                        OR json_extract(grant_row.value, '$.creator_id') IN (
-                            json_extract(c.metadata_json, '$.creator_id'),
-                            json_extract(c.metadata_json, '$.channel_id'),
-                            json_extract(c.metadata_json, '$.creator_frontier_id')
-                        )
-                      )
+                      AND json_extract(grant_row.value, '$.source_id') = c.source_id
                 )
-              )
             ORDER BY
               CASE WHEN c.platform='youtube'
                    THEN COALESCE(c.view_count, 0)
@@ -529,7 +519,7 @@ class DiscoveryStore:
             rows = self.connection.execute(
                 query, (
                     int(min_metric), int(max_attempts), selected_platform,
-                    authorized_grants_json, authorized_grants_json, maximum,
+                    authorized_grants_json, maximum,
                 )
             )
             by_platform[selected_platform] = [
