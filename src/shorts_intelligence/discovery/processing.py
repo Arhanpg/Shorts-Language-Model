@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -14,6 +16,8 @@ from shorts_intelligence.discovery.downloader import download_candidate
 from shorts_intelligence.discovery.models import DiscoveredCandidate
 from shorts_intelligence.discovery.storage import DiscoveryStore
 from shorts_intelligence.media.probe import MediaError, probe_video
+
+logger = logging.getLogger(__name__)
 
 
 def _safe_component(value: str) -> str:
@@ -215,6 +219,7 @@ def run_processing_batch(
     instagram_session_file: Path | None = None,
     asr_model: str = "small",
     asr_device: str = "cuda",
+    asr_timeout_seconds: float = 300.0,
     language: str | None = None,
     max_duration_seconds: float = 180.0,
     max_file_size_mb: int = 1000,
@@ -236,8 +241,17 @@ def run_processing_batch(
         )
         for candidate, _, _, _ in queued:
             platform_totals[candidate.platform]["selected"] += 1
-        for candidate, existing_path, download_status, stored_hash in queued:
+        for item_index, (candidate, existing_path, download_status, stored_hash) in enumerate(queued, start=1):
+            item_started = time.monotonic()
             platform, source_id = candidate.platform, candidate.source_id
+            logger.info(
+                "Processing video %d/%d | platform=%s | id=%s | metric=%s",
+                item_index,
+                len(queued),
+                platform,
+                source_id,
+                candidate.qualifying_metric(),
+            )
             did_download = download_attempted = download_succeeded = False
             media_validation_failed = False
             media_path: Path | None = None
@@ -252,6 +266,7 @@ def run_processing_batch(
                     max_ocr_frames=max_ocr_frames,
                     asr_model=asr_model,
                     asr_device=asr_device,
+                    asr_timeout_seconds=asr_timeout_seconds,
                     language=language,
                     enable_asr=True,
                     enable_ocr=True,
@@ -297,7 +312,20 @@ def run_processing_batch(
                     store.mark_download(platform, source_id, path=str(media_path), media_sha256=media_hash)
 
                 analysis_path = item_dir / "analysis.json"
+                logger.info(
+                    "Media ready | platform=%s | id=%s | path=%s",
+                    platform,
+                    source_id,
+                    media_path,
+                )
                 report = analyze_video(media_path, analysis_path, config=config)
+                logger.info(
+                    "Analysis stages | platform=%s | id=%s | ASR=%s | OCR=%s",
+                    platform,
+                    source_id,
+                    report.stages["asr"].engine or report.stages["asr"].status,
+                    report.stages["ocr"].engine or report.stages["ocr"].status,
+                )
                 transcript_path, transcript_count, detected_language = _write_transcript_artifacts(item_dir, candidate, report)
                 ocr_path, ocr_count = _write_ocr_artifact(item_dir, candidate, report)
                 _atomic_write_json(item_dir / "asset.json", {
@@ -326,7 +354,21 @@ def run_processing_batch(
                 )
                 processed += 1
                 platform_totals[platform]["processed"] += 1
+                logger.info(
+                    "Video complete | platform=%s | id=%s | transcript_segments=%d | ocr_spans=%d | elapsed=%.1fs",
+                    platform,
+                    source_id,
+                    transcript_count,
+                    ocr_count,
+                    time.monotonic() - item_started,
+                )
             except Exception as exc:
+                logger.exception(
+                    "Video processing failed | platform=%s | id=%s | elapsed=%.1fs",
+                    platform,
+                    source_id,
+                    time.monotonic() - item_started,
+                )
                 store.mark_processing_failure(platform, source_id, error=f"{type(exc).__name__}: {exc}")
                 if media_validation_failed or (download_attempted and not download_succeeded):
                     store.mark_download_failure(platform, source_id, error=f"{type(exc).__name__}: {exc}")

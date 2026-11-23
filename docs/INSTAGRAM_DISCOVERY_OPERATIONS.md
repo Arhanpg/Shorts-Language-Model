@@ -161,7 +161,7 @@ The browser collector now treats Chrome shutdown as a recoverable lifecycle even
 
 ### Seed target vs. graph expansion
 
-The seed bootstrap can itself meet `--target-new`. By default, this preserves the fast-stop behavior and skips the subsequent creator/related-video frontier loop. The report and terminal output now make this explicit. To keep exploring the creator graph after enough new eligible videos have been found, pass:
+The seed bootstrap can itself meet `--target-new`. In combined runs, this no longer starves explicitly configured Instagram creator seeds: those seed handles continue to be attempted within `--max-creators` and `--max-runtime-seconds`. The report exposes `instagram_seed_creators_queued` and `instagram_seed_creators_pending`. By default, reaching the target still stops optional YouTube creator/related-video expansion. To keep exploring the full creator graph after enough new eligible videos have been found, pass:
 
 ```powershell
 shorts-lm discover graph-run --platform youtube --target-new 20 --max-creators 10 --max-expansions 10 --continue-graph-after-target

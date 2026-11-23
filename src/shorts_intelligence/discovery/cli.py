@@ -1087,6 +1087,10 @@ def process_eligible_media(
         help="Inference device for Whisper and PaddleOCR; CUDA is the default.",
     ),
     language: str | None = typer.Option(None, "--language"),
+    asr_timeout_seconds: int = typer.Option(
+        300, "--asr-timeout-seconds", min=10, max=3600,
+        help="Hard per-video ASR timeout. A hung worker is terminated and the batch continues.",
+    ),
     max_duration: float = typer.Option(180.0, "--max-duration", min=1.0, max=1800.0),
     max_file_size_mb: int = typer.Option(1000, "--max-file-size-mb", min=1, max=10000),
     max_keyframes: int = typer.Option(24, "--max-keyframes", min=4, max=96),
@@ -1109,6 +1113,7 @@ def process_eligible_media(
             instagram_session_file=instagram_session_file,
             asr_model=asr_model,
             asr_device=asr_device,
+            asr_timeout_seconds=asr_timeout_seconds,
             language=language,
             max_duration_seconds=max_duration,
             max_file_size_mb=max_file_size_mb,
@@ -1146,7 +1151,10 @@ def process_eligible_media(
     console.print(f"Dataset manifest: [cyan]{summary['manifest_path']}[/cyan]")
     console.print(f"Downloads: {download_dir.expanduser().resolve()}")
     console.print(f"Artifacts: {artifact_dir.expanduser().resolve()}")
-    console.print(f"Platforms: {platform} | Inference device requested: {asr_device}")
+    console.print(
+        f"Platforms: {platform} | Inference device requested: {asr_device} | "
+        f"ASR timeout: {asr_timeout_seconds}s per video"
+    )
 
 
 @discovery_app.command("graph-run")
@@ -1251,7 +1259,9 @@ def graph_run(
         "metric_above_threshold_candidates", "youtube_creator_candidates",
         "youtube_related_candidates", "instagram_hashtag_requests",
         "hashtags_with_candidates", "creators_with_candidates", "creators_empty",
-        "creators_completed", "creators_pending", "creators_exhausted",
+        "creators_completed", "creators_pending",
+        "instagram_seed_creators_queued", "instagram_seed_creators_pending",
+        "creators_exhausted",
         "creators_blocked", "creators_failed", "creator_edges", "elapsed_seconds",
     ):
         table.add_row(key.replace("_", " ").title(), str(summary.get(key, 0)))
@@ -1270,8 +1280,9 @@ def graph_run(
         if summary.get("new_eligible", 0) >= summary.get("target_new", 0) and summary.get("target_new", 0) > 0 and not summary.get("continue_graph_after_target"):
             console.print(
                 "[yellow]The new-eligible target was reached during seed discovery; "
-                "creator/related-video expansion was skipped. Use --continue-graph-after-target "
-                "to continue bounded graph exploration in the same run.[/yellow]"
+                "optional YouTube creator/related-video expansion was skipped. "
+                "Configured Instagram seed creators are still processed within the run budget. "
+                "Use --continue-graph-after-target for full graph expansion.[/yellow]"
             )
 
     instagram_requests = summary.get("provider_requests", {}).get("instagram", {})

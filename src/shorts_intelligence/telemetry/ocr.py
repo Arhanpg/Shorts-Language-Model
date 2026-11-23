@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import numpy as np
 
 from shorts_intelligence.schemas import FrameEvidence, OCRSpan
+
+logger = logging.getLogger(__name__)
 
 
 class OCRError(RuntimeError):
@@ -21,6 +24,19 @@ def run_ocr(
     """OCR selected frames, preferring CUDA when PaddlePaddle has GPU support."""
     if not frames:
         return [], "not-run-no-frames"
+
+    paddle_cuda_available = False
+    try:
+        import paddle
+        paddle_cuda_available = bool(paddle.is_compiled_with_cuda())
+    except Exception as exc:
+        logger.warning("Could not inspect PaddlePaddle CUDA support: %s", exc)
+    if prefer_gpu and not paddle_cuda_available:
+        logger.warning(
+            "CUDA was requested for PaddleOCR, but the installed PaddlePaddle build "
+            "does not have CUDA support. OCR will run on CPU. Install the Windows "
+            "paddlepaddle-gpu wheel and re-check paddle.is_compiled_with_cuda()."
+        )
 
     # Spread OCR across the full video while reserving coverage for the hook
     # and scenes where the visual telemetry detected a candidate cut.
@@ -109,17 +125,18 @@ def run_ocr(
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,
-            device="gpu:0" if prefer_gpu else "cpu",
+            device="gpu:0" if prefer_gpu and paddle_cuda_available else "cpu",
         )
         version = "paddleocr-3"
     except TypeError:
         engine = PaddleOCR(
-            use_angle_cls=True, lang="en", show_log=False, use_gpu=prefer_gpu
+            use_angle_cls=True, lang="en", show_log=False,
+            use_gpu=prefer_gpu and paddle_cuda_available
         )
         version = "paddleocr-2"
 
     spans = []
-    actual_device = "gpu-0" if prefer_gpu else "cpu"
+    actual_device = "gpu-0" if prefer_gpu and paddle_cuda_available else "cpu"
     for evidence, image in chosen:
         if version == "paddleocr-3":
             results = engine.predict(image)

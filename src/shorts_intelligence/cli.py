@@ -64,6 +64,10 @@ def analyze(
         None, "--language",
         help="Optional language code, e.g. hi, en, mr. Omit for auto-detection.",
     ),
+    asr_timeout_seconds: int = typer.Option(
+        300, "--asr-timeout-seconds", min=10, max=3600,
+        help="Hard ASR timeout; stuck inference is terminated.",
+    ),
     no_asr: bool = typer.Option(False, "--no-asr", help="Skip speech transcription."),
     no_ocr: bool = typer.Option(False, "--no-ocr", help="Skip on-screen text extraction."),
     no_audio_analysis: bool = typer.Option(
@@ -82,6 +86,7 @@ def analyze(
         max_ocr_frames=max_ocr_frames,
         asr_model=asr_model,
         asr_device=asr_device,
+        asr_timeout_seconds=asr_timeout_seconds,
         language=language,
         enable_asr=not no_asr,
         enable_ocr=not no_ocr,
@@ -153,7 +158,40 @@ def doctor(
     """Check external binaries, Python engines and yt-dlp YouTube prerequisites."""
     deno_ok, deno_version = _supported_js_runtime("deno", (2, 3))
     node_ok, node_version = _supported_js_runtime("node", (22, 0))
+    gpu_name = None
+    nvidia_smi = shutil.which("nvidia-smi")
+    if nvidia_smi:
+        try:
+            gpu_result = subprocess.run(
+                [nvidia_smi, "--query-gpu=name", "--format=csv,noheader"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+            if gpu_result.returncode == 0 and gpu_result.stdout.strip():
+                gpu_name = gpu_result.stdout.strip().splitlines()[0]
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+
+    ctranslate2_cuda = False
+    try:
+        import ctranslate2
+        ctranslate2_cuda = ctranslate2.get_cuda_device_count() > 0
+    except Exception:
+        pass
+
+    paddle_cuda = False
+    try:
+        import paddle
+        paddle_cuda = bool(paddle.is_compiled_with_cuda())
+    except Exception:
+        pass
+
     checks = {
+        "nvidia_smi": gpu_name is not None,
+        "ctranslate2_cuda": ctranslate2_cuda,
+        "paddle_cuda": paddle_cuda,
         "ffmpeg": shutil.which("ffmpeg") is not None,
         "ffprobe": shutil.which("ffprobe") is not None,
         "opencv": importlib.util.find_spec("cv2") is not None,
@@ -182,6 +220,20 @@ def doctor(
             "[green]available[/green]" if available else "[yellow]not installed[/yellow]",
         )
     console.print(table)
+    if gpu_name:
+        console.print(f"[dim]NVIDIA GPU: {gpu_name}[/dim]")
+    if not checks["ctranslate2_cuda"]:
+        console.print(
+            "[yellow]Whisper CUDA is unavailable. Check that CUDA 12 cuBLAS "
+            "(cublas64_12.dll) and cuDNN 9 are installed and on PATH. "
+            "Whisper will otherwise fall back to CPU.[/yellow]"
+        )
+    if not checks["paddle_cuda"]:
+        console.print(
+            "[yellow]The installed PaddlePaddle build has no CUDA support. "
+            "PaddleOCR will run on CPU; install the matching Windows "
+            "paddlepaddle-gpu wheel if GPU OCR is required.[/yellow]"
+        )
     if not checks["ffmpeg"] or not checks["ffprobe"]:
         console.print("[red]FFmpeg and ffprobe are required for media processing.[/red]")
     if not checks["ytscrape"]:

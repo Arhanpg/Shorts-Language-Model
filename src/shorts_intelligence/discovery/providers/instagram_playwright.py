@@ -27,6 +27,9 @@ _PLAY_FIELDS = (
 _VIEW_FIELDS = (
     "view_count", "video_view_count", "viewCount", "videoViewCount",
 )
+_MAX_RESPONSE_NODES = 100_000
+_MAX_RESPONSE_DEPTH = 48
+
 _DISPLAY_COUNT = re.compile(
     r"(?P<number>(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:[.][0-9]+)?)"
     r"[ ]*(?P<suffix>[KMB])?",
@@ -253,8 +256,13 @@ def extract_reel_records(
 ) -> list[DiscoveredCandidate]:
     """Extract explicit Reel/video records from observed Instagram response JSON."""
     found: dict[str, DiscoveredCandidate] = {}
+    visited_nodes = 0
 
-    def walk(value: object) -> None:
+    def walk(value: object, depth: int = 0) -> None:
+        nonlocal visited_nodes
+        if depth > _MAX_RESPONSE_DEPTH or visited_nodes >= _MAX_RESPONSE_NODES:
+            return
+        visited_nodes += 1
         if isinstance(value, dict):
             code = value.get("code") or value.get("shortcode") or value.get("media_code")
             if not isinstance(code, str):
@@ -349,10 +357,14 @@ def extract_reel_records(
                 elif previous and record.description and not previous.description:
                     previous.description = record.description
             for child in value.values():
-                walk(child)
+                if visited_nodes >= _MAX_RESPONSE_NODES:
+                    break
+                walk(child, depth + 1)
         elif isinstance(value, list):
             for child in value:
-                walk(child)
+                if visited_nodes >= _MAX_RESPONSE_NODES:
+                    break
+                walk(child, depth + 1)
 
     walk(payload)
     return list(found.values())
