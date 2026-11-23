@@ -10,16 +10,17 @@ venv/
 .env.*
 !.env.example
 
-# Private user data and acquisition artifacts
-# /data/
-# /data/private/
-# /raw/
-# /processed/
-# /outputs/
-/checkpoints/
-/runs/
-/wandb/
-/mlruns/
+# Private datasets, acquired media, processing artifacts and run outputs
+/data/private/
+/data/raw/
+/data/processed/
+/outputs/
+!/outputs/README.md
+.checkpoints/
+checkpoints/
+runs/
+wandb/
+mlruns/
 .shortslm/
 *.sqlite
 *.sqlite3
@@ -33,21 +34,21 @@ venv/
 *.wav
 *.mp3
 *.flac
-# *.jsonl.private
+*.metadata.json
+*.session
+*.session-journal
 *session*
 *cookie*
 *token*.json
-*.session
-*.session-journal
-# *.metadata.json
-
-# Model artifacts and temporary files
 *.gguf
 *.safetensors
 *.pt
 *.pth
 *.ckpt
 *.tmp
+*.jsonl
+!data/private/manifest.example.jsonl
+!data/private/candidates.example.jsonl
 
 # OS/editor
 .DS_Store

@@ -37,6 +37,16 @@ def run_ocr(
             "does not have CUDA support. OCR will run on CPU. Install the Windows "
             "paddlepaddle-gpu wheel and re-check paddle.is_compiled_with_cuda()."
         )
+    elif prefer_gpu:
+        try:
+            import paddle
+            paddle.device.set_device("gpu:0")
+            logger.info("PaddleOCR selected CUDA device: %s", paddle.device.get_device())
+        except Exception as exc:
+            raise OCRError(
+                "PaddlePaddle reports CUDA support but gpu:0 could not be selected. "
+                f"Check the installed CUDA/cuDNN runtime: {type(exc).__name__}: {exc}"
+            ) from exc
 
     # Spread OCR across the full video while reserving coverage for the hook
     # and scenes where the visual telemetry detected a candidate cut.

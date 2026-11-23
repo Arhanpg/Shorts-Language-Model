@@ -302,3 +302,20 @@ def test_processing_batch_includes_both_platforms_and_prefers_cuda(
     assert set(downloaded_platforms) == {"youtube", "instagram"}
     assert requested_devices == ["cuda", "cuda"]
     assert summary["failed"] == 0
+
+
+def test_asr_and_ocr_low_signal_heuristics_flag_obvious_gibberish_only():
+    from shorts_intelligence.discovery.processing import (
+        _ocr_is_low_signal,
+        _transcript_looks_degenerate,
+    )
+
+    repeated = SimpleNamespace(text=" ".join(["ौ"] * 80))
+    normal = SimpleNamespace(text="This is a clear sentence with varied words.")
+    assert _transcript_looks_degenerate([repeated]) is True
+    assert _transcript_looks_degenerate([normal]) is False
+
+    tiny = SimpleNamespace(text="x", confidence=0.2)
+    useful = SimpleNamespace(text="GORDON RAMSAY", confidence=0.99)
+    assert _ocr_is_low_signal([tiny]) is True
+    assert _ocr_is_low_signal([useful]) is False
