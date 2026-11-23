@@ -307,6 +307,7 @@ def run_all(
     for platform in ("instagram", "youtube"):
         if platform in blocked_platforms:
             continue
+        previous_progress = -1
         for drain_index in range(1, 101):
             drain_summary = _discover(
                 platform=platform, creators=[], hashtags=[], database=database,
@@ -316,12 +317,16 @@ def run_all(
                 creator_limit=500,
             )
             pending = int(drain_summary.get("creators_pending", 0))
-            claimed = int(drain_summary.get("creators_claimed", 0))
+            progress = sum(int(drain_summary.get(key, 0)) for key in (
+                "creators_completed", "creators_empty", "creators_exhausted",
+                "creators_failed", "creators_blocked",
+            ))
             if _blocked(drain_summary):
                 blocked_platforms.append(platform)
                 break
-            if pending <= 0 or claimed <= 0:
+            if pending <= 0 or progress <= previous_progress:
                 break
+            previous_progress = progress
 
     # Final drain catches candidates added by the last discovery operation.
     final_processing = _drain_processing(
