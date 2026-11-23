@@ -379,7 +379,7 @@ def run_processing_batch(
                     duplicate_of = f"{duplicate['platform']}:{duplicate['source_id']}"
                     store.mark_duplicate_media(platform, source_id, duplicate_of=duplicate_of, media_sha256=media_hash)
                     store.mark_processing_duplicate(platform, source_id, duplicate_of=duplicate_of, media_sha256=media_hash)
-                    if did_download:
+                    if did_download or delete_media_after_processing:
                         media_path.unlink(missing_ok=True)
                         media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
                     duplicates += 1
