@@ -5,10 +5,10 @@
 ## What the command does
 
 1. Reads eligible candidates from the existing SQLite discovery database.
-2. Downloads a missing MP4 using the current platform downloader.
+2. Selects a balanced batch from YouTube and Instagram inventory, then downloads a missing MP4 using the current platform downloader.
 3. Validates the MP4 with FFprobe and calculates SHA-256.
 4. Skips exact duplicate media already in the inventory.
-5. Runs the existing multimodal analyzer, using the pinned VidTrace Whisper and PaddleOCR adapters.
+5. Runs the existing multimodal analyzer, preferring CUDA for the pinned VidTrace Whisper and PaddleOCR adapters.
 6. Saves the transcript, OCR, analysis report and a JSONL index.
 7. Keeps successful downloads so a later ASR/OCR retry does not download the MP4 again.
 
@@ -24,7 +24,7 @@ shorts-lm doctor
 Start with ten videos:
 
 ```powershell
-shorts-lm discover process --limit 10 --min-metric 1000000 --asr-model small --asr-device cpu
+shorts-lm discover process --platform all --limit 10 --min-metric 1000000 --asr-model small --device cuda
 ```
 
 Useful options include `--database`, `--download-dir`, `--artifact-dir`, `--dataset-manifest`, `--language`, `--max-duration`, `--max-file-size-mb`, `--max-keyframes` and `--max-ocr-frames`.
@@ -51,7 +51,9 @@ MP4 files are stored under `data/private/acquired/`. The JSONL index defaults to
 - Exact duplicate files are skipped using SHA-256.
 - Completed videos are not processed again.
 
-The batch worker is sequential and bounded. Validate 10 videos first, then 100 and 300. Review transcript/OCR accuracy and disk usage before larger runs.
+The batch worker is sequential and bounded. With both platforms present, it alternates YouTube and Instagram candidates within the total limit. The command only processes candidates already saved in SQLite; run `shorts-lm discover graph-run --platform all ...` first to discover candidates. Validate 10 videos first, then 100 and 300. Review transcript/OCR accuracy and disk usage before larger runs.
+
+CUDA is preferred by default for Whisper and PaddleOCR. Actual devices are included in the ASR/OCR engine names saved with each record. If the Windows CUDA/cuDNN or GPU PaddlePaddle runtime is missing, an adapter may fall back to CPU; follow [GPU setup](GPU_SETUP_WINDOWS.md) and verify the saved engine metadata before assuming the GPU was used.
 
 ## Long-term corpus goal
 
