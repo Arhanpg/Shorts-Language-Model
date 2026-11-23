@@ -174,14 +174,55 @@ def research_leads(research_dir: Path) -> dict[str,list[dict]]:
     found={"youtube":[],"instagram":[]}
     path=research_dir/"creators.csv"
     if not path.is_file(): path=research_dir/"v0.1"/"creators.csv"
-    if not path.is_file(): return found
-    with path.open("r",encoding="utf-8-sig",newline="") as f:
-        for row in csv.DictReader(f):
-            for platform,col,url_col in (("youtube","youtube_channel_handles","youtube_urls"),("instagram","instagram_handles","instagram_urls")):
-                handles=[x.strip().lstrip("@") for x in (row.get(col) or "").split(";") if x.strip()]
-                urls=[x.strip() for x in (row.get(url_col) or "").split(";") if x.strip()]
-                for i,h in enumerate(handles):
-                    found[platform].append({"account_id":f"{platform[:2]}:research:{h.casefold()}","platform":platform,"account_handle":f"@{h}","account_url":urls[i] if i<len(urls) else "","display_name":row.get("creator_name",""),"entity_type":"unknown_person_or_org","country":row.get("country_reported",""),"region":row.get("region_reported",""),"language":row.get("primary_languages_reported","und"),"category":row.get("categories_reported",""),"followers_count":"","videos_count":"","views_count":"","rank":"","joined_date":"","source_dataset":"submitted_AI_research_and_repository_seeds","source_url":"","source_license":"not specified in submitted seed source","source_observed_at":"2026-11-23 uploads","discovery_status":"AI_OR_REPOSITORY_LEAD_NEEDS_LIVE_RECHECK","short_form_status":"NOT_VERIFIED","rights_status":"NOT_ASSESSED_DISCOVERY_ONLY","last_independent_verification_at":"","notes":"Submitted research lead; reported status is not independently confirmed and does not grant media rights."})
+    if not path.is_file(): path=research_dir/"creators_ai_research_leads_v0.1.csv"
+    if path.is_file():
+        with path.open("r",encoding="utf-8-sig",newline="") as f:
+            for row in csv.DictReader(f):
+                for platform,col,url_col in (("youtube","youtube_channel_handles","youtube_urls"),("instagram","instagram_handles","instagram_urls")):
+                    handles=[x.strip().lstrip("@") for x in (row.get(col) or "").split(";") if x.strip()]
+                    urls=[x.strip() for x in (row.get(url_col) or "").split(";") if x.strip()]
+                    for i,h in enumerate(handles):
+                        found[platform].append({"account_id":f"{platform[:2]}:research:{h.casefold()}","platform":platform,"account_handle":f"@{h}","account_url":urls[i] if i<len(urls) else "","display_name":row.get("creator_name",""),"entity_type":"unknown_person_or_org","country":row.get("country_reported",""),"region":row.get("region_reported",""),"language":row.get("primary_languages_reported","und"),"category":row.get("categories_reported",""),"followers_count":"","videos_count":"","views_count":"","rank":"","joined_date":"","source_dataset":"submitted_AI_research_and_repository_seeds","source_url":"","source_license":"not specified in submitted seed source","source_observed_at":"2026-11-23 uploads","discovery_status":"AI_OR_REPOSITORY_LEAD_NEEDS_LIVE_RECHECK","short_form_status":"NOT_VERIFIED","rights_status":"NOT_ASSESSED_DISCOVERY_ONLY","last_independent_verification_at":"","notes":"Submitted research lead; reported status is not independently confirmed and does not grant media rights."})
+    # The checked-in 100-handle Instagram starter file is always merged, even when
+    # the full v0.1 creator catalogue ZIP has not been installed locally.
+    instagram_seed_path=research_dir.parent/"instagram_creator_seeds.txt"
+    if not instagram_seed_path.is_file(): instagram_seed_path=Path("data/instagram_creator_seeds.txt")
+    if instagram_seed_path.is_file():
+        for raw in instagram_seed_path.read_text(encoding="utf-8-sig").splitlines():
+            handle=raw.strip().lstrip("@")
+            if not handle or handle.startswith("#"): continue
+            found["instagram"].append({
+                "account_id":f"ig:repository_seed:{handle.casefold()}","platform":"instagram",
+                "account_handle":f"@{handle}","account_url":f"https://www.instagram.com/{handle}/",
+                "display_name":"","entity_type":"unknown_person_or_org","country":"","region":"",
+                "language":"und","category":"","followers_count":"","videos_count":"","views_count":"",
+                "rank":"","joined_date":"","source_dataset":"checked_in_repository_instagram_creator_seeds",
+                "source_url":"https://github.com/Arhanpg/Shorts-Language-Model/blob/main/data/instagram_creator_seeds.txt",
+                "source_license":"not specified; public profile link only","source_observed_at":"repository seed file",
+                "discovery_status":"REPOSITORY_SEED_NEEDS_LIVE_RECHECK","short_form_status":"NOT_VERIFIED_FOR_REELS",
+                "rights_status":"NOT_ASSESSED_DISCOVERY_ONLY","last_independent_verification_at":"",
+                "notes":"Existing project starter handle; identity, originality and active Reels publishing need live recheck. No media rights implied."
+            })
+    youtube_seed_path=research_dir.parent/"youtube_channel_seeds.txt"
+    if not youtube_seed_path.is_file(): youtube_seed_path=Path("data/youtube_channel_seeds.txt")
+    if youtube_seed_path.is_file():
+        for raw in youtube_seed_path.read_text(encoding="utf-8-sig").splitlines():
+            url=raw.strip()
+            if not url or url.startswith("#"): continue
+            handle_match=re.search(r"youtube\.com/@([^/?#]+)",url,re.I)
+            handle=handle_match.group(1) if handle_match else url
+            found["youtube"].append({
+                "account_id":f"yt:repository_seed:{handle.casefold()}","platform":"youtube",
+                "account_handle":f"@{handle}" if handle_match else "","account_url":url,
+                "display_name":"","entity_type":"unknown_person_or_org","country":"","region":"",
+                "language":"und","category":"","followers_count":"","videos_count":"","views_count":"",
+                "rank":"","joined_date":"","source_dataset":"checked_in_repository_youtube_creator_seeds",
+                "source_url":"https://github.com/Arhanpg/Shorts-Language-Model/blob/main/data/youtube_channel_seeds.txt",
+                "source_license":"not specified; public profile link only","source_observed_at":"repository seed file",
+                "discovery_status":"REPOSITORY_SEED_NEEDS_LIVE_RECHECK","short_form_status":"NOT_VERIFIED_FOR_SHORTS",
+                "rights_status":"NOT_ASSESSED_DISCOVERY_ONLY","last_independent_verification_at":"",
+                "notes":"Existing project starter URL; identity, originality and active Shorts publishing need live recheck. No media rights implied."
+            })
     return found
 
 def dedupe(rows: list[dict]) -> list[dict]:
@@ -198,13 +239,25 @@ def write_csv(path: Path,rows: list[dict],fields: list[str]) -> None:
     with path.open("w",encoding="utf-8-sig",newline="") as f:
         writer=csv.DictWriter(f,fieldnames=fields,extrasaction="ignore"); writer.writeheader(); writer.writerows(rows)
 
+def youtube_scan_target(target: int) -> int:
+    """Oversample raw source rows so incomplete channel records cannot underfill the final list."""
+    return target + max(250, int(target * 0.05))
+
+
 def build(research_dir: Path,out_dir: Path,yt_limit: int,ig_limit: int,tag_target: int,hashtags_only: bool=False) -> dict:
     out_dir.mkdir(parents=True,exist_ok=True)
     tags=build_tags(research_dir,tag_target); write_csv(out_dir/"hashtags_generated_candidates.csv",tags,TAG_FIELDS)
     if hashtags_only: return {"counts":{"hashtags":len(tags)},"network_sources_downloaded":False}
-    yt_raw,yt_meta=fetch_youtube(yt_limit); ig_raw,ig_meta=fetch_instagram(ig_limit)
+    youtube_scan_limit=youtube_scan_target(yt_limit)
+    yt_raw,yt_meta=fetch_youtube(youtube_scan_limit); ig_raw,ig_meta=fetch_instagram(ig_limit)
     yt=[x for r in yt_raw if (x:=map_youtube(r))]; ig=[x for r in ig_raw if (x:=map_instagram(r))]
     leads=research_leads(research_dir); yt,ig=dedupe(yt+leads["youtube"]),dedupe(ig+leads["instagram"])
+    if len(yt)<yt_limit:
+        raise RuntimeError(f"Only {len(yt)} unique YouTube channel candidates survived normalization; target={yt_limit}. Increase source scan only after reviewing data quality.")
+    if len(ig)<ig_limit:
+        raise RuntimeError(f"Only {len(ig)} unique Instagram account candidates survived normalization; target={ig_limit}. No fabricated top-up was performed.")
+    yt_meta["raw_rows_requested_for_valid_account_target"]=youtube_scan_limit
+    yt_meta["unique_output_candidates"]=len(yt)
     people=[x for x in ig if x["entity_type"]=="person"]; orgs=[x for x in ig if x["entity_type"]=="organization"]
     for name,rows in (("youtube_channel_candidates.csv",yt),("instagram_account_candidates.csv",ig),("instagram_person_candidates.csv",people),("instagram_organization_publisher_candidates.csv",orgs)):
         write_csv(out_dir/name,rows,ACCOUNT_FIELDS)

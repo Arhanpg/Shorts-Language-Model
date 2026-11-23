@@ -39,12 +39,25 @@
         "AI-reported verification is not independent confirmation",
         "rights remain discovery-only"
       ]
+    },
+    {
+      "id": "gemini_and_other_ai_creator_leads",
+      "dataset": "Shorts-LM submitted Gemini Deep Research and other-AI creator catalogue plus checked-in project starter seeds",
+      "url": "https://github.com/Arhanpg/Shorts-Language-Model",
+      "access": "300-row normalized creators.csv is optionally merged after installing Research Catalogue v0.1; checked-in Instagram creator seed file is always merged",
+      "license": "not specified for imported leads",
+      "limitations": [
+        "reported verification is not independent verification",
+        "profile ownership, activity and short-form publishing must be rechecked",
+        "rights are not assessed"
+      ]
     }
   ],
   "claims_not_made": [
     "10,000 unique human identities per platform are not guaranteed.",
     "No account is assumed to be active on Shorts or Reels.",
     "No video retrieval or training permission is inferred from profile visibility or dataset license.",
-    "Generated hashtag candidates are not observed popularity measurements."
+    "Generated hashtag candidates are not observed popularity measurements.",
+    "AI and repository starter handles are retained as extra leads only and do not count as fresh verification."
   ]
 }

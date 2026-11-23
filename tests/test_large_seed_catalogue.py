@@ -11,6 +11,8 @@ from scripts.build_large_seed_catalogue import (
     ACCOUNT_FIELDS,
     TAG_FIELDS,
     build_tags,
+    research_leads,
+    youtube_scan_target,
     dedupe,
     map_instagram,
     map_youtube,
@@ -151,3 +153,22 @@ def test_http_bytes_adds_optional_hugging_face_token(monkeypatch):
         return DummyResponse()
     monkeypatch.setattr(module, "urlopen", fake_urlopen)
     assert module.http_bytes("https://example.test/data") == b"ok"
+
+
+def test_youtube_scan_target_oversamples_raw_rows():
+    assert youtube_scan_target(10_000) == 10_500
+    assert youtube_scan_target(1_000) == 1_250
+
+
+def test_repository_instagram_seeds_are_loaded_when_v01_csv_missing(tmp_path):
+    from scripts.build_large_seed_catalogue import research_leads
+    data_dir = tmp_path / "data"
+    research_dir = data_dir / "research_catalogue"
+    research_dir.mkdir(parents=True)
+    (data_dir / "instagram_creator_seeds.txt").write_text(
+        "# comment\\ncreator_one\\n@creator_two\\n", encoding="utf-8"
+    )
+    leads = research_leads(research_dir)
+    handles = {row["account_handle"] for row in leads["instagram"]}
+    assert handles == {"@creator_one", "@creator_two"}
+    assert all(row["rights_status"] == "NOT_ASSESSED_DISCOVERY_ONLY" for row in leads["instagram"])
