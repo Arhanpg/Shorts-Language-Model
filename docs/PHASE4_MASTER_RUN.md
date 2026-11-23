@@ -40,9 +40,9 @@ The command uses conservative defaults suitable for a resumable long-running cam
 - Processes stable YouTube `UC...` channel IDs in bounded batches. Handle-only/unresolved YouTube records are counted and skipped rather than guessed.
 - Submits all normalized hashtags to Instagram and YouTube independently, in provider-safe batches (50 Instagram / 20 YouTube by default).
 - Uses a persistent SQLite discovery inventory and creator frontier, so rerunning the command resumes known state instead of starting from scratch.
-- Runs acquisition and local ASR, OCR, audio and visual analysis for eligible confirmed Shorts/Reels.
+- Runs acquisition and local ASR, OCR, audio and visual analysis for eligible confirmed Shorts/Reels on both platforms. Instagram candidates enter the same SQLite processing queue as YouTube; discovery itself is metadata-only, while the master runner explicitly drains the shared processing queue after each discovery batch.
 - Deletes each temporary downloaded video after its processing attempt. JSON analysis, transcript, OCR, metadata, hashes and the cumulative feature manifest remain.
-- Caps processing attempts (2 by default), checkpoints reports after each batch, and stops further discovery for a platform when an access restriction is reported.
+- Caps processing attempts (2 by default), checkpoints reports after each batch, and stops further discovery for a platform when an access restriction is reported. Media validation failures such as duration/file-size/format violations are classified as terminal `media_rejected` outcomes so the same invalid media is not downloaded repeatedly.
 
 ## Outputs
 
@@ -57,6 +57,6 @@ The command uses conservative defaults suitable for a resumable long-running cam
 
 The default qualifying threshold is 1,000,000 native views/plays. Set `--min-metric 0` only for a deliberate unfiltered test. This is a multi-hour or multi-day campaign, not a promise of 10,000 successful account resolutions or 10,000 processed videos. Catalogue rows are candidate leads; some accounts may be inactive, inaccessible, invalid, private, blocked, or have no eligible short-form videos. YouTube handle-only rows cannot be resolved from a handle by guessing. Provider results are best-effort samples and do not prove a globally complete popularity ranking. Instagram plays and YouTube views are stored as separate metrics.
 
-The runner checkpoints discovery and processing state. If interrupted, run the same command again. It has bounded processing retries and no unbounded retry loop. A reported restriction stops further discovery on that platform; wait for the platform to restore ordinary access before manually restarting. It does not bypass restrictions.
+The runner checkpoints discovery and processing state. If interrupted, run the same command again. A successful item follows download → ffprobe validation and SHA-256 → duplicate check → ASR/OCR/audio/visual analysis → atomic JSON/transcript/OCR artifact writes → SQLite completion → temporary media deletion. Items rejected by validation are recorded as rejected and are not silently counted as successfully processed. It has bounded processing retries and no unbounded retry loop. A reported restriction stops further discovery on that platform; wait for the platform to restore ordinary access before manually restarting. It does not bypass restrictions.
 
 Feature extraction is not the same as dataset release or training authorization. Phase 4 output should be audited and annotated before Phase 5 model development.
