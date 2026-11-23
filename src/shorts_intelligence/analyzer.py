@@ -189,7 +189,9 @@ def analyze_video(
             ]
             try:
                 ocr_spans, ocr_engine = run_ocr(
-                    frames, max_frames=config.max_ocr_frames, prefer_gpu=False
+                    frames,
+                    max_frames=config.max_ocr_frames,
+                    prefer_gpu=config.asr_device in {"cuda", "auto"},
                 )
                 stages["ocr"] = StageStatus(
                     status="complete" if ocr_spans else "partial",
