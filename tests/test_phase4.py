@@ -4,7 +4,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from shorts_intelligence.phase4 import phase4_app, _identity, _tag, _training_rights
+from shorts_intelligence.phase4 import _identity, _tag, _training_rights, phase4_app
 
 
 def test_unicode_normalization():
