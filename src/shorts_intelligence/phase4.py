@@ -44,7 +44,10 @@ def _identity(row: dict[str, str]) -> str | None:
     elif "instagram.com" in value.casefold():
         match = re.search(r"instagram\.com/([^/?#]+)", value, re.I)
         value = match.group(1) if match else value
-    value = value.strip().lstrip("@").rstrip("/").casefold()
+    value = value.strip().lstrip("@").rstrip("/")
+    if re.fullmatch(r"UC[A-Za-z0-9_-]{22}", value):
+        return value
+    value = value.casefold()
     return value if re.fullmatch(r"[a-z0-9._-]{1,64}", value) else None
 
 
@@ -153,6 +156,7 @@ def catalogue(
     _write_lines(output_dir / "instagram_creator_seeds.txt", ig_handles)
     _write_lines(output_dir / "youtube_channel_id_seeds.txt", yt_ids)
     _write_lines(output_dir / "instagram_hashtags.txt", [row["hashtag"] for row in tags])
+    _write_lines(output_dir / "all_hashtags.txt", [row["hashtag"] for row in tags])
     batch_dir = output_dir / "batches"
     batch_dir.mkdir(parents=True, exist_ok=True)
     batches = []
