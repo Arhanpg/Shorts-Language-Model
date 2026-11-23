@@ -302,6 +302,7 @@ def run_processing_batch(
     keep_frame_artifacts: bool = False,
     delete_media_after_processing: bool = False,
     max_processing_attempts: int = 2,
+    authorized_grants_json: str = "[]",
 ) -> dict[str, int | str]:
     """Download and process a bounded batch of discovered Shorts and Reels."""
     processed = downloaded = failed = rejected = duplicates = 0
@@ -315,6 +316,7 @@ def run_processing_batch(
             limit=limit,
             platform=platform,
             max_attempts=max_processing_attempts,
+            authorized_grants_json=authorized_grants_json,
         )
         for candidate, _, _, _ in queued:
             platform_totals[candidate.platform]["selected"] += 1
