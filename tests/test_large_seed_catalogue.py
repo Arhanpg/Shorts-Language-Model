@@ -172,3 +172,18 @@ def test_repository_instagram_seeds_are_loaded_when_v01_csv_missing(tmp_path):
     handles = {row["account_handle"] for row in leads["instagram"]}
     assert handles == {"@creator_one", "@creator_two"}
     assert all(row["rights_status"] == "NOT_ASSESSED_DISCOVERY_ONLY" for row in leads["instagram"])
+
+
+def test_compact_ai_creator_handle_leads_are_loaded(tmp_path):
+    research_dir = tmp_path / "research_catalogue"
+    research_dir.mkdir()
+    (research_dir / "creators_ai_research_leads_v0.1.csv").write_text(
+        "platform,handle,profile_url,creator_name,language_reported,region_reported,source_record_ids,verification_state,source_reported_verification_status,rights_status\\n"
+        "instagram,kn_creator,https://www.instagram.com/kn_creator/,Kannada Creator,Kannada,Mysuru,gemini:001,GEMINI_REPORTED_VERIFIED_NOT_INDEPENDENTLY_RECHECKED,VERIFIED,NOT_ASSESSED_DISCOVERY_ONLY\\n"
+        "youtube,yt_creator,https://www.youtube.com/@yt_creator,YouTube Creator,Hindi,Delhi,other:002,UNVERIFIED_RESEARCH_LEAD,UNVERIFIED,NOT_ASSESSED_DISCOVERY_ONLY\\n",
+        encoding="utf-8",
+    )
+    leads = research_leads(research_dir)
+    assert leads["instagram"][0]["account_handle"] == "@kn_creator"
+    assert leads["youtube"][0]["account_handle"] == "@yt_creator"
+    assert "not independent confirmation" in leads["instagram"][0]["notes"]

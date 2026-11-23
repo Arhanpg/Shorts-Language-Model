@@ -178,6 +178,33 @@ def research_leads(research_dir: Path) -> dict[str,list[dict]]:
     if path.is_file():
         with path.open("r",encoding="utf-8-sig",newline="") as f:
             for row in csv.DictReader(f):
+                # Compact 291-row file exported from the Gemini/other-AI catalogue.
+                if row.get("platform") and row.get("handle"):
+                    platform=row["platform"].strip().casefold()
+                    handle=row["handle"].strip().lstrip("@")
+                    if platform not in found or not handle: continue
+                    found[platform].append({
+                        "account_id":f"{platform[:2]}:ai_research:{handle.casefold()}",
+                        "platform":platform,"account_handle":f"@{handle}",
+                        "account_url":row.get("profile_url",""),
+                        "display_name":row.get("creator_name",""),
+                        "entity_type":"unknown_person_or_org",
+                        "country":row.get("country_reported",""),
+                        "region":row.get("region_reported",""),
+                        "language":row.get("language_reported","und"),
+                        "category":row.get("categories_reported",""),
+                        "followers_count":"","videos_count":"","views_count":"","rank":"","joined_date":"",
+                        "source_dataset":"submitted_Gemini_and_other_AI_research",
+                        "source_url":"",
+                        "source_license":"not specified for the imported account leads",
+                        "source_observed_at":"2026-11-23 research reconciliation",
+                        "discovery_status":"AI_RESEARCH_LEAD_NEEDS_LIVE_RECHECK",
+                        "short_form_status":"NOT_VERIFIED",
+                        "rights_status":"NOT_ASSESSED_DISCOVERY_ONLY",
+                        "last_independent_verification_at":"",
+                        "notes":"AI/source-reported state="+row.get("verification_state","UNKNOWN")+"; reported verification="+row.get("source_reported_verification_status","UNKNOWN")+"; source records="+row.get("source_record_ids","")+"; not independent confirmation and no media rights are granted."
+                    })
+                    continue
                 for platform,col,url_col in (("youtube","youtube_channel_handles","youtube_urls"),("instagram","instagram_handles","instagram_urls")):
                     handles=[x.strip().lstrip("@") for x in (row.get(col) or "").split(";") if x.strip()]
                     urls=[x.strip() for x in (row.get(url_col) or "").split(";") if x.strip()]

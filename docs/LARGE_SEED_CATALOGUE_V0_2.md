@@ -4,7 +4,7 @@ Prepared 23 November 2026. This release builds large, auditable discovery candid
 
 ## Build the creator/account lists
 
-You can run this builder directly from the repository root; it uses the committed v0.2 compositional hashtag catalogue. To additionally merge the Gemini/other-AI creator leads, install the full research catalogue v0.1 first using the installer from PR #31. The builder always merges the checked-in 100-handle Instagram seed file, even if the full v0.1 ZIP has not been installed:
+You can run this builder directly from the repository root; it uses the committed v0.2 compositional hashtag catalogue. The builder automatically merges the compact 291-handle Gemini/other-AI creator lead CSV checked into `data/research_catalogue/` and the checked-in 100-handle Instagram starter file. To additionally merge the full 300-record creator catalogue with its complete notes, install the full research catalogue v0.1 first using the installer from PR #31:
 
     python scripts/build_large_seed_catalogue.py --research-dir data/research_catalogue/v0.1 --output-dir data/generated_seed_catalogue/v0.2 --youtube-limit 10000 --instagram-limit 10000 --hashtag-target 10650
 
