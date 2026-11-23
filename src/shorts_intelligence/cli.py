@@ -27,6 +27,7 @@ from shorts_intelligence.discovery.cli import discovery_app
 from shorts_intelligence.media.probe import MediaError
 from shorts_intelligence.phase4 import phase4_app
 from shorts_intelligence.pilot.cli import pilot_app
+from shorts_intelligence.url_collection import url_collection_app
 
 app = typer.Typer(
     name="shorts-lm",
@@ -264,3 +265,4 @@ app.add_typer(pilot_app, name="pilot")
 app.add_typer(discovery_app, name="discover")
 app.add_typer(phase4_app, name="phase4")
 app.add_typer(campaign_app, name="campaign")
+app.add_typer(url_collection_app, name="urls")
