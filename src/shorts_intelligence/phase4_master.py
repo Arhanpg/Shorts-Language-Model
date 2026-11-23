@@ -160,11 +160,6 @@ def _drain_processing(
     return dict(totals)
 
 
-@typer.Typer
-def _unused() -> None:
-    """Internal placeholder; command is registered on the existing Phase 4 app."""
-
-
 from shorts_intelligence.phase4 import phase4_app
 
 
