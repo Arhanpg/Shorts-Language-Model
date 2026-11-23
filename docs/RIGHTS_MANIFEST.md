@@ -7,7 +7,9 @@ Default local path: `data/private/rights-manifest.jsonl`. Keep this file and all
 Each non-empty line must be one JSON object with:
 
 - `platform`: `instagram` or `youtube`
-- `source_id`: exact Instagram Reel shortcode or YouTube video ID
+- Exactly one of `source_id` or `creator_id`:
+  - `source_id`: exact Instagram Reel shortcode or YouTube video ID
+  - `creator_id`: exact Instagram username (without `@`) or stable YouTube channel ID; authorizes all discovered items attributed to that creator
 - `media_retrieval`: `true`
 - `media_analysis`: `true`
 - `temporary_processing`: `true`
@@ -34,7 +36,7 @@ Example schema only (replace every placeholder with a real grant; do not use thi
 }
 ```
 
-The command currently supports exact-item grants only. A public profile, a public Reel URL, a creator-list entry, a dataset compilation licence, or a successful extractor response is not itself permission to retrieve, retain, analyze, or train on the underlying video. The evidence reference is an audit pointer; ShortsLM does not independently authenticate the consent or licence.
+The command supports exact-item grants and creator-scope grants. Creator-scope grants must correspond to explicit permission covering the creator's videos and all listed scopes; do not infer creator permission from a public profile or follow relationship. A public profile, a public Reel URL, a creator-list entry, a dataset compilation licence, or a successful extractor response is not itself permission to retrieve, retain, analyze, or train on the underlying video. The evidence reference is an audit pointer; ShortsLM does not independently authenticate the consent or licence.
 
 If you do not have item-specific permission, leave that item out. It can remain in the discovery metadata inventory, but its MP4 will not be acquired or processed. Do not fabricate grants or evidence references.
 
