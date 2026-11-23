@@ -67,6 +67,7 @@ def _discover(
     min_metric: int,
     target_new: int,
     report_path: Path,
+    creator_limit: int | None = None,
 ) -> dict[str, Any]:
     with DiscoveryStore(database) as store:
         summary = asyncio.run(run_creator_graph(
@@ -77,7 +78,7 @@ def _discover(
             max_runtime_seconds=runtime_seconds,
             max_seed_queries=0,
             max_hashtag_queries=min(20, len(hashtags)) if platform == "youtube" else 0,
-            max_creators=min(500, len(creators)),
+            max_creators=min(500, len(creators)) if creator_limit is None else creator_limit,
             max_expansions=0,
             max_depth=0,
             instagram_profile_dir=profile_dir if platform == "instagram" else None,
@@ -264,6 +265,8 @@ def run_all(
         except Exception as exc:
             console.print(f"[red]Discovery batch failed ({label}): {type(exc).__name__}: {exc}[/red]")
             totals["discovery_batches_failed"] += 1
+            blocked_platforms.append(platform)
+            console.print(f"[yellow]Stopping {platform} discovery after an unhandled batch error to avoid repeated failing requests.[/yellow]")
             continue
         discovery_batches += 1
         totals["discovery_candidates_observed"] += int(summary.get("candidates_observed", 0))
@@ -299,6 +302,26 @@ def run_all(
             f"[green]Checkpoint saved[/green] | manifest records={processing.get('manifest_records', 0)} "
             f"| processing failures this drain={processing.get('failed', 0)}"
         )
+
+    # Drain any creator-frontier work left by runtime-limited discovery batches.
+    for platform in ("instagram", "youtube"):
+        if platform in blocked_platforms:
+            continue
+        for drain_index in range(1, 101):
+            drain_summary = _discover(
+                platform=platform, creators=[], hashtags=[], database=database,
+                profile_dir=instagram_profile_dir, runtime_seconds=discovery_runtime_seconds,
+                min_metric=min_metric, target_new=target_new_per_batch,
+                report_path=reports_dir / f"{platform}-frontier-drain-{drain_index:03d}.json",
+                creator_limit=500,
+            )
+            pending = int(drain_summary.get("creators_pending", 0))
+            claimed = int(drain_summary.get("creators_claimed", 0))
+            if _blocked(drain_summary):
+                blocked_platforms.append(platform)
+                break
+            if pending <= 0 or claimed <= 0:
+                break
 
     # Final drain catches candidates added by the last discovery operation.
     final_processing = _drain_processing(
