@@ -14,6 +14,7 @@ venv/
 /data/private/
 /data/raw/
 /data/processed/
+/data/generated_seed_catalogue/
 /outputs/
 .shortslm/
 *.sqlite
