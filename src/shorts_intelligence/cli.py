@@ -17,6 +17,7 @@ from rich.table import Table
 
 from shorts_intelligence import __version__
 from shorts_intelligence.analyzer import analyze_video
+from shorts_intelligence.campaign import campaign_app
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.discovery.cli import discovery_app
 from shorts_intelligence.media.probe import MediaError
@@ -258,3 +259,4 @@ def version() -> None:
 app.add_typer(pilot_app, name="pilot")
 app.add_typer(discovery_app, name="discover")
 app.add_typer(phase4_app, name="phase4")
+app.add_typer(campaign_app, name="campaign")
