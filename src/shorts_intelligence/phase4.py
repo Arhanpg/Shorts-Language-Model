@@ -154,8 +154,10 @@ def catalogue(
 
     ig_handles = [row["identity"] for row in creators["instagram"]]
     yt_ids = [row["identity"] for row in creators["youtube"] if re.fullmatch(r"UC[A-Za-z0-9_-]{22}", row["identity"])]
+    yt_creator_refs = [value if value.startswith("UC") else f"@{value}" for value in (row["identity"] for row in creators["youtube"])]
     _write_lines(output_dir / "instagram_creator_seeds.txt", ig_handles)
     _write_lines(output_dir / "youtube_channel_id_seeds.txt", yt_ids)
+    _write_lines(output_dir / "youtube_creator_seeds.txt", yt_creator_refs)
     _write_lines(output_dir / "instagram_hashtags.txt", [row["hashtag"] for row in tags])
     _write_lines(output_dir / "all_hashtags.txt", [row["hashtag"] for row in tags])
     batch_dir = output_dir / "batches"
@@ -164,6 +166,7 @@ def catalogue(
     for kind, platform, values, chunk_size in (
         ("instagram_creators", "instagram", ig_handles, batch_size),
         ("youtube_channel_ids", "youtube", yt_ids, batch_size),
+        ("youtube_creators", "youtube", yt_creator_refs, batch_size),
         ("hashtags", "all", [row["hashtag"] for row in tags], hashtag_batch_size),
     ):
         for offset in range(0, len(values), chunk_size):
@@ -177,6 +180,8 @@ def catalogue(
         "source_rows": source_counts, "unique_instagram_accounts": len(ig_handles),
         "unique_youtube_channel_candidates": len(creators["youtube"]),
         "youtube_channel_id_seedable": len(yt_ids),
+        "youtube_creator_seedable": len(yt_creator_refs),
+        "youtube_handle_seedable": len(yt_creator_refs) - len(yt_ids),
         "youtube_handle_only_or_unresolved": len(creators["youtube"]) - len(yt_ids),
         "unique_normalized_hashtags": len(tags), "invalid_rows": invalid, "creator_batch_size": batch_size, "hashtag_batch_size": hashtag_batch_size,
         "batches": batches,
@@ -185,7 +190,7 @@ def catalogue(
             "AI verification labels are source claims, not independent verification.",
             "Hashtag candidates have no assumed popularity or measured retrieval yield.",
             "Public visibility and catalogue licences do not grant media or model-training rights.",
-            "YouTube channel handles without a stable UC channel ID are exported for review, not crawled as channel IDs.",
+            "YouTube channel candidates are exported as stable UC IDs or @handles; provider support for handle resolution is required at crawl time.",
         ],
     }
     (output_dir / "catalogue_report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -193,7 +198,7 @@ def catalogue(
     table.add_column("Inventory")
     table.add_column("Count", justify="right")
     for name, count in (("Instagram accounts", len(ig_handles)), ("YouTube channel candidates", len(creators["youtube"])),
-                        ("YouTube channel IDs", len(yt_ids)), ("Unique hashtags", len(tags)), ("Batches", len(batches))):
+                        ("YouTube channel IDs", len(yt_ids)), ("YouTube creator seeds", len(yt_creator_refs)), ("Unique hashtags", len(tags)), ("Batches", len(batches))):
         table.add_row(name, str(count))
     console.print(table)
     console.print(f"[green]Catalogue batches written:[/green] {output_dir}")
