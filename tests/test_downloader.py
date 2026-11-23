@@ -32,7 +32,7 @@ def test_downloader_prefers_node_runtime_when_node_is_available(monkeypatch, tmp
             return None
 
         def extract_info(self, url, download=True):
-            assert url == candidate.canonical_url
+            assert url == str(candidate.canonical_url)
             assert download is True
             media_path = tmp_path / f"{candidate.source_id}.mp4"
             media_path.write_bytes(b"fake-mp4")
