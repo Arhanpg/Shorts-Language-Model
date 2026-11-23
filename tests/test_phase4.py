@@ -9,6 +9,8 @@ from shorts_intelligence.phase4 import phase4_app, _identity, _tag, _training_ri
 
 def test_unicode_normalization():
     assert _identity({"profile_url": "https://instagram.com/Some.User/"}) == "some.user"
+    channel_id = "UC" + "a" * 22
+    assert _identity({"channel_id": channel_id}) == channel_id
     assert _tag({"hashtag": "#ಕನ್ನಡ"}) == "ಕನ್ನಡ"
     assert _tag({"hashtag": "two words"}) is None
 
