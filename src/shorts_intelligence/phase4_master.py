@@ -176,7 +176,7 @@ def run_all(
     instagram_session_user: str | None = typer.Option(None, "--instagram-session-user"),
     instagram_session_file: Path | None = typer.Option(None, "--instagram-session-file", exists=True, readable=True),
     seed: int = typer.Option(20261123, "--seed"),
-    min_metric: int = typer.Option(0, "--min-metric", min=0),
+    min_metric: int = typer.Option(1_000_000, "--min-metric", min=0),
     target_new_per_batch: int = typer.Option(2000, "--target-new-per-batch", min=1, max=2000),
     discovery_runtime_seconds: int = typer.Option(900, "--discovery-runtime-seconds", min=30, max=900),
     creator_batch_size: int = typer.Option(100, "--creator-batch-size", min=1, max=500),
@@ -229,6 +229,10 @@ def run_all(
         f"unique hashtags={len(hashtags)} (each platform)"
     )
     console.print("[yellow]Instagram and YouTube metrics are kept platform-specific. Media files are temporary and deleted after each processing attempt.[/yellow]")
+    if not instagram_creators:
+        raise typer.BadParameter("The normalized catalogue contains zero Instagram creators. Check source CSV headers and catalogue inputs.")
+    if not youtube_creators:
+        console.print("[bold yellow]No stable YouTube UC channel IDs were found. YouTube creator-harvest batches will be skipped; YouTube hashtag discovery will still run. Handle-only leads are reported for a separate resolver workflow.[/bold yellow]")
 
     totals: Counter[str] = Counter()
     blocked_platforms: list[str] = []
@@ -309,13 +313,18 @@ def run_all(
             continue
         previous_progress = -1
         for drain_index in range(1, 101):
-            drain_summary = _discover(
-                platform=platform, creators=[], hashtags=[], database=database,
-                profile_dir=instagram_profile_dir, runtime_seconds=discovery_runtime_seconds,
-                min_metric=min_metric, target_new=target_new_per_batch,
-                report_path=reports_dir / f"{platform}-frontier-drain-{drain_index:03d}.json",
-                creator_limit=500,
-            )
+            try:
+                drain_summary = _discover(
+                    platform=platform, creators=[], hashtags=[], database=database,
+                    profile_dir=instagram_profile_dir, runtime_seconds=discovery_runtime_seconds,
+                    min_metric=min_metric, target_new=target_new_per_batch,
+                    report_path=reports_dir / f"{platform}-frontier-drain-{drain_index:03d}.json",
+                    creator_limit=500,
+                )
+            except Exception as exc:
+                blocked_platforms.append(platform)
+                console.print(f"[yellow]Stopping {platform} frontier drain after an unhandled provider error: {type(exc).__name__}: {exc}[/yellow]")
+                break
             pending = int(drain_summary.get("creators_pending", 0))
             progress = sum(int(drain_summary.get(key, 0)) for key in (
                 "creators_completed", "creators_empty", "creators_exhausted",

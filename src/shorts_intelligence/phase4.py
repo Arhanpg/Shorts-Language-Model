@@ -19,7 +19,7 @@ phase4_app = typer.Typer(name="phase4", help="Phase 4 dataset QA and annotation.
 console = Console()
 CREATOR_FILES = {
     "youtube": ("youtube_channel_candidates.csv",),
-    "instagram": ("instagram_account_candidates.csv", "creators_ai_research_leads_v0.1.csv"),
+    "instagram": ("instagram_account_candidates.csv", "instagram_person_candidates.csv", "instagram_organization_publisher_candidates.csv", "instagram_unknown_entity_leads.csv", "creators_ai_research_leads_v0.1.csv"),
 }
 TAG_FILES = ("hashtags_master_candidates.csv", "hashtags_ai_research_candidates.csv", "hashtags_generated_candidates.csv")
 
@@ -35,7 +35,7 @@ def _value(row: dict[str, str], *keys: str) -> str:
 
 
 def _identity(row: dict[str, str]) -> str | None:
-    value = _value(row, "channel_id", "username", "handle", "channel_handle", "custom_url", "profile_url", "channel_url", "url")
+    value = _value(row, "channel_id", "username", "handle", "account_handle", "channel_handle", "custom_url", "profile_url", "account_url", "channel_url", "url")
     if not value:
         return None
     if "youtube.com" in value.casefold():

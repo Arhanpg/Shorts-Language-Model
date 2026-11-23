@@ -379,7 +379,7 @@ def run_processing_batch(
                     duplicate_of = f"{duplicate['platform']}:{duplicate['source_id']}"
                     store.mark_duplicate_media(platform, source_id, duplicate_of=duplicate_of, media_sha256=media_hash)
                     store.mark_processing_duplicate(platform, source_id, duplicate_of=duplicate_of, media_sha256=media_hash)
-                    if did_download:
+                    if did_download or delete_media_after_processing:
                         media_path.unlink(missing_ok=True)
                         media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
                     duplicates += 1
@@ -450,7 +450,21 @@ def run_processing_batch(
                     source_id,
                     time.monotonic() - item_started,
                 )
-                store.mark_processing_failure(platform, source_id, error=f"{type(exc).__name__}: {exc}")
+                error_text = f"{type(exc).__name__}: {exc}"
+                # Duration/size/format validation failures are terminal asset
+                # classifications, not transient pipeline errors. Do not spend
+                # the retry budget downloading the same invalid asset again.
+                terminal_media_error = isinstance(exc, MediaError) and any(
+                    marker in str(exc).casefold()
+                    for marker in (
+                        "video duration is", "configured limit is", "no video stream",
+                        "unsupported extension", "input is",
+                    )
+                )
+                if terminal_media_error:
+                    store.mark_processing_rejected(platform, source_id, reason=error_text)
+                else:
+                    store.mark_processing_failure(platform, source_id, error=error_text)
                 if delete_media_after_processing and media_path is not None:
                     media_path.unlink(missing_ok=True)
                     media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
