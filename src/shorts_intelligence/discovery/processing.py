@@ -300,6 +300,8 @@ def run_processing_batch(
     max_keyframes: int = 24,
     max_ocr_frames: int = 12,
     keep_frame_artifacts: bool = False,
+    delete_media_after_processing: bool = False,
+    max_processing_attempts: int = 2,
 ) -> dict[str, int | str]:
     """Download and process a bounded batch of discovered Shorts and Reels."""
     processed = downloaded = failed = duplicates = 0
@@ -312,6 +314,7 @@ def run_processing_batch(
             min_metric=min_metric,
             limit=limit,
             platform=platform,
+            max_attempts=max_processing_attempts,
         )
         for candidate, _, _, _ in queued:
             platform_totals[candidate.platform]["selected"] += 1
@@ -426,6 +429,10 @@ def run_processing_batch(
                     ocr_engine=report.stages["ocr"].engine,
                     quality_flags=_quality_flags(report, candidate),
                 )
+                if delete_media_after_processing:
+                    media_path.unlink(missing_ok=True)
+                    media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
+                    store.mark_processed_media_deleted(platform, source_id)
                 processed += 1
                 platform_totals[platform]["processed"] += 1
                 logger.info(
@@ -444,6 +451,10 @@ def run_processing_batch(
                     time.monotonic() - item_started,
                 )
                 store.mark_processing_failure(platform, source_id, error=f"{type(exc).__name__}: {exc}")
+                if delete_media_after_processing and media_path is not None:
+                    media_path.unlink(missing_ok=True)
+                    media_path.with_suffix(".metadata.json").unlink(missing_ok=True)
+                    store.mark_download_failure(platform, source_id, error=f"{type(exc).__name__}: {exc}")
                 if media_validation_failed or (download_attempted and not download_succeeded):
                     store.mark_download_failure(platform, source_id, error=f"{type(exc).__name__}: {exc}")
                     if media_validation_failed and media_path is not None:
