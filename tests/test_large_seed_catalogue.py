@@ -2,23 +2,28 @@
 from __future__ import annotations
 
 import csv
+import importlib.util
 import json
 import urllib.error
 from pathlib import Path
 
-from scripts import build_large_seed_catalogue as module
-from scripts.build_large_seed_catalogue import (
-    ACCOUNT_FIELDS,
-    TAG_FIELDS,
-    build_tags,
-    dedupe,
-    map_instagram,
-    map_youtube,
-    page_offsets,
-    research_leads,
-    write_csv,
-    youtube_scan_target,
-)
+SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "build_large_seed_catalogue.py"
+SPEC = importlib.util.spec_from_file_location("build_large_seed_catalogue", SCRIPT_PATH)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError(f"Cannot load seed builder from {SCRIPT_PATH}")
+module = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(module)
+
+ACCOUNT_FIELDS = module.ACCOUNT_FIELDS
+TAG_FIELDS = module.TAG_FIELDS
+build_tags = module.build_tags
+dedupe = module.dedupe
+map_instagram = module.map_instagram
+map_youtube = module.map_youtube
+page_offsets = module.page_offsets
+research_leads = module.research_leads
+write_csv = module.write_csv
+youtube_scan_target = module.youtube_scan_target
 
 
 def test_evenly_spaced_page_sampling():
@@ -140,7 +145,6 @@ def test_http_bytes_honours_retry_after(monkeypatch):
 
 
 def test_http_bytes_adds_optional_hugging_face_token(monkeypatch):
-    from scripts import build_large_seed_catalogue as module
     monkeypatch.setenv("HF_TOKEN", "hf_test_read_token")
     class DummyResponse:
         def __enter__(self):
@@ -162,7 +166,6 @@ def test_youtube_scan_target_oversamples_raw_rows():
 
 
 def test_repository_instagram_seeds_are_loaded_when_v01_csv_missing(tmp_path):
-    from scripts.build_large_seed_catalogue import research_leads
     data_dir = tmp_path / "data"
     research_dir = data_dir / "research_catalogue"
     research_dir.mkdir(parents=True)
