@@ -18,7 +18,7 @@ from rich.table import Table
 from shorts_intelligence.discovery.engine import run_creator_graph
 from shorts_intelligence.discovery.processing import run_processing_batch
 from shorts_intelligence.discovery.storage import DiscoveryStore
-from shorts_intelligence.phase4 import catalogue
+from shorts_intelligence.phase4 import catalogue, phase4_app
 
 console = Console()
 
@@ -159,9 +159,6 @@ def _drain_processing(
     totals["manifest_records"] = int(last.get("manifest_records", 0))
     totals["manifest_path"] = str(manifest.resolve())
     return dict(totals)
-
-
-from shorts_intelligence.phase4 import phase4_app
 
 
 @phase4_app.command("run-all")
