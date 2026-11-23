@@ -21,6 +21,7 @@ class AnalyzerConfig:
     asr_model: str = "small"
     asr_device: str = "cuda"
     asr_compute_type: str = "int8_float16"
+    asr_timeout_seconds: float = 300.0
     language: str | None = None
     enable_asr: bool = True
     enable_ocr: bool = True
@@ -46,3 +47,5 @@ class AnalyzerConfig:
             raise ValueError("jpeg_quality must be between 1 and 100")
         if self.asr_device not in {"cpu", "cuda", "auto"}:
             raise ValueError("asr_device must be cpu, cuda or auto")
+        if not 1 <= self.asr_timeout_seconds <= 3600:
+            raise ValueError("asr_timeout_seconds must be between 1 and 3600")
