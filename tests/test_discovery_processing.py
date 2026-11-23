@@ -454,3 +454,37 @@ def test_zero_threshold_requeues_unknown_metric_but_requires_exact_item_grant(tm
         )
         assert len(queued) == 1
         assert queued[0][0].qualifying_metric() is None
+
+
+
+def test_creator_scope_grant_matches_observed_instagram_creator(tmp_path: Path):
+    candidate = DiscoveredCandidate(
+        platform="instagram",
+        source_id="CreatorScope01",
+        canonical_url="https://www.instagram.com/reel/CreatorScope01/",
+        creator="creator.one",
+        short_format_status="confirmed",
+        metadata={"creator_id": "creator.one"},
+    )
+    database = tmp_path / "creator-grant.sqlite3"
+    with DiscoveryStore(database) as store:
+        store.start_run("creator-grant", 10, 0)
+        store.upsert_candidate(candidate, min_views=0, run_id="creator-grant")
+        grant = json.dumps([{
+            "platform": "instagram",
+            "creator_id": "creator.one",
+            "media_retrieval": True,
+            "media_analysis": True,
+            "temporary_processing": True,
+            "derived_artifact_retention": True,
+            "model_training": True,
+            "evidence_ref": "creator-permission-record",
+            "expires_at": "2099-12-31T23:59:59+00:00",
+            "revoked": False,
+        }])
+        queued = store.processing_candidates(
+            min_metric=0, limit=5, platform="instagram",
+            authorized_grants_json=grant,
+        )
+        assert len(queued) == 1
+        assert queued[0][0].source_id == "CreatorScope01"
