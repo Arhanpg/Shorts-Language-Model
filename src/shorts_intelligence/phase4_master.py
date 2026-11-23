@@ -144,7 +144,7 @@ def _drain_processing(
         )
         for key in (
             "candidates_selected", "media_downloaded_this_run", "processed_this_run",
-            "duplicates", "failed", "youtube_downloaded", "instagram_downloaded",
+            "duplicates", "failed", "rejected", "youtube_downloaded", "instagram_downloaded",
             "youtube_processed", "instagram_processed",
         ):
             totals[key] += int(last.get(key, 0))
@@ -156,6 +156,7 @@ def _drain_processing(
         )
     totals["processing_complete_total"] = int(last.get("processing_complete_total", 0))
     totals["processing_failed_total"] = int(last.get("processing_failed_total", 0))
+    totals["processing_rejected_total"] = int(last.get("processing_rejected_total", 0))
     totals["manifest_records"] = int(last.get("manifest_records", 0))
     totals["manifest_path"] = str(manifest.resolve())
     return dict(totals)
