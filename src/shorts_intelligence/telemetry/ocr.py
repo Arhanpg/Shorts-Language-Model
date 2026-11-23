@@ -9,7 +9,6 @@ import numpy as np
 
 from shorts_intelligence.schemas import FrameEvidence, OCRSpan
 
-
 logger = logging.getLogger(__name__)
 
 
