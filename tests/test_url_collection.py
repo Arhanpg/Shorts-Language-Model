@@ -73,11 +73,14 @@ def test_export_urls_deduplicates_and_keeps_existing_urls(monkeypatch, tmp_path)
     class FakeConnection:
         def execute(self, query, params):
             assert params == ("instagram",)
-            return [
-                {"canonical_url": "https://www.instagram.com/reel/ABC123/"},
-                {"canonical_url": "https://www.instagram.com/reel/DEF456/"},
-                {"canonical_url": "https://www.instagram.com/reel/ABC123/"},
-            ]
+            class Cursor:
+                def fetchall(self):
+                    return [
+                        {"canonical_url": "https://www.instagram.com/reel/ABC123/"},
+                        {"canonical_url": "https://www.instagram.com/reel/DEF456/"},
+                        {"canonical_url": "https://www.instagram.com/reel/ABC123/"},
+                    ]
+            return Cursor()
 
     class FakeStore:
         def __init__(self, path):
