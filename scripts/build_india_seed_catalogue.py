@@ -234,7 +234,7 @@ def fetch_instagram_india(target: int) -> tuple[list[dict], dict]:
             "discovery_status": "INDIA_COUNTRY_FIELD_MATCH_NEEDS_LIVE_RECHECK",
             "short_form_status": "NOT_VERIFIED_FOR_REELS", "rights_status": "NOT_ASSESSED_DISCOVERY_ONLY",
             "last_independent_verification_at": "",
-            "notes": "Country field matched IN in public account snapshot. Category is source category; language, India audience and active Reels status are not verified. No media rights implied.",
+            "notes": "Country field matched IN or the account is listed among India-linked countries in the public account snapshot. Category is source category; language, India audience and active Reels status are not verified. No media rights implied.",
         })
     return records, {
         "dataset": "arh1p/instagram-top-accounts", "source_url": IG_CARD,
