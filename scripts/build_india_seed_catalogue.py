@@ -16,7 +16,6 @@ import os
 import re
 import sys
 import time
-from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
