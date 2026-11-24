@@ -27,11 +27,14 @@ The hashtag generator round-robins across 17 language/community scopes so that t
 
 Topic families include:
 - Film, television, actors, actresses, cinema and music
-- Cricket, football, hockey, badminton, kabaddi, wrestling, athletics and fitness
+- Cricket, football, hockey, badminton, kabaddi, wrestling, athletics, women's sports and fitness
+- Women-focused creator topics, women in business/technology/education and empowerment
+- Miss World, Miss Universe, pageants, modelling and beauty
 - Education, school, competitive exams, UPSC, NEET, JEE, mathematics, science and coding
 - Comedy, memes, skits and stand-up
 - Motivation, careers, business and entrepreneurship
-- Politics, news, elections and civic information
+- Politics, public figures, politicians, news, elections, governance and civic information
+- Regional television, serials, folklore and regional cinema
 - Food, cooking, street food and regional cuisine
 - Travel, tourism, heritage, festivals and culture
 - Fashion, beauty, makeup and lifestyle
