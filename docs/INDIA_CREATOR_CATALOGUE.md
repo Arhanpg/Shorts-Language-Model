@@ -135,3 +135,7 @@ The YouTube collector uses yt-dlp flat metadata extraction; Instagram uses the v
 - A public account listing does not grant media retrieval, retention, analysis or model-training rights.
 - The YouTube source is a large compilation and the Dataset Viewer may expose a partial index; inspect the QA report.
 - Keep source attribution and license information with derived lists. Recheck licenses and terms at use time.
+
+## Existing-catalogue filter alternative
+
+The branch also contains `scripts/build_indian_seed_catalogue.py`, a filter-only alternative that consumes the already-materialized global v0.2 CSVs. Use it only if you have already built `data/seed_catalogue/v0.2` and want an offline country-field filter. The recommended builder for this India catalogue is `scripts/build_india_seed_catalogue.py`, because it queries India-specific source rows directly and can use the supplemental India creator index. Do not combine the outputs without deduplication and provenance checks.
