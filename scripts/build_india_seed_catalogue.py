@@ -156,7 +156,7 @@ def fetch_youtube_india(target: int, max_rows: int) -> tuple[list[dict], dict]:
     partial = bool(result.get("partial", False))
     found = rows_from_response(result)
     offset = len(found)
-    while len(found) < min(target, total) and offset < total and len(found) < max_rows:
+    while len({str(x.get("channel_id") or "").strip() for x in found if str(x.get("channel_id") or "").strip()}) < target and offset < total and len(found) < max_rows:
         time.sleep(1.0)
         page = get_json("filter", {"dataset": YT_DATASET, "config": config, "split": "train",
                                    "where": where, "offset": offset, "length": 100})
@@ -412,7 +412,11 @@ def build(args) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     yt, yt_meta = fetch_youtube_india(args.youtube_limit, args.youtube_scan_limit)
     ig, ig_meta = fetch_instagram_india(args.instagram_limit)
-    dex, dex_meta = fetch_dexfluence_india()
+    try:
+        dex, dex_meta = fetch_dexfluence_india()
+    except (RuntimeError, OSError, ValueError, KeyError) as exc:
+        dex = {"instagram": [], "youtube": []}
+        dex_meta = {"dataset": DEX_DATASET, "source_url": DEX_CARD, "status": "SUPPLEMENTAL_SOURCE_UNAVAILABLE", "error": str(exc)}
     yt = merge_candidates(yt, dex["youtube"], "youtube", args.youtube_limit)
     ig = merge_candidates(ig, dex["instagram"], "instagram", args.instagram_limit)
     tags = hashtag_rows(args.hashtag_target)
