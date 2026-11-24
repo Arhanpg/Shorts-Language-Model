@@ -26,6 +26,8 @@ from urllib.request import Request, urlopen
 API = "https://datasets-server.huggingface.co"
 YT_DATASET = "ScrapeExchange/youtube-channel-7m-plus"
 YT_CARD = f"https://huggingface.co/datasets/{YT_DATASET}"
+DEX_DATASET = "Shikha180224/dexfluence-indian-creator-index"
+DEX_CARD = f"https://huggingface.co/datasets/{DEX_DATASET}"
 IG_URL = "https://huggingface.co/datasets/arh1p/instagram-top-accounts/resolve/main/latest.csv"
 IG_CARD = "https://huggingface.co/datasets/arh1p/instagram-top-accounts"
 UA = "ShortsLM-India-Catalogue/1.0 (metadata-only research)"
@@ -241,6 +243,88 @@ def fetch_instagram_india(target: int) -> tuple[list[dict], dict]:
         "max_observation_date": max((x.get("date", "") for x in ordered), default=""),
     }
 
+
+def fetch_dexfluence_india() -> tuple[dict[str, list[dict]], dict]:
+    """Read the public India creator index via Dataset Viewer; keep IG/YT only."""
+    data = get_json("splits", {"dataset": DEX_DATASET})
+    splits = data.get("splits", [])
+    if not splits:
+        return {"instagram": [], "youtube": []}, {
+            "dataset": DEX_DATASET, "source_url": DEX_CARD,
+            "status": "NO_DATASET_VIEWER_SPLIT_AVAILABLE",
+        }
+    chosen = next((x for x in splits if x.get("split") == "train"), splits[0])
+    config, split = chosen.get("config", "default"), chosen.get("split", "train")
+    first = get_json("first-rows", {"dataset": DEX_DATASET, "config": config, "split": split})
+    total = int(first.get("num_rows_total") or 0)
+    raw = rows_from_response(first)
+    offset = len(raw)
+    while offset < total and offset < 10000:
+        page = get_json("rows", {"dataset": DEX_DATASET, "config": config,
+                                 "split": split, "offset": offset, "length": 100})
+        batch = rows_from_response(page)
+        if not batch:
+            break
+        raw.extend(batch)
+        offset += len(batch)
+        time.sleep(0.25)
+    output = {"instagram": [], "youtube": []}
+    for row in raw:
+        platform = str(row.get("platform") or "").strip().casefold()
+        location = str(row.get("location") or row.get("country") or "").strip().upper()
+        if platform not in output or location not in {"IN", "INDIA"}:
+            continue
+        handle = str(row.get("handle") or "").strip().lstrip("@")
+        if not handle:
+            continue
+        if platform == "instagram":
+            url = f"https://www.instagram.com/{handle}/"
+        else:
+            url = f"https://www.youtube.com/@{handle}"
+        output[platform].append({
+            "account_id": f"{platform[:2]}:dexfluence:{handle.casefold()}",
+            "platform": platform, "account_handle": f"@{handle}",
+            "account_url": url, "channel_id": "",
+            "display_name": str(row.get("name") or ""),
+            "entity_type": "unknown_person_or_org", "country": "IN",
+            "region": str(row.get("region") or row.get("city") or ""),
+            "language": str(row.get("language") or "und"),
+            "category": str(row.get("niche") or row.get("category") or ""),
+            "followers_count": row.get("followers") or "",
+            "videos_count": "", "views_count": "", "rank": "",
+            "source_dataset": DEX_DATASET, "source_url": DEX_CARD,
+            "source_license": "CC BY 4.0 as stated by dataset card; underlying platform/media rights remain separate",
+            "source_observed_at": "dataset snapshot; refresh date to be verified",
+            "discovery_status": "DATASET_REPORTED_INDIA_CREATOR_LEAD_NEEDS_LIVE_RECHECK",
+            "short_form_status": "NOT_VERIFIED_FOR_REELS_OR_SHORTS",
+            "rights_status": "NOT_ASSESSED_DISCOVERY_ONLY",
+            "last_independent_verification_at": "",
+            "notes": "India creator-index row; dataset-reported verification/authenticity fields are not independently audited by ShortsLM. Recheck identity, account status, region, language and current short-form activity.",
+        })
+    return output, {
+        "dataset": DEX_DATASET, "source_url": DEX_CARD,
+        "rows_reported": total, "rows_retrieved": len(raw),
+        "instagram_candidates": len(output["instagram"]),
+        "youtube_candidates": len(output["youtube"]),
+        "license_claim": "CC BY 4.0 (dataset card; recheck at use time)",
+    }
+
+def merge_candidates(primary: list[dict], supplemental: list[dict], platform: str, target: int) -> list[dict]:
+    merged = {}
+    for row in primary + supplemental:
+        handle = str(row.get("account_handle") or "").strip().lstrip("@").casefold()
+        if not handle:
+            continue
+        old = merged.get(handle)
+        if old is None:
+            merged[handle] = row
+        elif old.get("source_dataset") != DEX_DATASET and row.get("source_dataset") == DEX_DATASET:
+            # Prefer source-native account facts from the primary country-index source.
+            continue
+    values = list(merged.values())
+    values.sort(key=lambda x: (-int(x.get("followers_count") or 0), x.get("display_name", "").casefold()))
+    return values[:target]
+
 def hashtag_rows(target: int) -> list[dict]:
     rows, seen = [], set()
     patterns = [
@@ -311,6 +395,9 @@ def build(args) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     yt, yt_meta = fetch_youtube_india(args.youtube_limit, args.youtube_scan_limit)
     ig, ig_meta = fetch_instagram_india(args.instagram_limit)
+    dex, dex_meta = fetch_dexfluence_india()
+    yt = merge_candidates(yt, dex["youtube"], "youtube", args.youtube_limit)
+    ig = merge_candidates(ig, dex["instagram"], "instagram", args.instagram_limit)
     tags = hashtag_rows(args.hashtag_target)
     write_csv(out / "youtube_channel_candidates.csv", yt, FIELDS)
     write_csv(out / "instagram_account_candidates.csv", ig, FIELDS)
@@ -332,7 +419,7 @@ def build(args) -> dict:
             "hashtags": len(tags),
         },
         "targets": {"instagram": args.instagram_limit, "youtube": args.youtube_limit, "hashtags": args.hashtag_target},
-        "sources": {"instagram": ig_meta, "youtube": yt_meta},
+        "sources": {"instagram": ig_meta, "youtube": yt_meta, "supplemental_india_creator_index": dex_meta},
         "language_scopes": [{"language": x[0], "code": x[1], "region": x[3]} for x in LANGUAGES],
         "category_scopes": list(TOPICS),
         "limitations": [
@@ -341,7 +428,7 @@ def build(args) -> dict:
             "The YouTube dataset viewer filter may be partial because its source exceeds 5 GB; inspect partial_index and matching_rows_reported.",
             "Language is unknown unless a source explicitly supplies it; no language is inferred from a name.",
             "Hashtags are generated candidates, not verified popular tags; native-speaker review and retrieval-yield measurement are required.",
-            "The Instagram source may contain fewer India accounts than the requested target; the script does not invent or pad creators.",
+            "If source-backed Indian creator rows are fewer than the requested target, the output remains below target; the script does not invent or pad creators.",
             "No creator row grants permission to download, retain, analyze or train on media.",
         ],
     }
