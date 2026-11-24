@@ -1,89 +1,99 @@
-# ShortsLM Architecture — Open-Source Discovery Edition
+# ShortsLM Architecture — Minimal Multimodal Evidence Pipeline
 
-**Status:** selected implementation architecture  
-**Date:** 21 November 2026
+**Updated:** 24 November 2026  
+**Status:** selected target architecture; reuse current working code and validate before replacing components.
 
 ## System flow
 
 ```text
-Query planner (topic/language/region/date)
-        |
-        +----> ytscrape SearchFilter.SHORTS provider (YouTube)
-        |
-        +----> DDGS public-web search (Instagram Reel URLs)
-                      |
-                      v
-                Instaloader shortcode metadata
-                      |
-                      v
-        Normalization + 1M metric / short-format gate
-                      |
-                      v
-              Local SQLite candidate inventory
-             unique (platform, source_id)
-                      |
-                      v
-             Private item-rights manifest gate
-                      |
-                      v
-    yt-dlp (YouTube) / Instaloader → yt-dlp → gallery-dl (Instagram)
-                      |
-                      v
-           MP4 + metadata/rights sidecar
-                      |
-                      v
-              SHA-256 cross-platform dedup
-                      |
-                      v
-          Existing Phase 1 local telemetry analyzer
-                      |
-                      v
-           Review / dataset QA / train-test splits
-                      |
-                      v
-          Frozen VLM baseline -> cloud fine-tuning
-                      |
-                      v
-              Quantized local inference
+Existing discovery providers + SQLite
+          |
+          v
+Metadata snapshot + item-specific rights gate
+          |
+          v
+Authorized acquisition + FFprobe validation
+          |
+          v
+FFmpeg decode-once / PTS timeline
+          |
+     +----+--------------------+
+     |                         |
+     v                         v
+Audio lane                 Visual lane
+VAD + one ASR              adaptive frames
+audio signal features      OCR + shot/motion
+music/beat candidates      optional pose/action
+     |                         |
+     +-----------+-------------+
+                 v
+       Timestamped evidence timeline
+      confidence + missingness + provenance
+                 |
+       +---------+----------+
+       |                    |
+       v                    v
+Deterministic aggregation   Optional VLM
+and quality checks          fallback (one API)
+       |                    |
+       +---------+----------+
+                 v
+        Versioned feature bundle
+                 |
+        human review / annotation
+                 |
+        leakage-safe dataset splits
+                 |
+       +---------+----------+
+       |                    |
+       v                    v
+Content understanding   Performance model
+temporal fusion         CatBoost baseline
+       |                    |
+       +---------+----------+
+                 v
+     evidence-grounded report / API
+                 |
+        quantized local deployment
 ```
 
-## Components
+## Components and boundaries
 
-### Discovery adapters
+### Discovery and inventory
+Keep existing discovery adapters and SQLite inventory. Discovery is not permission to download or train. Preserve platform-native metric definitions and source observation time.
 
-- YouTube: ytscrape Shorts search with bounded public pagination, plus yt-dlp flat hashtag shelves and discovered-channel Shorts tabs.
-- Instagram: DDGS discovers public Reel URLs; Instaloader resolves metadata, with yt-dlp metadata-only fallback for non-access-related parser failures.
-- An optional user-owned Instaloader session is validated before use and remains local under the gitignored `.shortslm/` directory.
-- Combined discovery schedules both selected platform stages under the shared runtime deadline and reports independent execution states.
-- No official platform API is used by the discovery CLI.
+### Rights and media acquisition
+Keep the existing rights gate and downloader. Retrieval, analysis, temporary processing, derived-artifact retention and model training are separate scopes. Do not add access-control bypasses. Use FFprobe to validate media and FFmpeg to produce normalized audio/frame streams with PTS.
 
-### Candidate normalizer
+### Audio lane
+Reuse the existing VAD and faster-whisper adapter. Choose one ASR checkpoint by benchmark; default candidate is large-v3-turbo INT8 only if it beats the currently configured model on the held-out short-form sample. Extract low-cost audio signals in one pass. Do not require gated diarization, multi-ASR ensembles or source separation in the default path.
 
-Maps tool-specific metadata into DiscoveredCandidate. Missing fields remain null/unknown. View count and play count are separate. Only `short_format_status=confirmed` plus a numeric `view_count` meeting the threshold is eligible; uncertain format is retained but not promoted.
+### Visual lane
+Reuse the existing OCR adapter. Begin with OpenCV and current scene/shot logic; add one shot detector or one pose model only when benchmark evidence warrants it. Sample frames adaptively rather than uniformly at a fixed low rate. Fine-grained dance/action labels require a reviewed taxonomy and class-wise evaluation.
 
-### Inventory
+### Evidence timeline
+All outputs share PTS-derived time. Events include modality, event type, start/end, payload, confidence/quality, evidence reference, extractor/version and missingness status. A failed ASR stage cannot be interpreted as a silent clip.
 
-SQLite tracks discovery runs, candidate identity, metadata, status and download attempts. Unique (platform, source_id) prevents link repeats. SHA-256 prevents byte-identical media being processed twice across sources.
+### Optional reasoning
+One optional Gemini API key can be used for selected, rights-approved clips. It is not part of local default processing. Apply cost caps, log provider/model/prompt and verify every claim against evidence. Do not automatically upload private media.
 
-### Rights gate and downloader
+### Storage
+Keep SQLite for job state and JSON/JSONL for pilot artifacts. Adopt Parquet only after schema stabilization. Store large embeddings separately and only when an experiment needs them. Keep private media, transcripts, credentials and rights evidence outside Git.
 
-A local JSONL record has to match both platform and source ID and declare each required permission scope. The code checks expiry/revocation and flags. It does not verify legal documents cryptographically or establish rights independently. Missing/invalid records block download.
+### Training and prediction
+Train the temporal understanding head only after human-reviewed labels and a locked holdout exist. Keep engagement prediction as a separate model. Start with CatBoost for structured engagement features.
 
-Open-source extractor order:
-- YouTube: yt-dlp plus FFmpeg.
-- Instagram: Instaloader, then yt-dlp, then optional gallery-dl.
-
-No access-control bypass is built.
-
-### Existing telemetry and model path
-
-The current Phase 1 local analyzer stays the downstream video feature extractor. It continues to produce ASR, OCR, frames, shot/cut, motion, audio and structured reports. Model training is batch-based after QA, not incremental per video.
+## Operational principles
+- Load large models sequentially and release resources between stages.
+- CPU fallback for decode/preprocessing and supported inference stages.
+- Every stage has timeout, retry limit, idempotency key and persisted status.
+- Cache successful artifacts so failures do not repeat expensive upstream stages.
+- Record actual device, runtime, peak memory, model version and failure reason.
+- Measure throughput and cost on the actual laptop/cloud SKU; do not copy research estimates as benchmarks.
 
 ## Non-goals
-
-- Official platform API-key flow for discovery.
-- Promise that every public Reel/Short is searchable/downloadable.
-- Uniform sampling claim from search-engine rankings.
-- Treat a public view counter as permission to download/train.
-- Browser cookie extraction, CAPTCHA bypass, DRM circumvention or proxy evasion.
-- Train-from-scratch foundation model.
+- Training a foundation model from scratch.
+- Installing every model named in the Gemini report.
+- Mandatory Hugging Face token or ten different vendor accounts.
+- Treating view count as causal virality or retention.
+- Inferring identity or sensitive attributes from people in videos.
