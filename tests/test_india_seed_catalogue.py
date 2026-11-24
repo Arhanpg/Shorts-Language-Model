@@ -1,4 +1,14 @@
-from scripts.build_india_seed_catalogue import LANGUAGES, hashtag_rows
+import importlib.util
+from pathlib import Path
+
+MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "build_india_seed_catalogue.py"
+SPEC = importlib.util.spec_from_file_location("build_india_seed_catalogue", MODULE_PATH)
+assert SPEC is not None and SPEC.loader is not None
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+
+LANGUAGES = MODULE.LANGUAGES
+hashtag_rows = MODULE.hashtag_rows
 
 
 def test_india_hashtag_target_is_exact_and_unique():
