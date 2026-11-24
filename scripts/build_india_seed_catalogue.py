@@ -312,7 +312,7 @@ def fetch_dexfluence_india() -> tuple[dict[str, list[dict]], dict]:
 def merge_candidates(primary: list[dict], supplemental: list[dict], platform: str, target: int) -> list[dict]:
     merged = {}
     for row in primary + supplemental:
-        handle = str(row.get("account_handle") or "").strip().lstrip("@").casefold()
+        handle = str(row.get("account_handle") or row.get("account_url") or row.get("channel_id") or row.get("account_id") or "").strip().lstrip("@").casefold()
         if not handle:
             continue
         old = merged.get(handle)
