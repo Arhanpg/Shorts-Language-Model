@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
 import re
@@ -207,7 +208,9 @@ def fetch_instagram_india(target: int) -> tuple[list[dict], dict]:
     latest = {}
     for row in csv.DictReader(text.splitlines()):
         handle = (row.get("username") or "").strip().lstrip("@").casefold()
-        if not handle or (row.get("country") or "").strip().upper() != "IN":
+        country = (row.get("country") or "").strip().upper()
+        also = {x.strip().upper() for x in (row.get("countries") or "").split(";") if x.strip()}
+        if not handle or (country != "IN" and "IN" not in also):
             continue
         if handle not in latest or row.get("date", "") > latest[handle].get("date", ""):
             latest[handle] = row
@@ -282,7 +285,7 @@ def hashtag_rows(target: int) -> list[dict]:
 
 def make_tag(norm: str, tag: str, language: str, code: str, region: str, category: str, rule: str) -> dict:
     return {
-        "hashtag_id": f"IN_{code}_{len(norm)}_{len(tag)}_{len(norm)}",
+        "hashtag_id": f"IN_{code}_{hashlib.sha1(norm.encode('utf-8')).hexdigest()[:12]}",
         "hashtag": "#" + tag, "normalized_hashtag": norm,
         "language": language, "language_code": code, "region_scope": region,
         "category": category, "candidate_platform_scope": "instagram;youtube_search_text",
