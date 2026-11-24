@@ -211,6 +211,10 @@ The research-backed direction is documented here:
 
 The default feature-extraction path is local-first and requires no new developer API token. It reuses the existing ASR/OCR adapters, introduces a canonical PTS-aligned evidence timeline, and adds specialist models only after a measured quality/runtime/license gate. Optional Gemini reasoning and Sarvam Indic-ASR integrations are not required for baseline operation.
 
+## India-focused creator catalogue
+
+A separate India-specific discovery catalogue builder is available. See [India Creator Catalogue](docs/INDIA_CREATOR_CATALOGUE.md) for source provenance, diversity scope, build commands, and separate URL output paths. Run `python scripts/build_india_seed_catalogue.py` to generate up to 1,500 Indian Instagram accounts, 1,500 YouTube channels, and 1,500 multilingual hashtag candidates; actual creator counts are source-limited and reported without fabricated top-ups.
+
 ## Documentation
 
 - [Non-API Discovery and Downloader Toolchain](docs/NON_API_DISCOVERY_TOOLCHAIN.md)
