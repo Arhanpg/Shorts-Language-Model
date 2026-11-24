@@ -198,6 +198,19 @@ Instagram discovery uses ordinary browser navigation. A login prompt, account ch
     ruff check src tests
     pytest -q
 
+## Multimodal research and final master plan
+
+The research-backed direction is documented here:
+
+- [Global Master Plan — 24 November 2026](docs/GLOBAL_MASTER_PLAN.md)
+- [Gemini Research Reconciliation and Independent Technical Review](docs/GEMINI_RESEARCH_RECONCILIATION.md)
+- [Feature Extraction Specification](docs/FEATURE_EXTRACTION_SPEC.md)
+- [Minimal Model Selection and Training Plan](docs/MODEL_AND_TRAINING.md)
+- [Minimal Multimodal Evidence Architecture](docs/ARCHITECTURE.md)
+- [Updated Implementation Roadmap](docs/ROADMAP.md)
+
+The default feature-extraction path is local-first and requires no new developer API token. It reuses the existing ASR/OCR adapters, introduces a canonical PTS-aligned evidence timeline, and adds specialist models only after a measured quality/runtime/license gate. Optional Gemini reasoning and Sarvam Indic-ASR integrations are not required for baseline operation.
+
 ## Documentation
 
 - [Non-API Discovery and Downloader Toolchain](docs/NON_API_DISCOVERY_TOOLCHAIN.md)
