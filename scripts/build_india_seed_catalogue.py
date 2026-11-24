@@ -326,7 +326,8 @@ def merge_candidates(primary: list[dict], supplemental: list[dict], platform: st
     return values[:target]
 
 def hashtag_rows(target: int) -> list[dict]:
-    rows, seen = [], set()
+    """Generate balanced candidate tags across all listed language scopes."""
+    per_language: dict[str, list[dict]] = {}
     patterns = [
         ("native_root", "{root}"),
         ("native_root_reels", "{root}reels"),
@@ -338,19 +339,19 @@ def hashtag_rows(target: int) -> list[dict]:
         ("roman_topic_creator", "{topic}creator"),
     ]
     topic_items = [(cat, topic) for cat, topics in TOPICS.items() for topic in topics]
+    global_seen: set[str] = set()
     for language, code, native, region in LANGUAGES:
-        roots = LANG_ROOTS.get(code, [])
-        for root in roots:
-            for pattern, template in patterns[:4]:
+        local = []
+        for root in LANG_ROOTS.get(code, []):
+            for rule, template in patterns[:4]:
                 tag = template.format(root=root, topic="")
                 norm = re.sub(r"[^\w]", "", tag, flags=re.UNICODE).casefold()
-                if norm and norm not in seen:
-                    seen.add(norm)
-                    rows.append(make_tag(norm, tag, language, code, region, "regional_identity", pattern))
+                if norm and norm not in global_seen:
+                    global_seen.add(norm)
+                    local.append(make_tag(norm, tag, language, code, region, "regional_identity", rule))
         for category, topic in topic_items:
-            for pattern, template in patterns[4:]:
+            for rule, template in patterns[4:]:
                 tag = template.format(root="", topic=topic)
-                # Prefix language/region scope to avoid generic, global-only candidates.
                 if code == "hi":
                     tag = "bharat" + tag
                 elif code == "en-IN":
@@ -358,14 +359,30 @@ def hashtag_rows(target: int) -> list[dict]:
                 else:
                     tag = code.replace("-", "") + tag
                 norm = re.sub(r"[^\w]", "", tag, flags=re.UNICODE).casefold()
-                if norm and norm not in seen:
-                    seen.add(norm)
-                    rows.append(make_tag(norm, tag, language, code, region, category, pattern))
-                if len(rows) >= target:
-                    return rows[:target]
-    if len(rows) < target:
-        raise RuntimeError(f"Only {len(rows)} unique hashtag candidates generated; requested {target}. No fake top-up.")
-    return rows[:target]
+                if norm and norm not in global_seen:
+                    global_seen.add(norm)
+                    local.append(make_tag(norm, tag, language, code, region, category, rule))
+        per_language[code] = local
+
+    # Round-robin so the first 1,500 do not overrepresent the first few languages.
+    output = []
+    active = list(per_language)
+    cursor = 0
+    while active and len(output) < target:
+        code = active[cursor]
+        bucket = per_language[code]
+        if bucket:
+            output.append(bucket.pop(0))
+        if not bucket:
+            active.remove(code)
+            if not active:
+                break
+            cursor %= len(active)
+        else:
+            cursor = (cursor + 1) % len(active)
+    if len(output) < target:
+        raise RuntimeError(f"Only {len(output)} unique hashtag candidates generated; requested {target}. No fake top-up.")
+    return output[:target]
 
 def make_tag(norm: str, tag: str, language: str, code: str, region: str, category: str, rule: str) -> dict:
     return {
