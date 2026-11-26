@@ -54,7 +54,7 @@ This follows the accepted Gemini reconciliation: a small local-first P0 stack fi
 
 ## Training safeguards
 
-A feature extraction success does not imply a valid training example. Training datasets must require explicit item-level model-training permission, preserve source-native metrics, deduplicate and split by creator/time/audio-template as appropriate, and include human-reviewed labels. Do not treat raw views or likes as causal virality labels. Content understanding and engagement prediction remain separate tasks and datasets.
+A feature extraction success does not imply a valid training example. Every bundle includes `training_readiness.status=NOT_READY` until a separate dataset-curation process has verified item-level model-training permission, human-reviewed labels, deduplication and creator/time/audio-template leakage-safe splits. The bundle records whether the rights declaration explicitly permitted training, but this does not replace evidence review or annotation. Preserve source-native metrics and never treat raw views or likes as causal virality labels. Content understanding and engagement prediction remain separate tasks and datasets.
 
 ## Versioning and migration
 

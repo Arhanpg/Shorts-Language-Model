@@ -51,3 +51,6 @@ def test_feature_bundle_separates_modalities_and_defers_semantic_models():
     assert bundle["temporal_events"]
     assert bundle["semantic_features"]["person_pose"]["status"] == "NOT_YET_PROCESSED"
     assert bundle["provenance"]["rights_declaration"]["model_training_permitted"] is False
+    assert bundle["training_readiness"]["ready"] is False
+    assert bundle["training_readiness"]["status"] == "NOT_READY"
+    assert bundle["training_readiness"]["model_training_permission"] == "UNKNOWN_OR_NOT_PERMITTED"
