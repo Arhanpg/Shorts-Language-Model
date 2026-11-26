@@ -18,12 +18,12 @@ class DownloadError(RuntimeError):
 
 
 def _is_access_or_transport_failure(error: BaseException) -> bool:
-    """Identify hard blocks where trying further anonymous extractors is unsafe.
+    """Identify hard blocks where trying more extractors would only amplify requests.
 
-    A plain Instaloader "login required" response is not automatically a hard
-    stop: a public Reel may still be available through yt-dlp or gallery-dl.
-    Explicit challenges, checkpoints, HTTP denials, rate limits, and transport
-    errors stop fallback attempts.
+    A plain anonymous Instaloader "login required" response is deliberately
+    NOT a hard stop: public Reels can sometimes still resolve through the
+    repository's yt-dlp or gallery-dl fallback. Explicit challenges,
+    checkpoints, rate limits, HTTP denials, and transport failures stop fallback.
     """
     message = str(error).casefold()
     markers = (
