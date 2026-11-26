@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 import numpy as np
@@ -16,10 +17,112 @@ class OCRError(RuntimeError):
     """Raised when an OCR engine fails to initialize or execute."""
 
 
+def _ocr_script(text: str) -> str:
+    ranges = {
+        "Latn": ((0x0041, 0x024F),), "Deva": ((0x0900, 0x097F),),
+        "Beng": ((0x0980, 0x09FF),), "Taml": ((0x0B80, 0x0BFF),),
+        "Telu": ((0x0C00, 0x0C7F),), "Knda": ((0x0C80, 0x0CFF),),
+        "Mlym": ((0x0D00, 0x0D7F),), "Thai": ((0x0E00, 0x0E7F),),
+        "Arab": ((0x0600, 0x06FF),), "Cyrl": ((0x0400, 0x052F),),
+        "Hang": ((0xAC00, 0xD7AF),), "Hani": ((0x4E00, 0x9FFF),),
+    }
+    found = set()
+    for char in text:
+        for label, blocks in ranges.items():
+            if any(start <= ord(char) <= end for start, end in blocks):
+                found.add(label)
+                break
+    return "Zyyy" if not found else "Mixed" if len(found) > 1 else next(iter(found))
+
+
+def _bbox_iou(left: list[float] | None, right: list[float] | None) -> float:
+    if not left or not right:
+        return 1.0
+    x1, y1 = max(left[0], right[0]), max(left[1], right[1])
+    x2, y2 = min(left[2], right[2]), min(left[3], right[3])
+    intersection = max(0.0, x2 - x1) * max(0.0, y2 - y1)
+    area_left = max(0.0, left[2] - left[0]) * max(0.0, left[3] - left[1])
+    area_right = max(0.0, right[2] - right[0]) * max(0.0, right[3] - right[1])
+    union = area_left + area_right - intersection
+    return intersection / union if union > 0 else 0.0
+
+
+def _enrich_ocr_spans(spans, selected_frames, confidence_threshold: float):
+    """Keep every raw detection; add normalized geometry, script, QA flags and temporal IDs."""
+    import unicodedata
+
+    dimensions = {
+        evidence.frame_index: (image.shape[1], image.shape[0])
+        for evidence, image in selected_frames
+    }
+    prepared = []
+    for span in spans:
+        normalized_text = " ".join(unicodedata.normalize("NFC", span.text).split())
+        width, height = dimensions.get(span.frame_index, (0, 0))
+        box = span.bbox_xyxy
+        normalized_box = None
+        if box and width > 0 and height > 0 and len(box) >= 4:
+            normalized_box = [
+                min(1.0, max(0.0, float(box[0]) / width)),
+                min(1.0, max(0.0, float(box[1]) / height)),
+                min(1.0, max(0.0, float(box[2]) / width)),
+                min(1.0, max(0.0, float(box[3]) / height)),
+            ]
+        flags = []
+        if span.confidence < confidence_threshold:
+            flags.append("below_provisional_confidence_threshold")
+        if len(normalized_text) < 2:
+            flags.append("short_text_candidate")
+        accepted = span.confidence >= confidence_threshold and len(normalized_text) >= 2
+        prepared.append(span.model_copy(update={
+            "text_normalized": normalized_text,
+            "script": _ocr_script(normalized_text),
+            "bbox_normalized_xyxy": normalized_box,
+            "quality_status": "accepted_candidate" if accepted else "needs_review",
+            "quality_flags": flags,
+            "accepted_candidate": accepted,
+        }))
+
+    tracks = []
+    output = []
+    for span in sorted(prepared, key=lambda item: (item.timestamp_seconds, item.frame_index)):
+        key = span.text_normalized.casefold() if span.text_normalized else span.text
+        best_track = None
+        best_iou = 0.0
+        for track in tracks:
+            if track["key"] != key:
+                continue
+            gap = span.timestamp_seconds - track["last_time"]
+            if gap < 0 or gap > 1.25:
+                continue
+            overlap = _bbox_iou(span.bbox_normalized_xyxy, track["last_box"])
+            if overlap >= 0.25 and overlap >= best_iou:
+                best_track, best_iou = track, overlap
+        if best_track is None:
+            best_track = {
+                "key": key,
+                "track_id": f"ocr_{len(tracks):05d}",
+                "first_time": span.timestamp_seconds,
+                "last_time": span.timestamp_seconds,
+                "last_box": span.bbox_normalized_xyxy,
+            }
+            tracks.append(best_track)
+        best_track["last_time"] = span.timestamp_seconds
+        best_track["last_box"] = span.bbox_normalized_xyxy
+        output.append(span.model_copy(update={
+            "track_id": best_track["track_id"],
+            "track_start_seconds": best_track["first_time"],
+            "track_end_seconds": best_track["last_time"],
+        }))
+    return output
+
+
+
 def run_ocr(
     frames: list[tuple[FrameEvidence, np.ndarray]],
     max_frames: int = 12,
     prefer_gpu: bool = True,
+    confidence_threshold: float = 0.50,
 ) -> tuple[list[OCRSpan], str]:
     """OCR selected frames, preferring CUDA when PaddlePaddle has GPU support."""
     if not frames:
@@ -100,7 +203,7 @@ def run_ocr(
                         frame_index=evidence.frame_index,
                     ))
             actual_device = str(getattr(engine, "device", "unknown")).replace(":", "-")
-            return spans, f"vidtrace-paddleocr-{actual_device}"
+            return _enrich_ocr_spans(spans, chosen, confidence_threshold), f"vidtrace-paddleocr-{actual_device}"
         finally:
             close = getattr(engine, "close", None)
             if callable(close):
@@ -183,4 +286,4 @@ def run_ocr(
                         engine=version,
                         frame_index=evidence.frame_index,
                     ))
-    return spans, f"{version}-{actual_device}"
+    return _enrich_ocr_spans(spans, chosen, confidence_threshold), f"{version}-{actual_device}"

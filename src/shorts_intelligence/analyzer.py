@@ -11,6 +11,7 @@ from typing import Literal
 import cv2
 
 from shorts_intelligence.config import AnalyzerConfig
+from shorts_intelligence.feature_bundle import build_feature_bundle
 from shorts_intelligence.media.extract import extract_audio_wav
 from shorts_intelligence.media.probe import MediaError, probe_video, validate_input
 from shorts_intelligence.media.sampling import SamplingResult, sample_video
@@ -225,6 +226,7 @@ def analyze_video(
                     frames,
                     max_frames=config.max_ocr_frames,
                     prefer_gpu=config.asr_device in {"cuda", "auto"},
+                    confidence_threshold=config.ocr_confidence_threshold,
                 )
                 logger.info(
                     "OCR stage completed | file=%s | engine=%s | spans=%d | elapsed=%.1fs",
@@ -233,17 +235,21 @@ def analyze_video(
                     len(ocr_spans),
                     time.monotonic() - ocr_started,
                 )
+                accepted_spans = sum(1 for span in ocr_spans if span.accepted_candidate)
                 stages["ocr"] = StageStatus(
-                    status="complete" if ocr_spans else "partial",
+                    status="complete" if accepted_spans else "partial",
                     engine=ocr_engine,
                     detail=(
-                        f"{len(ocr_spans)} text spans from up to "
-                        f"{min(len(frames), config.max_ocr_frames)} frames."
+                        f"{accepted_spans} accepted candidates; {len(ocr_spans)} raw "
+                        f"candidates from up to {min(len(frames), config.max_ocr_frames)} "
+                        f"frames; provisional confidence threshold="
+                        f"{config.ocr_confidence_threshold:.2f} (not calibrated)."
                     ),
                 )
-                if not ocr_spans:
+                if not accepted_spans:
                     warnings.append(
-                        "OCR ran but found no text above its detector threshold."
+                        "OCR produced no candidates that passed the provisional "
+                        "confidence threshold; raw candidates, if any, were retained."
                     )
             except OCRError as exc:
                 logger.warning(
@@ -281,32 +287,44 @@ def analyze_video(
     hook_cut_count = sum(
         item.timestamp_seconds <= hook_end for item in sampling.cuts
     )
+    rights_declaration = (
+        RightsDeclaration(
+            basis=rights_basis,
+            reference=rights_reference,
+            media_analysis_permitted=True,
+            model_training_permitted=training_permitted,
+        )
+        if rights_basis is not None else None
+    )
+    hook_window = HookWindow(
+        end_seconds=hook_end,
+        frame_count=sampling.hook_frame_count,
+        cut_candidate_count=hook_cut_count,
+        mean_motion_score=_mean_hook_motion(sampling, hook_end),
+    )
+    motion_summary = MotionSummary(
+        sample_count=len(sampling.motion_samples),
+        mean_flow_magnitude=sampling.mean_motion,
+        p95_flow_magnitude=sampling.p95_motion,
+        peak_timestamp_seconds=sampling.peak_timestamp,
+        samples=sampling.motion_samples,
+    )
+    feature_bundle = build_feature_bundle(
+        video=metadata, hook_window=hook_window,
+        frame_evidence=[item.evidence for item in sampling.frames],
+        cut_candidates=sampling.cuts, motion=motion_summary,
+        transcript_segments=transcript_segments, ocr_spans=ocr_spans,
+        audio=audio_features, stages=stages, warnings=warnings,
+        rights=rights_declaration, config=config,
+    )
     report = AnalysisReport(
-        rights=(
-            RightsDeclaration(
-                basis=rights_basis,
-                reference=rights_reference,
-                media_analysis_permitted=True,
-                model_training_permitted=training_permitted,
-            )
-            if rights_basis is not None else None
-        ),
+        rights=rights_declaration,
+        feature_bundle=feature_bundle,
         video=metadata,
-        hook_window=HookWindow(
-            end_seconds=hook_end,
-            frame_count=sampling.hook_frame_count,
-            cut_candidate_count=hook_cut_count,
-            mean_motion_score=_mean_hook_motion(sampling, hook_end),
-        ),
+        hook_window=hook_window,
         frame_evidence=[item.evidence for item in sampling.frames],
         cut_candidates=sampling.cuts,
-        motion=MotionSummary(
-            sample_count=len(sampling.motion_samples),
-            mean_flow_magnitude=sampling.mean_motion,
-            p95_flow_magnitude=sampling.p95_motion,
-            peak_timestamp_seconds=sampling.peak_timestamp,
-            samples=sampling.motion_samples,
-        ),
+        motion=motion_summary,
         transcript_segments=transcript_segments,
         ocr_spans=ocr_spans,
         audio=audio_features,
