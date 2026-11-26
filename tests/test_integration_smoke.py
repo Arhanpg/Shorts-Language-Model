@@ -70,3 +70,47 @@ def test_sampling_does_not_retain_more_than_configured_keyframes(tmp_path: Path)
     assert len(result.frames) <= 12
     assert result.hook_frame_count > 0
     assert result.motion_samples
+
+
+@pytest.mark.skipif(
+    not shutil.which("ffmpeg") or not shutil.which("ffprobe"),
+    reason="FFmpeg and ffprobe are required for integration smoke tests",
+)
+def test_unexpected_ocr_runtime_error_does_not_abort_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    clip = tmp_path / "ocr_runtime_failure.mp4"
+    subprocess.run(
+        [
+            "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i", "testsrc=size=360x640:rate=24:duration=4",
+            "-an", "-c:v", "mpeg4", "-pix_fmt", "yuv420p", str(clip),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+    def fail_ocr(*args, **kwargs):
+        raise RuntimeError(
+            "Engine 'paddle_static' is unavailable because dependency "
+            "'paddlepaddle' is not installed."
+        )
+
+    monkeypatch.setattr("shorts_intelligence.analyzer.run_ocr", fail_ocr)
+
+    output = tmp_path / "ocr_runtime_failure.json"
+    report = analyze_video(
+        clip,
+        output,
+        config=AnalyzerConfig(
+            max_duration_seconds=10,
+            enable_asr=False,
+            enable_ocr=True,
+            enable_audio_analysis=False,
+        ),
+    )
+
+    assert output.exists()
+    assert report.stages["ocr"].status == "failed"
+    assert any("OCR failed unexpectedly" in warning for warning in report.warnings)
+
