@@ -150,22 +150,6 @@ def build_feature_bundle(
             "ocr_raw_candidates": len(ocr_items), "ocr_accepted_candidates": accepted_ocr,
             "human_review_recommended": review_required,
         },
-        "training_readiness": {
-            "ready": False,
-            "status": "NOT_READY",
-            "model_training_permission": (
-                "PERMITTED_BY_DECLARATION"
-                if rights is not None and bool(getattr(rights, "model_training_permitted", False))
-                else "UNKNOWN_OR_NOT_PERMITTED"
-            ),
-            "human_reviewed_labels": "NOT_PROVIDED",
-            "deduplication_and_leakage_safe_splits": "NOT_CREATED",
-            "reason": (
-                "Feature extraction is not training clearance. Require item-level "
-                "model-training permission, human-reviewed labels, deduplication, "
-                "and creator/time/audio-template leakage-safe splits before training."
-            ),
-        },
         "provenance": {
             "pipeline": "ShortsLM Phase 1 evidence extraction", "bundle_version": BUNDLE_VERSION,
             "rights_declaration": _dump(rights) if rights is not None else None,
