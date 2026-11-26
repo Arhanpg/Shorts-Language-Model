@@ -253,9 +253,22 @@ def analyze_video(
                     exc,
                 )
                 stages["ocr"] = StageStatus(
-                    status="skipped", engine="paddleocr/vidtrace", detail=str(exc)
+                    status="failed", engine="paddleocr/vidtrace", detail=str(exc)
                 )
-                warnings.append(str(exc))
+                warnings.append(f"OCR failed: {exc}")
+            except Exception as exc:
+                # OCR is optional telemetry. A PaddleOCR/PaddleX initialization
+                # failure must not discard successful video/audio/ASR features.
+                logger.exception(
+                    "OCR stage crashed | file=%s | elapsed=%.1fs",
+                    input_path.name,
+                    time.monotonic() - ocr_started,
+                )
+                detail = f"{type(exc).__name__}: {exc}"
+                stages["ocr"] = StageStatus(
+                    status="failed", engine="paddleocr", detail=detail
+                )
+                warnings.append(f"OCR failed unexpectedly: {detail}")
         elif not config.enable_ocr:
             stages["ocr"] = StageStatus(
                 status="skipped", detail="Disabled by configuration."
