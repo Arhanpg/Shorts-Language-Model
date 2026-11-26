@@ -1,4 +1,4 @@
-# ShortsLM Feature Bundle v3.0.0
+# ShortsLM Feature Bundle v3.0.1
 
 **Status:** Initial implementation contract. This is a P0 evidence pipeline, not a validated training dataset.
 
@@ -46,7 +46,7 @@ Current visual telemetry remains sampled frames, OpenCV motion and candidate cut
 
 ## Semantic-model gates
 
-Person/pose, general action, objects/interactions, scene context, music/sound-event classification, text-speech relation and narrative-structure modules are marked `NOT_YET_PROCESSED` in v3.0.0. Speaker diarization and fine-grained dance labels are deferred P2 work. These fields are not populated with guesses.
+Person/pose, general action, objects/interactions, scene context, music/sound-event classification, text-speech relation and narrative-structure modules are marked `NOT_YET_PROCESSED` in v3.0.1. Speaker diarization and fine-grained dance labels are deferred P2 work. These fields are not populated with guesses.
 
 A model is activated only after exact checkpoint/code/weight license review, install/runtime benchmarking, a task-specific human-reviewed sample, class-wise quality/abstention rules, and evidence timestamps plus extractor/version provenance.
 
@@ -58,4 +58,4 @@ A feature extraction success does not imply a valid training example. Training d
 
 ## Versioning and migration
 
-The Colab notebook reprocesses prior records whose nested bundle is missing or whose bundle version is not `3.0.0`, while leaving current v3 records reusable. Per-video JSON files are updated in the private feature repository; older Git history remains available.
+The Colab notebook reprocesses prior records whose nested bundle is missing or whose bundle version is not `3.0.1`, while leaving current v3 records reusable. Per-video JSON files are updated in the private feature repository; older Git history remains available.

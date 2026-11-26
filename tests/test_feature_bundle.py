@@ -42,7 +42,7 @@ def test_feature_bundle_separates_modalities_and_defers_semantic_models():
         warnings=[], rights=RightsDeclaration(basis="creator_owned"),
         config=AnalyzerConfig(),
     )
-    assert bundle["bundle_version"] == "3.0.0"
+    assert bundle["bundle_version"] == "3.0.1"
     assert bundle["video_manifest"]["file_name"] == "clip.mp4"
     assert bundle["transcript"]["segment_count"] == 1
     assert bundle["ocr"]["raw_candidate_count"] == 1
@@ -51,3 +51,8 @@ def test_feature_bundle_separates_modalities_and_defers_semantic_models():
     assert bundle["temporal_events"]
     assert bundle["semantic_features"]["person_pose"]["status"] == "NOT_YET_PROCESSED"
     assert bundle["provenance"]["rights_declaration"]["model_training_permitted"] is False
+    assert bundle["training_readiness"]["ready"] is False
+    assert bundle["training_readiness"]["status"] == "NOT_READY"
+    assert bundle["training_readiness"]["model_training_permission"] == "NOT_PERMITTED_BY_DECLARATION"
+    assert bundle["training_readiness"]["human_reviewed_labels"] == "NOT_PROVIDED"
+    assert bundle["training_readiness"]["deduplication_and_leakage_safe_splits"] == "NOT_CREATED"

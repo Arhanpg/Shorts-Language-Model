@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-BUNDLE_VERSION = "3.0.0"
+BUNDLE_VERSION = "3.0.1"
 
 
 def _dump(value: Any) -> Any:
@@ -149,6 +149,26 @@ def build_feature_bundle(
             "transcript_segments_flagged_for_review": flagged_segments,
             "ocr_raw_candidates": len(ocr_items), "ocr_accepted_candidates": accepted_ocr,
             "human_review_recommended": review_required,
+        },
+        "training_readiness": {
+            "ready": False,
+            "status": "NOT_READY",
+            "model_training_permission": (
+                "PERMITTED_BY_DECLARATION"
+                if rights is not None and bool(getattr(rights, "model_training_permitted", False))
+                else (
+                    "NOT_PERMITTED_BY_DECLARATION"
+                    if rights is not None
+                    else "UNKNOWN"
+                )
+            ),
+            "human_reviewed_labels": "NOT_PROVIDED",
+            "deduplication_and_leakage_safe_splits": "NOT_CREATED",
+            "reason": (
+                "Feature extraction is not training clearance. Require item-level "
+                "model-training permission, human-reviewed labels, deduplication, "
+                "and creator/time/audio-template leakage-safe splits before training."
+            ),
         },
         "provenance": {
             "pipeline": "ShortsLM Phase 1 evidence extraction", "bundle_version": BUNDLE_VERSION,
