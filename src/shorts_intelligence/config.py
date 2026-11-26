@@ -14,6 +14,7 @@ class AnalyzerConfig:
     analysis_sample_interval_seconds: float = 0.25
     max_keyframes: int = 48
     max_ocr_frames: int = 12
+    ocr_confidence_threshold: float = 0.50
     cut_threshold: float = 0.28
     motion_resize_width: int = 160
     keyframe_width: int = 640
@@ -37,6 +38,8 @@ class AnalyzerConfig:
             raise ValueError("max_keyframes must be between 4 and 96 to bound image memory")
         if self.max_ocr_frames < 1:
             raise ValueError("max_ocr_frames must be at least 1")
+        if not 0.0 <= self.ocr_confidence_threshold <= 1.0:
+            raise ValueError("ocr_confidence_threshold must be between 0 and 1")
         if not 0.0 < self.cut_threshold <= 1.0:
             raise ValueError("cut_threshold must be in (0, 1]")
         if self.hook_sample_interval_seconds <= 0 or self.analysis_sample_interval_seconds <= 0:

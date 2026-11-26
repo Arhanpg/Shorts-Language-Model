@@ -28,6 +28,13 @@ def analyze_audio(audio_path: Path) -> AudioFeatures:
             y=signal, frame_length=frame_length, hop_length=hop_length
         )[0]
         silence_ratio = float(np.mean(rms < 0.008)) if rms.size else 0.0
+        curve_stride = max(1, int(np.ceil(len(rms) / 1200)))
+        rms_curve = [
+            {"timestamp_seconds": float(index * hop_length / sample_rate), "rms": float(rms[index])}
+            for index in range(0, len(rms), curve_stride)
+        ]
+        zero_crossing_rate = librosa.feature.zero_crossing_rate(y=signal)[0]
+        spectral_centroid = librosa.feature.spectral_centroid(y=signal, sr=sample_rate)[0]
         onset_env = librosa.onset.onset_strength(
             y=signal, sr=sample_rate, hop_length=hop_length
         )
@@ -53,7 +60,12 @@ def analyze_audio(audio_path: Path) -> AudioFeatures:
             duration_seconds=float(len(signal) / sample_rate),
             sample_rate=sample_rate,
             rms_mean=float(np.mean(rms)) if rms.size else 0.0,
+            rms_curve=rms_curve,
             silence_ratio=min(1.0, max(0.0, silence_ratio)),
+            zero_crossing_rate_mean=float(np.mean(zero_crossing_rate)) if zero_crossing_rate.size else 0.0,
+            spectral_centroid_mean_hz=float(np.mean(spectral_centroid)) if spectral_centroid.size else 0.0,
+            spectral_flux_mean=float(np.mean(onset_env)) if onset_env.size else 0.0,
+            clipping_ratio=float(np.mean(np.abs(signal) >= 0.999)) if signal.size else 0.0,
             estimated_tempo_bpm=max(0.0, tempo_value),
             beat_times_seconds=[float(value) for value in beat_times[:1000]],
             onset_times_seconds=[float(value) for value in onset_times[:2000]],

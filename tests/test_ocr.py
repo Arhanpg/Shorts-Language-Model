@@ -56,3 +56,8 @@ def test_paddleocr_v3_disables_onednn_for_cpu(monkeypatch):
     assert engine_name == "paddleocr-3-cpu"
     assert len(spans) == 1
     assert spans[0].text == "sample text"
+    assert spans[0].text_normalized == "sample text"
+    assert spans[0].script == "Latn"
+    assert spans[0].accepted_candidate is True
+    assert spans[0].bbox_normalized_xyxy == [1 / 128, 2 / 64, 30 / 128, 20 / 64]
+    assert spans[0].track_id == "ocr_00000"

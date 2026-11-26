@@ -205,6 +205,7 @@ The research-backed direction is documented here:
 - [Global Master Plan — 24 November 2026](docs/GLOBAL_MASTER_PLAN.md)
 - [Gemini Research Reconciliation and Independent Technical Review](docs/GEMINI_RESEARCH_RECONCILIATION.md)
 - [Feature Extraction Specification](docs/FEATURE_EXTRACTION_SPEC.md)
+- [Feature Bundle v3.0.0](docs/FEATURE_BUNDLE_V3.md)
 - [Minimal Model Selection and Training Plan](docs/MODEL_AND_TRAINING.md)
 - [Minimal Multimodal Evidence Architecture](docs/ARCHITECTURE.md)
 - [Updated Implementation Roadmap](docs/ROADMAP.md)

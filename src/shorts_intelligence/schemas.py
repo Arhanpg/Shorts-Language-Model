@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -76,8 +76,18 @@ class TranscriptSegment(StrictModel):
     start_seconds: float = Field(ge=0)
     end_seconds: float = Field(ge=0)
     text: str = Field(min_length=1)
+    text_normalized: str | None = None
+    script: str | None = None
     language: str | None = None
+    language_probability: float | None = Field(default=None, ge=0, le=1)
     confidence: float | None = Field(default=None, ge=0, le=1)
+    no_speech_probability: float | None = Field(default=None, ge=0, le=1)
+    average_log_probability: float | None = None
+    compression_ratio: float | None = Field(default=None, ge=0)
+    temperature: float | None = Field(default=None, ge=0)
+    vad_retry_used: bool = False
+    quality_status: str = "unreviewed"
+    quality_flags: list[str] = Field(default_factory=list)
     words: list[dict[str, object]] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -90,8 +100,18 @@ class TranscriptSegment(StrictModel):
 class OCRSpan(StrictModel):
     timestamp_seconds: float = Field(ge=0)
     text: str = Field(min_length=1)
+    text_normalized: str | None = None
+    script: str = "Zyyy"
+    language: str | None = None
     confidence: float = Field(ge=0, le=1)
     bbox_xyxy: list[int] | None = None
+    bbox_normalized_xyxy: list[float] | None = None
+    track_id: str | None = None
+    track_start_seconds: float | None = Field(default=None, ge=0)
+    track_end_seconds: float | None = Field(default=None, ge=0)
+    quality_status: str = "unreviewed"
+    quality_flags: list[str] = Field(default_factory=list)
+    accepted_candidate: bool = False
     engine: str
     frame_index: int = Field(ge=0)
 
@@ -101,7 +121,14 @@ class AudioFeatures(StrictModel):
     duration_seconds: float | None = Field(default=None, ge=0)
     sample_rate: int | None = Field(default=None, gt=0)
     rms_mean: float | None = Field(default=None, ge=0)
+    rms_curve: list[dict[str, float]] = Field(default_factory=list)
     silence_ratio: float | None = Field(default=None, ge=0, le=1)
+    zero_crossing_rate_mean: float | None = Field(default=None, ge=0)
+    spectral_centroid_mean_hz: float | None = Field(default=None, ge=0)
+    spectral_flux_mean: float | None = Field(default=None, ge=0)
+    clipping_ratio: float | None = Field(default=None, ge=0, le=1)
+    speech_ratio: float | None = Field(default=None, ge=0, le=1)
+    music_ratio: float | None = Field(default=None, ge=0, le=1)
     estimated_tempo_bpm: float | None = Field(default=None, ge=0)
     beat_times_seconds: list[float] = Field(default_factory=list)
     onset_times_seconds: list[float] = Field(default_factory=list)
@@ -141,6 +168,7 @@ class AnalysisReport(StrictModel):
     audio: AudioFeatures = Field(default_factory=AudioFeatures)
     stages: dict[str, StageStatus]
     warnings: list[str] = Field(default_factory=list)
+    feature_bundle: dict[str, Any] = Field(default_factory=dict)
     limitations: list[str] = Field(default_factory=lambda: [
         "Phase 1 extracts evidence; it does not yet run a fine-tuned VLM.",
         "Cut, motion and beat events are algorithmic candidates, not ground truth.",
