@@ -1,22 +1,46 @@
 # ================================================================
-# SHORTSLM REPOSITORY-NATIVE DOWNLOADER
-# Anonymous attempt only — no IG session or YouTube cookies.
+# SHORTSLM REPOSITORY-NATIVE ANONYMOUS DOWNLOADER
+# No Instagram session file, username, YouTube cookies, or login.
 # ================================================================
 
 from pathlib import Path
+from shorts_intelligence.discovery import downloader as _shorts_downloader
 from shorts_intelligence.discovery.downloader import (
     download_candidate,
     DownloadError,
 )
 from shorts_intelligence.discovery.models import DiscoveredCandidate
 
+# The notebook may be run against an older installed checkout.
+# This in-memory compatibility patch ensures a plain anonymous
+# "login required" response from Instaloader may try yt-dlp and
+# gallery-dl. Explicit blocks and rate limits still stop fallback.
+def _anonymous_hard_block(error):
+    message = str(error).casefold()
+    hard_block_markers = (
+        "401", "403", "429", "rate limit", "too many requests",
+        "checkpoint", "challenge_required", "challenge required",
+        "challenge page", "sign in to confirm", "not a bot",
+        "temporarily blocked", "timed out", "timeout",
+        "connection reset", "connection refused",
+    )
+    return any(marker in message for marker in hard_block_markers)
+
+_shorts_downloader._is_access_or_transport_failure = _anonymous_hard_block
+
 def download_video(item, output_dir):
     """
-    Delegate downloading to the exact adapter implemented in
-    src/shorts_intelligence/discovery/downloader.py.
+    Resolve media through ShortsLM's own downloader module.
 
-    No instagram_session_username, instagram_session_file,
-    cookiefile, or login setup is supplied.
+    Instagram order:
+      1) Instaloader anonymous request
+      2) yt-dlp fallback after non-hard-block failures
+      3) gallery-dl fallback after non-hard-block failures
+
+    YouTube:
+      1) yt-dlp anonymous request
+
+    No cookies or login sessions are passed.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -35,24 +59,19 @@ def download_video(item, output_dir):
     )
 
     print(
-        f"Using ShortsLM repository downloader: "
-        f"{candidate.platform} | {candidate.source_id}"
+        f"ShortsLM downloader | {candidate.platform} | {candidate.source_id}"
     )
 
-    media_path = download_candidate(
-        candidate,
-        output_dir,
-        # Intentionally no Instagram session arguments.
-    )
+    # Do not pass instagram_session_username, instagram_session_file,
+    # or any YouTube cookiefile.
+    media_path = download_candidate(candidate, output_dir)
 
     media_path = Path(media_path).resolve(strict=True)
     if not media_path.is_file() or media_path.stat().st_size <= 0:
-        raise DownloadError(
-            f"Downloader returned an invalid media file: {media_path}"
-        )
+        raise DownloadError("Repository downloader returned an empty or missing file.")
 
     print(
-        "Downloaded:",
+        "Download successful:",
         media_path.name,
         "|",
         round(media_path.stat().st_size / (1024 * 1024), 2),
@@ -61,21 +80,24 @@ def download_video(item, output_dir):
     return media_path
 
 
-print("Repository-native anonymous downloader is ready.")
+print("Anonymous repository-native downloader ready.")
+print("Instagram session variables required: NO")
+print("YouTube cookie variables required: NO")
 
 
 # ================================================================
 # SHORTSLM PERSONAL FEATURE EXTRACTION — RESUMABLE RUNNER
-# Requires: read_lines, write_lines_atomic, append_jsonl,
-#           process_one, source_urls, ITEM_BY_URL and state paths.
+# Requires process_one() and the shared state helpers from setup.
+# This cell also redefines download_video() above process_one() calls.
 # ================================================================
 
 successes = 0
 failures = 0
-attempted_this_session = set()
 
-# Rebuild the queue from the source TXT files and completion ledger.
 completed_set = set(read_lines(COMPLETED_FILE))
+
+# The two TXT input files remain the source of truth.
+# No artificial maximum URL count is applied.
 queue = [
     url for url in source_urls
     if url not in completed_set
@@ -89,8 +111,8 @@ print("=" * 70)
 print("Source URLs:", f"{len(source_urls):,}")
 print("Already completed:", f"{len(completed_set):,}")
 print("To process:", f"{len(queue):,}")
-print("Downloader: ShortsLM repository-native adapter")
-print("Authentication: anonymous attempt; no session/cookie variables")
+print("Downloader: ShortsLM repository-native")
+print("Authentication: anonymous; no login sessions/cookies")
 print("=" * 70)
 
 try:
@@ -119,11 +141,10 @@ try:
         )
 
         try:
-            # process_one() resolves the current global download_video()
-            # function, which is redefined in the repository-native cell.
+            # process_one() uses the redefined global download_video().
             result = process_one(item)
 
-            # Mark complete only after GitHub confirms the feature commit.
+            # Only mark complete once the GitHub commit is confirmed.
             completed_set.add(url)
             append_jsonl(PUSH_LOG, {
                 **result,
@@ -151,15 +172,13 @@ try:
             })
 
             print("FAILED:", error_text[:1400])
-            print("URL remains in remaining.txt.")
+            print("URL remains in remaining.txt. Stopping to avoid repeated requests.")
 
-            # Do not retry the same failed item endlessly in this runtime.
-            # Preserve it at the head of the remaining queue and stop.
+            # Keep failed URL and all later URLs checkpointed.
             write_lines_atomic(REMAINING_FILE, queue)
             break
 
 finally:
-    # Persist exact queue state even after manual interruption.
     write_lines_atomic(COMPLETED_FILE, sorted(completed_set))
     write_lines_atomic(REMAINING_FILE, queue)
 
