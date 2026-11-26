@@ -62,4 +62,8 @@ def test_instagram_access_and_transport_failures_are_classified_for_fast_stop():
     assert _is_access_or_transport_failure(RuntimeError("401 Unauthorized"))
     assert _is_access_or_transport_failure(RuntimeError("Connection timed out"))
     assert _is_access_or_transport_failure(RuntimeError("HTTP 429 rate limit"))
+    assert _is_access_or_transport_failure(RuntimeError("challenge_required"))
+    assert _is_access_or_transport_failure(RuntimeError("Sign in to confirm you are not a bot"))
+    # A generic anonymous login wall should permit normal public-media fallbacks.
+    assert not _is_access_or_transport_failure(RuntimeError("Login required"))
     assert not _is_access_or_transport_failure(RuntimeError("unsupported media format"))
