@@ -172,18 +172,31 @@ def analyze_video(
                     len(transcript_segments),
                     time.monotonic() - asr_started,
                 )
+                flagged_segments = sum(bool(segment.quality_flags) for segment in transcript_segments)
+                used_vad_retry = any(segment.vad_retry_used for segment in transcript_segments)
+                asr_partial = (
+                    not transcript_segments or flagged_segments > 0 or used_vad_retry
+                )
                 stages["asr"] = StageStatus(
-                    status="complete" if transcript_segments else "partial",
+                    status="partial" if asr_partial else "complete",
                     engine=asr_engine,
                     detail=(
                         f"Detected language: {detected_language or 'unknown'}; "
-                        f"{len(transcript_segments)} segments."
+                        f"{len(transcript_segments)} segments; "
+                        f"{flagged_segments} segments flagged for review; "
+                        f"VAD-disabled retry used: {used_vad_retry}."
                     ),
                 )
                 if not transcript_segments:
                     warnings.append(
-                        "ASR completed but returned no speech segments; "
-                        "this may be a music-only or silent clip."
+                        "ASR returned no segments after VAD-enabled and VAD-disabled "
+                        "attempts. Speech absence is undetermined; do not label this "
+                        "clip as silent without a separate VAD/human check."
+                    )
+                elif asr_partial:
+                    warnings.append(
+                        "ASR produced transcript evidence that requires QA; inspect "
+                        "per-segment decoding diagnostics and VAD retry metadata."
                     )
             except ASRError as exc:
                 logger.warning(
@@ -237,7 +250,11 @@ def analyze_video(
                 )
                 accepted_spans = sum(1 for span in ocr_spans if span.accepted_candidate)
                 stages["ocr"] = StageStatus(
-                    status="complete" if accepted_spans else "partial",
+                    status=(
+                        "complete"
+                        if accepted_spans > 0 and accepted_spans == len(ocr_spans)
+                        else "partial"
+                    ),
                     engine=ocr_engine,
                     detail=(
                         f"{accepted_spans} accepted candidates; {len(ocr_spans)} raw "
