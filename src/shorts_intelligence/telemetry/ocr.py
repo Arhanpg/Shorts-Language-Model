@@ -126,6 +126,9 @@ def run_ocr(
             use_doc_unwarping=False,
             use_textline_orientation=False,
             device="gpu:0" if prefer_gpu and paddle_cuda_available else "cpu",
+            # The Colab traceback fails inside the oneDNN/PIR CPU executor.
+            # Disable MKL-DNN so PaddleOCR does not select that execution path.
+            enable_mkldnn=False,
         )
         version = "paddleocr-3"
     except TypeError:
