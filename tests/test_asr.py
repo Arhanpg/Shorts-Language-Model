@@ -73,3 +73,28 @@ def test_zero_segments_after_retry_are_not_labeled_silence(monkeypatch, tmp_path
     assert calls == [True, False]
     assert segments == []
     assert engine.endswith("-vad-disabled-retry-empty")
+
+
+
+def test_vidtrace_nested_quality_dictionary_is_preserved():
+    from types import SimpleNamespace
+
+    from shorts_intelligence.telemetry.asr import _convert_segments
+
+    segment = SimpleNamespace(
+        start=0.0,
+        end=0.8,
+        text="hello",
+        words=[],
+        quality={
+            "no_speech_prob": 0.04,
+            "avg_logprob": -0.3,
+            "compression_ratio": 1.2,
+            "temperature": 0.0,
+        },
+    )
+    [converted] = _convert_segments([segment], "en", language_probability=0.93)
+    assert converted.no_speech_probability == 0.04
+    assert converted.average_log_probability == -0.3
+    assert converted.compression_ratio == 1.2
+    assert converted.temperature == 0.0

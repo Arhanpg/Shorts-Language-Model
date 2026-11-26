@@ -1,5 +1,6 @@
 """Canonical, versioned evidence bundle assembly for ShortsLM."""
 from __future__ import annotations
+
 from collections import defaultdict
 from typing import Any
 
@@ -10,11 +11,21 @@ def _dump(value: Any) -> Any:
     return value.model_dump(mode="json") if hasattr(value, "model_dump") else value
 
 
-def build_feature_bundle(*, video: Any, hook_window: Any, frame_evidence: list[Any],
-                         cut_candidates: list[Any], motion: Any,
-                         transcript_segments: list[Any], ocr_spans: list[Any],
-                         audio: Any, stages: dict[str, Any], warnings: list[str],
-                         rights: Any, config: Any) -> dict[str, Any]:
+def build_feature_bundle(
+    *,
+    video: Any,
+    hook_window: Any,
+    frame_evidence: list[Any],
+    cut_candidates: list[Any],
+    motion: Any,
+    transcript_segments: list[Any],
+    ocr_spans: list[Any],
+    audio: Any,
+    stages: dict[str, Any],
+    warnings: list[str],
+    rights: Any,
+    config: Any,
+) -> dict[str, Any]:
     transcript_items = [_dump(item) for item in transcript_segments]
     ocr_items = [_dump(item) for item in ocr_spans]
     frames = [_dump(item) for item in frame_evidence]
@@ -94,13 +105,28 @@ def build_feature_bundle(*, video: Any, hook_window: Any, frame_evidence: list[A
         "speaker_diarization": {"status": "NOT_YET_PROCESSED", "phase": "P2", "reason": "Deferred pending task validation and model selection."},
         "fine_grained_dance": {"status": "NOT_YET_PROCESSED", "phase": "P2", "reason": "Deferred pending reviewed taxonomy and class-wise benchmark."},
     }
+    if transcript_items:
+        speech_presence = {
+            "status": "PRESENT",
+            "reason": "At least one timestamped ASR segment was returned.",
+        }
+    elif not getattr(video, "audio_present", False):
+        speech_presence = {
+            "status": "ABSENT_IN_MEDIA",
+            "reason": "The source media has no audio stream.",
+        }
+    else:
+        speech_presence = {
+            "status": "NOT_YET_PROCESSED",
+            "reason": "ASR returned no segments after retry. Independent VAD or human review is required before marking speech absent.",
+        }
     return {
         "bundle_version": BUNDLE_VERSION,
         "video_manifest": _dump(video),
         "transcript": {
             "segments": transcript_items, "segment_count": len(transcript_items),
             "language_codes": languages, "script_codes": scripts,
-            "speech_presence": {"status": "NOT_YET_PROCESSED", "reason": "No dedicated calibrated VAD result is available. Zero ASR segments are not proof that speech is absent."},
+            "speech_presence": speech_presence,
             "quality": {"segments_flagged_for_review": flagged_segments, "quality_thresholds_calibrated": False,
                         "note": "Whisper decoding diagnostics are retained as review heuristics, not calibrated probabilities."},
         },

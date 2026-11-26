@@ -67,15 +67,18 @@ def _enrich_ocr_spans(spans, selected_frames, confidence_threshold: float):
                 min(1.0, max(0.0, float(box[2]) / width)),
                 min(1.0, max(0.0, float(box[3]) / height)),
             ]
+        script = _ocr_script(normalized_text)
         flags = []
         if span.confidence < confidence_threshold:
             flags.append("below_provisional_confidence_threshold")
-        if len(normalized_text) < 2:
+        short_ambiguous = len(normalized_text) == 1 and script in {"Latn", "Zyyy"}
+        if short_ambiguous:
             flags.append("short_text_candidate")
-        accepted = span.confidence >= confidence_threshold and len(normalized_text) >= 2
+        # A one-character CJK/Indic token can be valid; retain it when confidence passes.
+        accepted = span.confidence >= confidence_threshold and not short_ambiguous
         prepared.append(span.model_copy(update={
             "text_normalized": normalized_text,
-            "script": _ocr_script(normalized_text),
+            "script": script,
             "bbox_normalized_xyxy": normalized_box,
             "quality_status": "accepted_candidate" if accepted else "needs_review",
             "quality_flags": flags,

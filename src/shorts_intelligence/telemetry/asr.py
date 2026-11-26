@@ -4,8 +4,8 @@ from __future__ import annotations
 import contextlib
 import logging
 import multiprocessing
-import unicodedata
 import time
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -70,10 +70,20 @@ def _convert_segments(
                 "script": _script_for_text(word_text),
                 "probability": float(word.probability) if getattr(word, "probability", None) is not None else None,
             })
+        quality = getattr(segment, "quality", None)
+        quality = quality if isinstance(quality, dict) else {}
         no_speech = getattr(segment, "no_speech_prob", None)
+        if no_speech is None:
+            no_speech = quality.get("no_speech_prob")
         avg_logprob = getattr(segment, "avg_logprob", None)
+        if avg_logprob is None:
+            avg_logprob = quality.get("avg_logprob")
         compression = getattr(segment, "compression_ratio", None)
+        if compression is None:
+            compression = quality.get("compression_ratio")
         temperature = getattr(segment, "temperature", None)
+        if temperature is None:
+            temperature = quality.get("temperature")
         flags: list[str] = []
         # Review heuristics only; thresholds are not calibrated correctness scores.
         if no_speech is not None and float(no_speech) >= 0.6:

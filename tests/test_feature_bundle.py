@@ -1,8 +1,15 @@
 from shorts_intelligence.config import AnalyzerConfig
 from shorts_intelligence.feature_bundle import build_feature_bundle
 from shorts_intelligence.schemas import (
-    AudioFeatures, CutCandidate, FrameEvidence, HookWindow, MotionSummary,
-    OCRSpan, RightsDeclaration, TranscriptSegment, VideoMetadata,
+    AudioFeatures,
+    CutCandidate,
+    FrameEvidence,
+    HookWindow,
+    MotionSummary,
+    OCRSpan,
+    RightsDeclaration,
+    TranscriptSegment,
+    VideoMetadata,
 )
 
 
