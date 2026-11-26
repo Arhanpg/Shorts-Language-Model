@@ -80,7 +80,7 @@ print("PyAV compatibility verified:", AV_VERSION)
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 
 paddle_install = subprocess.run(
-    [sys.executable, "-m", "pip", "install", "-q", "--upgrade", "paddlepaddle"],
+    [sys.executable, "-m", "pip", "install", "-q", "--upgrade", "paddlepaddle==3.3.0", "-i", "https://www.paddlepaddle.org.cn/packages/stable/cpu/"],
     capture_output=True,
     text=True,
     check=False,
