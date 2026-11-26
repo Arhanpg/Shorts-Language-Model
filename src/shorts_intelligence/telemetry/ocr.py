@@ -126,6 +126,10 @@ def run_ocr(
             use_doc_unwarping=False,
             use_textline_orientation=False,
             device="gpu:0" if prefer_gpu and paddle_cuda_available else "cpu",
+            # PaddlePaddle 3.3.x has a known CPU oneDNN/PIR conversion
+            # regression (ConvertPirAttribute2RuntimeAttribute). Disabling
+            # MKL-DNN also protects environments that have not yet pinned 3.2.2.
+            enable_mkldnn=False,
         )
         version = "paddleocr-3"
     except TypeError:
