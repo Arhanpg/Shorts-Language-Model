@@ -84,6 +84,7 @@ def _convert_segments(
         temperature = getattr(segment, "temperature", None)
         if temperature is None:
             temperature = quality.get("temperature")
+        script = _script_for_text(normalized)
         flags: list[str] = []
         # Review heuristics only; thresholds are not calibrated correctness scores.
         if no_speech is not None and float(no_speech) >= 0.6:
@@ -92,12 +93,16 @@ def _convert_segments(
             flags.append("low_average_log_probability")
         if compression is not None and float(compression) > 2.4:
             flags.append("high_compression_ratio")
+        if language_probability is not None and float(language_probability) < 0.60:
+            flags.append("low_language_probability")
+        if script == "Mixed":
+            flags.append("mixed_script_segment")
         converted.append(TranscriptSegment(
             start_seconds=max(0.0, float(segment.start)),
             end_seconds=max(0.0, float(segment.end)),
             text=text,
             text_normalized=normalized,
-            script=_script_for_text(normalized),
+            script=script,
             language=language,
             language_probability=language_probability,
             no_speech_probability=float(no_speech) if no_speech is not None else None,

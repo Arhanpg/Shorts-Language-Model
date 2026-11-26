@@ -98,3 +98,50 @@ def test_vidtrace_nested_quality_dictionary_is_preserved():
     assert converted.average_log_probability == -0.3
     assert converted.compression_ratio == 1.2
     assert converted.temperature == 0.0
+
+
+
+def test_low_language_probability_is_flagged_for_qa():
+    from types import SimpleNamespace
+
+    from shorts_intelligence.telemetry.asr import _convert_segments
+
+    segment = SimpleNamespace(
+        start=0.0,
+        end=0.9,
+        text="e que eu possa ver",
+        words=[],
+        no_speech_prob=0.2,
+        avg_logprob=-0.4,
+        compression_ratio=1.0,
+        temperature=0.0,
+    )
+    [converted] = _convert_segments(
+        [segment], "pt", language_probability=0.46
+    )
+    assert converted.language == "pt"
+    assert converted.language_probability == 0.46
+    assert "low_language_probability" in converted.quality_flags
+    assert converted.quality_status == "needs_review"
+
+
+def test_mixed_script_segment_is_flagged_for_multilingual_review():
+    from types import SimpleNamespace
+
+    from shorts_intelligence.telemetry.asr import _convert_segments
+
+    segment = SimpleNamespace(
+        start=0.0,
+        end=0.9,
+        text="नमस्ते hello",
+        words=[],
+        no_speech_prob=0.1,
+        avg_logprob=-0.2,
+        compression_ratio=1.0,
+        temperature=0.0,
+    )
+    [converted] = _convert_segments(
+        [segment], "hi", language_probability=0.9
+    )
+    assert converted.script == "Mixed"
+    assert "mixed_script_segment" in converted.quality_flags
