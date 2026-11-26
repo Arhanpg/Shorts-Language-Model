@@ -18,12 +18,20 @@ class DownloadError(RuntimeError):
 
 
 def _is_access_or_transport_failure(error: BaseException) -> bool:
-    """Avoid cascading extractor requests after an access denial or network outage."""
+    """Identify hard blocks where trying more extractors would only amplify requests.
+
+    A plain anonymous Instaloader "login required" response is deliberately
+    NOT a hard stop: public Reels can sometimes still resolve through the
+    repository's yt-dlp or gallery-dl fallback. Explicit challenges,
+    checkpoints, rate limits, HTTP denials, and transport failures stop fallback.
+    """
     message = str(error).casefold()
     markers = (
-        "401 unauthorized", "403 forbidden", "429", "rate limit",
-        "checkpoint", "login required", "challenge", "timed out", "timeout",
-        "connection reset", "connection refused", "temporarily blocked",
+        "401 unauthorized", "403 forbidden", "http error 401", "http error 403",
+        "429", "rate limit", "too many requests", "checkpoint",
+        "challenge_required", "challenge required", "challenge page",
+        "sign in to confirm", "not a bot", "temporarily blocked",
+        "timed out", "timeout", "connection reset", "connection refused",
     )
     return any(marker in message for marker in markers)
 
